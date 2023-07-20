@@ -1,0 +1,9 @@
+streamlit
+watchdog
+httpx-oauth==0.3.5
+asyncio
+nanodb
+streamlit-cookies-manager
+ccxt==2.8.17
+py3cw==0.0.39
+requests==2.31.0
