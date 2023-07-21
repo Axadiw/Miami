@@ -1,3 +1,5 @@
+import time
+
 import asyncio
 import json
 
@@ -10,9 +12,12 @@ from pages.Account import COOKIES_PASSWORD, COOKIES_PREFIX, OAUTH_TOKEN_KEY, GOO
 from users import is_authorized
 
 
-async def get_google_email(oauthclient,
-                           token):
+async def get_google_email(oauthclient, token):
     return await oauthclient.get_id_email(token['access_token'])
+
+
+async def get_refreshed_token(oauthclient, token):
+    return await oauthclient.refresh_token(token['refresh_token'])
 
 
 def get_configuration_for_authorized_user():
@@ -33,6 +38,12 @@ def get_configuration_for_authorized_user():
         st.stop()
 
     client = GoogleOAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
+    if auth_token['expires_at'] < time.time():
+        new_token = asyncio.run(get_refreshed_token(oauthclient=client, token=auth_token))
+        cookies[OAUTH_TOKEN_KEY] = json.dumps(new_token)
+        cookies.save()
+        auth_token = new_token
+
     email = asyncio.run(get_google_email(oauthclient=client, token=auth_token))[1]
 
     if not is_authorized(email):
