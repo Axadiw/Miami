@@ -3,7 +3,7 @@ import json
 
 import streamlit as st
 from httpx_oauth.clients.google import GoogleOAuth2
-from streamlit_cookies_manager import EncryptedCookieManager
+from lib.streamlit_cookies_manager import EncryptedCookieManager
 
 from pages.Account import COOKIES_PASSWORD, COOKIES_PREFIX, OAUTH_TOKEN_KEY, GOOGLE_CLIENT_SECRET, GOOGLE_CLIENT_ID, \
     BYBIT_API_SECRET_KEY, TC_ACCOUNT_KEY, BYBIT_API_KEY_KEY, TC_API_SECRET_KEY, TC_API_KEY_KEY

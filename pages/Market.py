@@ -13,26 +13,26 @@ with open('style.css') as f:
 bybit_balance = get_balance(apiKey=bybit_api_key, apiSecret=bybit_api_secret)
 st.write('Balance {} $'.format(bybit_balance))
 
-symbol_val = st.text_input("Symbol")
-direction_val = st.radio("direction", ['buy', 'sell'], horizontal=True)
+config_col, config2_col, rendered_value_col, tradingview_col = st.columns([3, 1, 1, 3])
 
-maxLossCol1, maxLossCol2 = st.columns(2)
-tp1Col1, tp1Col2 = st.columns(2)
-tp2Col1, tp2Col2 = st.columns(2)
-tp3Col1, tp3Col2 = st.columns(2)
-slCol1, slCol2 = st.columns(2)
-maxLoss = maxLossCol1.text_input("Max loss")
-tp1 = tp1Col1.text_input("TP1")
-tp2 = tp2Col1.text_input("TP2")
-tp3 = tp3Col1.text_input("TP3")
-sl = slCol1.text_input("SL")
+symbol_val = config_col.text_input("Symbol")
+direction_val = config_col.radio("direction", ['buy', 'sell'], horizontal=True)
 
-maxLossType = maxLossCol2.radio(label='', key="Max loss type", options=['%', '$'], horizontal=True)
-tp1Type = tp1Col2.radio(label='', key="tp1type", options=['%', '$'], horizontal=True)
-tp2Type = tp2Col2.radio(label='', key="tp2type", options=['%', '$'], horizontal=True)
-tp3Type = tp3Col2.radio(label='', key="tp3type", options=['%', '$'], horizontal=True)
-slType = slCol2.radio(label='', key="sltype", options=['%', '$'], horizontal=True)
-comment = st.text_input("Comment")
+maxLoss = config_col.text_input("Max loss")
+tp1 = config_col.text_input("TP1")
+tp2 = config_col.text_input("TP2")
+tp3 = config_col.text_input("TP3")
+sl = config_col.text_input("SL")
+
+maxLossType = config2_col.radio(label='', key="Max loss type", options=['%', '$'], horizontal=True)
+tp1Type = config2_col.radio(label='', key="tp1type", options=['%', '$'], horizontal=True)
+tp2Type = config2_col.radio(label='', key="tp2type", options=['%', '$'], horizontal=True)
+tp3Type = config2_col.radio(label='', key="tp3type", options=['%', '$'], horizontal=True)
+slType = config2_col.radio(label='', key="sltype", options=['%', '$'], horizontal=True)
+comment = config_col.text_input("Comment")
+
+calculated_max_loss = float(maxLoss) if maxLoss and maxLossType == '$' else float(maxLoss) * 0.01 * bybit_balance if maxLoss else None
+rendered_value_col.write('{} $'.format(calculated_max_loss))
 
 # Every form must have a submit button.
 submitted = st.button("Submit")

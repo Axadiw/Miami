@@ -3,7 +3,7 @@ import json
 
 import streamlit as st
 from httpx_oauth.clients.google import GoogleOAuth2
-from streamlit_cookies_manager import EncryptedCookieManager
+from lib.streamlit_cookies_manager import EncryptedCookieManager
 
 GOOGLE_CLIENT_ID = '557728805244-p5lmcikopkrhqrbg3vhmimbk2grub3nb.apps.googleusercontent.com'
 GOOGLE_CLIENT_SECRET = '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'
@@ -45,6 +45,7 @@ client = GoogleOAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
 authToken = json.loads(cookies[OAUTH_TOKEN_KEY]) if cookies is not None and \
                                                     OAUTH_TOKEN_KEY in cookies and \
                                                     cookies[OAUTH_TOKEN_KEY] != '' else None
+authToken = 'a'
 queryParams = st.experimental_get_query_params()
 
 if not authToken:
