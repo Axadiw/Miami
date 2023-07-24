@@ -5,7 +5,7 @@ import streamlit as st
 from httpx_oauth.clients.google import GoogleOAuth2
 from httpx_oauth.oauth2 import OAuth2Token
 
-from cookies import get_cookies, OAUTH_TOKEN_KEY, GOOGLE_CLIENT_SECRET, GOOGLE_CLIENT_ID, \
+from cookies import OAUTH_TOKEN_KEY, GOOGLE_CLIENT_SECRET, GOOGLE_CLIENT_ID, \
     BYBIT_API_SECRET_KEY, TC_ACCOUNT_KEY, BYBIT_API_KEY_KEY, TC_API_SECRET_KEY, TC_API_KEY_KEY, OAUTH_REFRESH_TOKEN_KEY
 from users import is_authorized
 
@@ -18,8 +18,7 @@ async def get_refreshed_token(oauthclient, token):
     return await oauthclient.refresh_token(token)
 
 
-def get_configuration_for_authorized_user():
-    cookies = get_cookies()
+def get_configuration_for_authorized_user(cookies):
     auth_token = OAuth2Token(json.loads(cookies[OAUTH_TOKEN_KEY])) if cookies is not None and \
                                                                       OAUTH_TOKEN_KEY in cookies and \
                                                                       cookies[OAUTH_TOKEN_KEY] != '' else None

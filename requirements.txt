@@ -1,4 +1,5 @@
 streamlit==1.25.0
+altair<5
 watchdog
 httpx-oauth==0.13.0
 asyncio
@@ -8,4 +9,5 @@ ccxt==2.8.17
 py3cw==0.0.39
 requests==2.31.0
 streamlit-lightweight-charts==0.7.20
-extra_streamlit_components==0.1.56
+# extra_streamlit_components==0.1.56
+streamlit-ws-localstorage==1.0.6
