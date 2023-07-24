@@ -2,27 +2,14 @@ import asyncio
 import json
 
 import streamlit as st
+
 from httpx_oauth.clients.google import GoogleOAuth2
-from lib.streamlit_cookies_manager import EncryptedCookieManager
+from httpx_oauth.oauth2 import OAuth2Token
 
-GOOGLE_CLIENT_ID = '557728805244-p5lmcikopkrhqrbg3vhmimbk2grub3nb.apps.googleusercontent.com'
-GOOGLE_CLIENT_SECRET = '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'
-GOOGLE_REDIRECT_URL = 'http://localhost:8501/Account'
-COOKIES_PREFIX = 'project-miami'
-COOKIES_PASSWORD = 'lk398kljsnmad0u2lknamwdasd'
-OAUTH_TOKEN_KEY = 'miami-auth'
-TC_API_KEY_KEY = '3commas-api-key'
-TC_API_SECRET_KEY = '3commas-secret'
-TC_ACCOUNT_KEY = '3commas-account'
-BYBIT_API_KEY_KEY = 'bybit-api-key'
-BYBIT_API_SECRET_KEY = 'bybit-secret'
+from cookies import get_cookies, GOOGLE_REDIRECT_URL, BYBIT_API_SECRET_KEY, BYBIT_API_KEY_KEY, TC_ACCOUNT_KEY, \
+    TC_API_SECRET_KEY, TC_API_KEY_KEY, OAUTH_TOKEN_KEY, OAUTH_REFRESH_TOKEN_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 
-cookies = EncryptedCookieManager(
-    prefix=COOKIES_PREFIX,
-    password=COOKIES_PASSWORD
-)
-if not cookies.ready():
-    st.stop()
+st.set_page_config(layout="wide")
 
 
 async def write_authorization_url(oauthclient,
@@ -40,15 +27,14 @@ async def write_access_token(oauthclient,
     return await oauthclient.get_access_token(authcode, redirect_uri)
 
 
-
+cookies = get_cookies()
 client = GoogleOAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
-authToken = json.loads(cookies[OAUTH_TOKEN_KEY]) if cookies is not None and \
-                                                    OAUTH_TOKEN_KEY in cookies and \
-                                                    cookies[OAUTH_TOKEN_KEY] != '' else None
-authToken = 'a'
+auth_token = OAuth2Token(json.loads(cookies[OAUTH_TOKEN_KEY])) if cookies is not None and \
+                                                                  OAUTH_TOKEN_KEY in cookies and \
+                                                                  cookies[OAUTH_TOKEN_KEY] else None
 queryParams = st.experimental_get_query_params()
 
-if not authToken:
+if not auth_token:
     authorization_url = asyncio.run(
         write_authorization_url(oauthclient=client,
                                 redirect_uri=GOOGLE_REDIRECT_URL)
@@ -66,6 +52,7 @@ if not authToken:
                                authcode=code))
 
         cookies[OAUTH_TOKEN_KEY] = json.dumps(token)
+        cookies[OAUTH_REFRESH_TOKEN_KEY] = token['refresh_token']
         cookies.save()
         st.experimental_set_query_params()
 else:
@@ -80,7 +67,8 @@ else:
     bybitApiSecret = st.text_input('ByBit API Secret',
                                    value=(cookies[BYBIT_API_SECRET_KEY] if BYBIT_API_SECRET_KEY in cookies else ''))
 
-    if st.button('Save'):
+
+    def save():
         cookies[TC_API_KEY_KEY] = threeCommasAPIKey
         cookies[TC_API_SECRET_KEY] = threeCommasAPISecret
         cookies[TC_ACCOUNT_KEY] = threeCommasAccount
@@ -89,7 +77,15 @@ else:
         cookies.save()
         st.write('Saved successfully')
 
-    if st.button("Log out"):
+
+    st.button('Save', on_click=save)
+
+
+    def log_out():
         if OAUTH_TOKEN_KEY in cookies:
             cookies[OAUTH_TOKEN_KEY] = ''
+            cookies[OAUTH_REFRESH_TOKEN_KEY] = ''
             cookies.save()
+
+
+    st.button("Log out", on_click=log_out)
