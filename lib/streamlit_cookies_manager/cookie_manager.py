@@ -20,7 +20,7 @@ class CookieManager(MutableMapping[str, str]):
         else:
             self._cookies = parse_cookies(raw_cookie)
             self._clean_queue()
-        self._default_expiry = datetime.now() + timedelta(days=365)
+        self._default_expiry = datetime.now() + timedelta(days=30)
         self._path = path if path is not None else "/"
 
     def ready(self) -> bool:
