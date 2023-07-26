@@ -1,3 +1,5 @@
+import urllib
+
 import streamlit as st
 
 from cookies import COOKIES_PREFIX
@@ -6,8 +8,10 @@ from the_pages.Account import account
 from the_pages.Market import market
 
 st.set_page_config(page_title='Project Miami', page_icon='💵', layout='wide')
-
+session = st.runtime.get_instance()._session_mgr.list_active_sessions()[0]
+st_base_url = urllib.parse.urlunparse([session.client.request.protocol, session.client.request.host, "", "", "", ""])
 cookies = CookieManager(
+    path=st_base_url
     # prefix=COOKIES_PREFIX,
 )
 if not cookies.ready():
