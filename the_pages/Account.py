@@ -37,7 +37,7 @@ def account(cookies):
                                     redirect_uri=GOOGLE_REDIRECT_URL)
         )
         st.write(f'''<h3>
-                <a target="_blank"
+                <a target="_self"
                 href="{authorization_url}">Click here to login</a></h3>''',
                  unsafe_allow_html=True)
 
