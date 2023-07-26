@@ -7,9 +7,9 @@ st_base_url = urllib.parse.urlunparse([session.client.request.protocol, session.
 
 COOKIES_PREFIX = 'project-miami'
 COOKIES_PASSWORD = 'lk398kljsnmad0u2lknamwdasd'
-GOOGLE_CLIENT_ID = '557728805244-vt0tdbqhn9qs4nccbrs940pmtl9lebt1.apps.googleusercontent.com'
-GOOGLE_CLIENT_SECRET = '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'
-GOOGLE_REDIRECT_URL = 'http://localhost:8501?page=account' if st_base_url == 'http://localhost:8501' else 'https://axadiw-miami.streamlit.app/?page=account'
+GOOGLE_CLIENT_ID = '557728805244-jkote0i7u4250asur3ius9909i2g2r20.apps.googleusercontent.com'
+GOOGLE_CLIENT_SECRET = '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'
+GOOGLE_REDIRECT_URL = 'http://localhost:8501?page=account' if st_base_url == 'http://localhost:8501' else 'https://miami.axadiw.pl/?page=account'
 OAUTH_TOKEN_KEY = 'oauth-token'
 OAUTH_REFRESH_TOKEN_KEY = 'oauth-refresh-token'
 TC_API_KEY_KEY = '3commas-api-key'

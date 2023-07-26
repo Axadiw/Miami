@@ -13,7 +13,7 @@ def market(cookies):
     bybit_balance = get_balance(apiKey=bybit_api_key, apiSecret=bybit_api_secret)
 
     balance_container = st.empty()
-    config_col, tradingview_col = st.columns([1,2])
+    config_col, tradingview_col = st.columns([1, 2])
     symbol_value_col, symbol_price_col = config_col.columns(2)
     m1_col, m5_col, m15_col, h1_col, h4_col, d1_col = tradingview_col.columns(6)
 
@@ -71,7 +71,8 @@ def market(cookies):
     tp3 = tp3_value_col.text_input("TP3", value=3)
     sl = sl_value_col.text_input("SL", value=10)
 
-    max_loss_type = max_loss_type_col.radio(label="Max loss type", options=['%', '$'], horizontal=True , label_visibility='hidden')
+    max_loss_type = max_loss_type_col.radio(label="Max loss type", options=['%', '$'], horizontal=True,
+                                            label_visibility='hidden')
     tp1_type = tp1_type_col.radio(label="tp1type", options=['%', '$'], horizontal=True, label_visibility='hidden')
     tp2_type = tp2_type_col.radio(label="tp2type", options=['%', '$'], horizontal=True, label_visibility='hidden')
     tp3_type = tp3_type_col.radio(label="tp3type", options=['%', '$'], horizontal=True, label_visibility='hidden')
