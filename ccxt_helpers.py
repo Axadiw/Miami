@@ -10,7 +10,7 @@ def get_balance(apiKey, apiSecret):
     }).fetch_balance()['USDT']['total']
 
 
-def get_ohlcv_data(symbol, interval, reverse_order=True):
+def get_ohlcv_data(symbol, interval, reverse_order=False):
     data = ccxt.bybit().fetch_ohlcv(
         f'{symbol.upper()}/USDT:USDT', interval)
     data.sort(key=lambda x: x[0], reverse=reverse_order)

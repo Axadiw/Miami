@@ -32,6 +32,14 @@ st.sidebar.button("Market", on_click=market_page)
 
 query_params = st.experimental_get_query_params()
 
+# hide_streamlit_style = """
+#             <style>
+#             [data-testid="stToolbar"] {visibility: hidden !important;}
+#             footer {visibility: hidden !important;}
+#             </style>
+#             """
+# st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 if 'page' not in query_params:
     page_names_to_funcs['account'](cookies)
 else:
