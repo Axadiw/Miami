@@ -29,7 +29,7 @@ def get_configuration_for_authorized_user(cookies):
 
     if not auth_token or not refresh_token:
         st.write('Not logged in')
-        st.markdown("<a href='Account' target='_self'>Log in here</a>", unsafe_allow_html=True)
+        st.markdown("<a href='?page=account' target='_self'>Log in here</a>", unsafe_allow_html=True)
         st.stop()
 
     client = GoogleOAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
