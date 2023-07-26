@@ -16,7 +16,7 @@ def account(cookies):
         return await oauthclient.get_authorization_url(
             redirect_uri,
             scope=["email", 'profile'],
-            extras_params={"access_type": "offline"},
+            extras_params={"access_type": "offline", 'prompt': 'consent'}
         )
 
     async def write_access_token(oauthclient,
