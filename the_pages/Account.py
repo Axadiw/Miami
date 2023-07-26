@@ -52,6 +52,7 @@ def account(cookies):
             cookies[OAUTH_REFRESH_TOKEN_KEY] = token['refresh_token']
             cookies.save()
             st.experimental_set_query_params()
+            st.experimental_rerun()
     else:
         three_commas_api_key = st.text_input('3commas API Key',
                                           value=(cookies[TC_API_KEY_KEY] if TC_API_KEY_KEY in cookies else ''))
