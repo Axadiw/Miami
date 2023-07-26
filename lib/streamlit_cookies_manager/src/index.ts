@@ -38,10 +38,17 @@ Streamlit.setFrameHeight(0)
 function saveCookies(queue: { [k in string]: CookieSpec }) {
     Object.keys(queue).forEach((name) => {
         const spec = queue[name]
-        if (spec.value === null)
+        if (spec.value === null){
+            console.log('saving cookie', `${encodeURIComponent(name)}=; max-age=0; path=${encodeURIComponent(spec.path)}`)
             targetDocument.cookie = `${encodeURIComponent(name)}=; max-age=0; path=${encodeURIComponent(spec.path)}`
+            }
         else {
             const date = new Date(spec.expires_at)
+            console.log('saving cookie', (
+                `${encodeURIComponent(name)}=${encodeURIComponent(spec.value)};` +
+                ` expires=${date.toUTCString()};` +
+                ` path=${encodeURIComponent(spec.path)};`
+            ))
             targetDocument.cookie = (
                 `${encodeURIComponent(name)}=${encodeURIComponent(spec.value)};` +
                 ` expires=${date.toUTCString()};` +
