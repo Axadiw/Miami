@@ -19,6 +19,10 @@ def market(cookies):
 
     balance_container.write('Balance {:.2f} $'.format(bybit_balance))
     symbol = symbol_value_col.text_input("Symbol")
+
+    if not symbol:
+        st.stop()
+
     direction = config_col.radio("direction", ['buy 🟩', 'sell 🟥'], horizontal=True)
 
     max_loss_value_col, max_loss_type_col, max_loss_rendered_col = config_col.columns(3)
@@ -67,10 +71,10 @@ def market(cookies):
     tp3 = tp3_value_col.text_input("TP3", value=3)
     sl = sl_value_col.text_input("SL", value=10)
 
-    max_loss_type = max_loss_type_col.radio(label="Max loss type", options=['%', '$'], horizontal=True)
+    max_loss_type = max_loss_type_col.radio(label="Max loss type", options=['%', '$'], horizontal=True , label_visibility='hidden')
     tp1_type = tp1_type_col.radio(label="tp1type", options=['%', '$'], horizontal=True, label_visibility='hidden')
-    tp2_type = tp2_type_col.radio(label="tp2type", options=['%', '$'], horizontal=True)
-    tp3_type = tp3_type_col.radio(label="tp3type", options=['%', '$'], horizontal=True)
+    tp2_type = tp2_type_col.radio(label="tp2type", options=['%', '$'], horizontal=True, label_visibility='hidden')
+    tp3_type = tp3_type_col.radio(label="tp3type", options=['%', '$'], horizontal=True, label_visibility='hidden')
     sl_type = sl_type_col.radio(label="sltype", options=['%', '$'], horizontal=True)
     comment = config_col.text_input("Comment")
     price_lines = []
@@ -118,7 +122,7 @@ def market(cookies):
                                                       100.0 * calculated_tp2 / symbol_current_price - 100))
             price_lines.append(get_price_line_data(calculated_tp2, "TP2", "#26a69a"))
         if tp3:
-            calculated_tp3 = float(tp3) if tp1_type == '$' else symbol_current_price * (
+            calculated_tp3 = float(tp3) if tp3_type == '$' else symbol_current_price * (
                 ((float(tp3)) / 100 + 1) if direction == 'buy 🟩' else (1 - (float(tp3)) / 100))
             tp3_rendered_col.write('')
             tp3_rendered_col.write('')
@@ -171,13 +175,14 @@ def market(cookies):
                 "priceFormat": {
                     "type": 'volume',
                 },
-                "priceScaleId": ""  # set as an overlay setting,
+                "priceScaleId": "",  # set as an overlay setting,
+                'lastValueVisible': False
             },
             "priceScale": {
                 "scaleMargins": {
                     "top": 0.7,
                     "bottom": 0,
-                }
+                },
             }
         }, ]
 
