@@ -105,5 +105,5 @@ class WebsocketClient:
         return json.loads(result)['val'] if result else ''
 
     def setLocalStorageVal(self, key, val):
-        result = self.sendCommand(json.dumps({'cmd': 'localStorage_set_key', 'key': key, 'val': val}))
+        result = self.sendCommand(json.dumps({'cmd': 'localStorage_set_key', 'key': key, 'val': val}), waitForResponse=False)
         return result
