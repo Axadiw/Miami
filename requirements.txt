@@ -5,5 +5,4 @@ asyncio
 ccxt==2.8.17
 py3cw==0.0.39
 requests==2.31.0
-streamlit_ws_localstorage==1.0.6
-websockets==11.0.3
+websockets==10.3
