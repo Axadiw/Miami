@@ -2,7 +2,6 @@ streamlit==1.25.0
 watchdog
 httpx-oauth==0.13.0
 asyncio
-nanodb
 ccxt==2.8.17
 py3cw==0.0.39
 requests==2.31.0
