@@ -6,3 +6,4 @@ ccxt==2.8.17
 py3cw==0.0.39
 requests==2.31.0
 websockets==10.3
+streamlit_js_eval==0.1.5

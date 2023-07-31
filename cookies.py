@@ -1,6 +1,5 @@
 import streamlit as st
 
-import streamlit as st
 import urllib.parse
 session = st.runtime.get_instance()._session_mgr.list_active_sessions()[0]
 st_base_url = urllib.parse.urlunparse([session.client.request.protocol, session.client.request.host, "", "", "", ""])

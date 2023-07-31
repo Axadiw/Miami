@@ -1,20 +1,20 @@
-import uuid
-
 import streamlit as st
 
-from lib.streamlit_ws_localstorage import injectWebsocketCode
+from streamlit_localstorage import LocalStorageManager, LOCALSTORAGE_SESSION_KEY
 from the_pages.Account import account
 from the_pages.Market import market
 
 st.set_page_config(page_title='Project Miami', page_icon='💵', layout='wide')
 
-HOST_PORT = 'miamiws.axadiw.pl'
-localstorage = injectWebsocketCode(hostPort=HOST_PORT, uid=str(uuid.uuid1()))
-
 page_names_to_funcs = {
     "account": account,
     "market": market,
 }
+
+localstorage_manager = LocalStorageManager(
+)
+if not localstorage_manager.ready():
+    st.stop()
 
 
 def account_page():
@@ -38,12 +38,14 @@ query_params = st.experimental_get_query_params()
 #             """
 # st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
+st.write(st.session_state[LOCALSTORAGE_SESSION_KEY])
+
 if 'page' not in query_params:
-    page_names_to_funcs['account'](localstorage)
+    page_names_to_funcs['account'](localstorage_manager)
 else:
     page = query_params['page'][0] if len(query_params['page']) == 1 else ''
 
     if page not in page_names_to_funcs:
         st.write('Page not found')
 
-    page_names_to_funcs[page](localstorage)
+    page_names_to_funcs[page](localstorage_manager)

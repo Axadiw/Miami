@@ -1,15 +1,15 @@
 import asyncio
-import json
 
 import streamlit as st
 from httpx_oauth.clients.google import GoogleOAuth2
 from httpx_oauth.oauth2 import OAuth2Token
+from streamlit_js_eval import streamlit_js_eval
 
 from cookies import GOOGLE_REDIRECT_URL, BYBIT_API_SECRET_KEY, BYBIT_API_KEY_KEY, TC_ACCOUNT_KEY, \
     TC_API_SECRET_KEY, TC_API_KEY_KEY, OAUTH_TOKEN_KEY, OAUTH_REFRESH_TOKEN_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 
 
-def account(localstorage):
+def account(localstorage_manager):
     async def write_authorization_url(oauthclient,
                                       redirect_uri):
         return await oauthclient.get_authorization_url(
@@ -25,8 +25,8 @@ def account(localstorage):
 
     # ret =
     client = GoogleOAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
-    raw_auth_token = localstorage.getLocalStorageVal(key=OAUTH_TOKEN_KEY)
-    auth_token = OAuth2Token(json.loads(raw_auth_token)) if raw_auth_token != '' else None
+    raw_auth_token = localstorage_manager.get_localstorage(OAUTH_TOKEN_KEY)
+    auth_token = OAuth2Token(raw_auth_token) if raw_auth_token else None
 
     query_params = st.experimental_get_query_params()
 
@@ -46,35 +46,39 @@ def account(localstorage):
                 write_access_token(oauthclient=client,
                                    redirect_uri=GOOGLE_REDIRECT_URL,
                                    authcode=code))
-
-            localstorage.setLocalStorageVal(key=OAUTH_TOKEN_KEY, val=json.dumps(token))
-            localstorage.setLocalStorageVal(key=OAUTH_REFRESH_TOKEN_KEY, val=token['refresh_token'])
-            st.experimental_set_query_params()
-            st.experimental_rerun()
+            print('dupa')
+            localstorage_manager.set_localstorage(OAUTH_TOKEN_KEY, token)
+            localstorage_manager.set_localstorage(OAUTH_REFRESH_TOKEN_KEY, token['refresh_token'])
+            if localstorage_manager.save():
+                streamlit_js_eval(js_expressions="window.location.reload()")
     else:
         three_commas_api_key = st.text_input('3commas API Key',
-                                             value=(localstorage.getLocalStorageVal(key=TC_API_KEY_KEY)))
+                                             value=(localstorage_manager.get_localstorage(TC_API_KEY_KEY) or ''))
         three_commas_api_secret = st.text_input('3commas API Secret',
-                                                value=(localstorage.getLocalStorageVal(key=TC_API_SECRET_KEY)))
+                                                value=(localstorage_manager.get_localstorage(TC_API_SECRET_KEY) or ''))
         three_commas_account = st.text_input('3commas Account Id',
-                                             value=(localstorage.getLocalStorageVal(key=TC_ACCOUNT_KEY)))
-        bybit_api_key = st.text_input('ByBit API Key', value=(localstorage.getLocalStorageVal(key=BYBIT_API_KEY_KEY)))
+                                             value=(localstorage_manager.get_localstorage(TC_ACCOUNT_KEY) or ''))
+        bybit_api_key = st.text_input('ByBit API Key',
+                                      value=(localstorage_manager.get_localstorage(BYBIT_API_KEY_KEY) or ''))
         bybit_api_secret = st.text_input('ByBit API Secret',
-                                         value=(localstorage.getLocalStorageVal(key=BYBIT_API_SECRET_KEY)))
+                                         value=(localstorage_manager.get_localstorage(BYBIT_API_SECRET_KEY) or ''))
 
         def save():
-            localstorage.setLocalStorageVal(key=TC_API_KEY_KEY, val=three_commas_api_key)
-            localstorage.setLocalStorageVal(key=TC_API_SECRET_KEY, val=three_commas_api_secret)
-            localstorage.setLocalStorageVal(key=TC_ACCOUNT_KEY, val=three_commas_account)
-            localstorage.setLocalStorageVal(key=BYBIT_API_KEY_KEY, val=bybit_api_key)
-            localstorage.setLocalStorageVal(key=BYBIT_API_SECRET_KEY, val=bybit_api_secret)
-            st.write('Saved successfully')
+            localstorage_manager.set_localstorage(TC_API_KEY_KEY, three_commas_api_key)
+            localstorage_manager.set_localstorage(TC_API_SECRET_KEY, three_commas_api_secret)
+            localstorage_manager.set_localstorage(TC_ACCOUNT_KEY, three_commas_account)
+            localstorage_manager.set_localstorage(BYBIT_API_KEY_KEY, bybit_api_key)
+            localstorage_manager.set_localstorage(BYBIT_API_SECRET_KEY, bybit_api_secret)
+            if localstorage_manager.save():
+                st.write('Saved successfully')
 
         st.button('Save', on_click=save)
 
         def log_out():
-            if localstorage.getLocalStorageVal(key=OAUTH_TOKEN_KEY) != '':
-                localstorage.setLocalStorageVal(key=OAUTH_TOKEN_KEY, val='')
-                localstorage.setLocalStorageVal(key=OAUTH_REFRESH_TOKEN_KEY, val='')
+            if localstorage_manager.get_localstorage(OAUTH_TOKEN_KEY):
+                localstorage_manager.delete_localstorage(OAUTH_TOKEN_KEY)
+                localstorage_manager.delete_localstorage(OAUTH_REFRESH_TOKEN_KEY)
+                if localstorage_manager.save():
+                    streamlit_js_eval(js_expressions="window.location.reload()")
 
         st.button("Log out", on_click=log_out)

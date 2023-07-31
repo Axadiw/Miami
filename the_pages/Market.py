@@ -5,10 +5,10 @@ from ccxt_helpers import get_balance, get_current_price, get_ohlcv_data
 from lib.streamlit_lightweight_charts import renderLightweightCharts
 
 
-def market(cookies):
+def market(localstorage_manager):
     st.title('Market')
     three_commas_api_key, three_commas_api_secret, three_commas_account, bybit_api_key, bybit_api_secret = \
-        get_configuration_for_authorized_user(cookies)
+        get_configuration_for_authorized_user(localstorage_manager)
 
     bybit_balance = get_balance(apiKey=bybit_api_key, apiSecret=bybit_api_secret)
 
