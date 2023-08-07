@@ -20,6 +20,7 @@ class LocalStorageManager:
     def __init__(self):
         self._items_to_save = []
         self._items_to_delete = []
+        self._items = {}
         response = evaluate_js(js_expressions=f'get_all_localstorage()',
                                key=f'get_all_localstorage')
 
@@ -27,26 +28,37 @@ class LocalStorageManager:
         if response is not None:
             for item in response:
                 items[item[0]] = json.loads(item[1])
-            st.session_state[LOCALSTORAGE_SESSION_KEY] = items
+            # st.session_state[LOCALSTORAGE_SESSION_KEY] = items
+            self._items = items
 
-    @staticmethod
-    def ready() -> bool:
-        return LOCALSTORAGE_SESSION_KEY in st.session_state
+    def ready(self) -> bool:
+        # return LOCALSTORAGE_SESSION_KEY in st.session_state
+        return self._items is not None
 
     def set_localstorage(self, name, value):
-        st.session_state[LOCALSTORAGE_SESSION_KEY][name] = value
+        if not self.ready():
+            raise LocalStorageNotReady()
+
+        # st.session_state[LOCALSTORAGE_SESSION_KEY][name] = value
+        self._items[name] = value
         self._items_to_save.append((name, value))
 
     def get_localstorage(self, name):
         if not self.ready():
             raise LocalStorageNotReady()
 
-        return st.session_state[LOCALSTORAGE_SESSION_KEY][name] if name in st.session_state[
-            LOCALSTORAGE_SESSION_KEY] else None
+        return self._items[name] if name in self._items else None
+        # return st.session_state[LOCALSTORAGE_SESSION_KEY][name] if name in st.session_state[
+        #     LOCALSTORAGE_SESSION_KEY] else None
 
     def delete_localstorage(self, name):
-        if name in st.session_state[LOCALSTORAGE_SESSION_KEY]:
-            del st.session_state[LOCALSTORAGE_SESSION_KEY][name]
+        if not self.ready():
+            raise LocalStorageNotReady()
+
+        # if name in st.session_state[LOCALSTORAGE_SESSION_KEY]:
+        if name in self._items:
+            # del st.session_state[LOCALSTORAGE_SESSION_KEY][name]
+            del self._items[name]
             self._items_to_delete.append(name)
 
     def save(self):

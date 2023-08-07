@@ -1,6 +1,6 @@
 import streamlit as st
 
-from streamlit_localstorage import LocalStorageManager, LOCALSTORAGE_SESSION_KEY
+from streamlit_localstorage import LocalStorageManager
 from the_pages.Account import account
 from the_pages.Market import market
 
@@ -16,6 +16,7 @@ localstorage_manager = LocalStorageManager(
 if not localstorage_manager.ready():
     st.stop()
 
+print('Rerenderuje sie')
 
 def account_page():
     st.experimental_set_query_params(page='account')
@@ -37,8 +38,8 @@ query_params = st.experimental_get_query_params()
 #             </style>
 #             """
 # st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
-st.write(st.session_state[LOCALSTORAGE_SESSION_KEY])
+# st.session_state.clear()
+st.write(st.session_state)
 
 if 'page' not in query_params:
     page_names_to_funcs['account'](localstorage_manager)
