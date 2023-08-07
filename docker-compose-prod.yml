@@ -1,0 +1,31 @@
+version: '3.1'
+
+services:
+
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_DB_FILE=/run/secrets/MIAMI_POSTGRES_DB
+      - POSTGRES_USER_FILE=/run/secrets/MIAMI_POSTGRES_USER
+      - POSTGRES_PASSWORD_FILE=/run/secrets/MIAMI_POSTGRES_PASSWORD
+    secrets:
+      - MIAMI_POSTGRES_DB
+      - MIAMI_POSTGRES_USER
+      - MIAMI_POSTGRES_PASSWORD
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+
+  frontend:
+    image: node
+    secrets:
+      - MIAMI_POSTGRES_DB
+      - MIAMI_POSTGRES_USER
+      - MIAMI_POSTGRES_PASSWORD
+
+secrets:
+  MIAMI_POSTGRES_PASSWORD:
+      external: true
+  MIAMI_POSTGRES_DB:
+    external: true
+  MIAMI_POSTGRES_USER:
+    external: true
