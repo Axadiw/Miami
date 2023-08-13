@@ -1,13 +1,8 @@
 import os
-from flask import Flask, jsonify, make_response, request
-from werkzeug.security import generate_password_hash,check_password_hash
-from flask_sqlalchemy import SQLAlchemy
-from functools import wraps
-import uuid
-import jwt
-import datetime
-from get_docker_secret import get_docker_secret
 
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from get_docker_secret import get_docker_secret
 
 db_username = get_docker_secret('MIAMI_POSTGRES_USER') or os.getenv('MIAMI_POSTGRES_USER')
 db_password = get_docker_secret('MIAMI_POSTGRES_PASSWORD') or os.getenv('MIAMI_POSTGRES_PASSWORD')
