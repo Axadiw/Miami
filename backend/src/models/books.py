@@ -1,4 +1,4 @@
-from src.backend.app import db
+from backend.src.app import db
 
 
 class Books(db.Model):

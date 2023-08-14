@@ -2,11 +2,8 @@ import os
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from get_docker_secret import get_docker_secret
 
-db_username = get_docker_secret('MIAMI_POSTGRES_USER') or os.getenv('MIAMI_POSTGRES_USER')
-db_password = get_docker_secret('MIAMI_POSTGRES_PASSWORD') or os.getenv('MIAMI_POSTGRES_PASSWORD')
-db_name = get_docker_secret('MIAMI_POSTGRES_DB') or os.getenv('MIAMI_POSTGRES_DB')
+from backend.src.consts_secrets import db_username, db_password, db_name
 
 if not db_username or not db_password or not db_name:
     print('No database creds detected')

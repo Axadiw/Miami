@@ -1,15 +1,14 @@
 import datetime
 import random
-import uuid
 from functools import wraps
 
 import jwt
 from flask import jsonify, make_response, request
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from src.backend.app import app, db
-from src.backend.models.books import Books
-from src.backend.models.users import Users
+from backend.src.app import app, db
+from backend.src.models.books import Books
+from backend.src.models.users import Users
 
 
 def token_required(f):
