@@ -1,10 +1,14 @@
-from backend.src.app import db
+from sqlalchemy import Integer, Column, ForeignKey, String
+
+from backend.src.models import Base
 
 
-class Books(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    name = db.Column(db.String(50), unique=True, nullable=False)
-    Author = db.Column(db.String(50), unique=True, nullable=False)
-    Publisher = db.Column(db.String(50), nullable=False)
-    book_prize = db.Column(db.Integer)
+class Books(Base):
+    __tablename__ = 'Books'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('Users.id'), nullable=False)
+    name = Column(String(50), unique=True, nullable=False)
+    Author = Column(String(50), unique=True, nullable=False)
+    Publisher = Column(String(50), nullable=False)
+    book_prize = Column(Integer)

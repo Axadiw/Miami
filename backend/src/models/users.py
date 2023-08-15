@@ -1,9 +1,13 @@
-from backend.src.app import db
+from sqlalchemy import Column, String, Integer, Boolean
+
+from backend.src.models import Base
 
 
-class Users(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    public_id = db.Column(db.Integer)
-    name = db.Column(db.String(50))
-    password = db.Column(db.String(90))
-    admin = db.Column(db.Boolean)
+class Users(Base):
+    __tablename__ = 'Users'
+
+    id = Column(Integer, primary_key=True)
+    public_id = Column(Integer)
+    name = Column(String(50), nullable=False, unique=True)
+    password = Column(String(90), nullable=False)
+    admin = Column(Boolean)
