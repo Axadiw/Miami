@@ -12,7 +12,6 @@ if not db_username or not db_password or not db_name:
 
 
 def register_extensions(app):
-    db.init_app(app)
     app.register_blueprint(account_routes)
     app.register_blueprint(session_routes)
 
@@ -31,6 +30,7 @@ def create_app():
 
 
 application = create_app()
+db.init_app(application)
 
 if __name__ == '__main__':
     application.run(debug=True)

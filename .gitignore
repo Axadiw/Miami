@@ -1,2 +1,3 @@
 setup-dev.sh
 consts_secrets.py
+test.db

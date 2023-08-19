@@ -36,9 +36,12 @@ def token_required(f):
 @session_routes.route('/register', methods=['POST'])
 def signup_user():
     data = request.get_json()
+    if db.session.query(Users).filter_by(username=data['username']).count() > 0:
+        return make_response(jsonify({'error': 'user already exists'}), 400)
+
     hashed_password = generate_password_hash(data['password'])
 
-    new_user = Users(public_id=uuid.uuid4(), username=data['username'], password=hashed_password, admin=False,
+    new_user = Users(public_id=str(uuid.uuid4()), username=data['username'], password=hashed_password, admin=False,
                      email=data['email'])
     db.session.add(new_user)
     db.session.commit()
