@@ -14,7 +14,7 @@ flask-sqlalchemy = "^3.0.5"
 get-docker-secret = "^2.0.0"
 psycopg2-binary = "^2.9.7"
 alembic = "^1.11.2"
-flask-testing = "^0.8.1"
+pytest-flask = "^1.2.0"
 
 [build-system]
 requires = ["poetry-core"]

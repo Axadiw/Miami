@@ -1,29 +1,33 @@
-from flask_testing import TestCase
+PARAMS_INVALID_RESPONSE = dict(error='parameters invalid')
+SUCCESS_RESPONSE = dict(message='registered successfully')
+USER_EXISTS_RESPONSE = dict(error='user already exists')
 
-from backend.src.database import db
-from backend.tests.tests_main import create_test_app
+
+def test_simple_registration(client):
+    response = client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1'})
+    assert response.json == SUCCESS_RESPONSE
 
 
-class SessionTests(TestCase):
-    SQLALCHEMY_DATABASE_URI = "sqlite://"
-    TESTING = True
+def test_register_without_email(client):
+    response = client.post("/register", json={"username": "user1", 'password': 'pass1'})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
 
-    def create_app(self):
-        # pass in test configuration
-        return create_test_app(self)
 
-    def test_simple_registration(self):
-        response = self.client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1'})
-        self.assertEquals(response.json, dict(message='registered successfully'))
+def test_register_without_password(client):
+    response = client.post("/register", json={"username": "user1", 'email': 'email1'})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
 
-    def test_dont_allow_duplicate_registrations(self):
-        self.client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1'})
-        response = self.client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1'})
-        self.assertEquals(response.status_code, 400)
-        self.assertEquals(response.json, dict(error='user already exists'))
-    def setUp(self):
-        db.create_all()
 
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
+def test_register_without_username(client):
+    response = client.post("/register", json={'email': 'email1', 'password': 'pass1'})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+
+def test_dont_allow_duplicate_registrations(client):
+    client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1'})
+    response = client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1'})
+    assert response.status_code == 400
+    assert response.json == USER_EXISTS_RESPONSE

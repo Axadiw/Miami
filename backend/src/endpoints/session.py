@@ -36,6 +36,10 @@ def token_required(f):
 @session_routes.route('/register', methods=['POST'])
 def signup_user():
     data = request.get_json()
+
+    if 'username' not in data or 'password' not in data or 'email' not in data:
+        return make_response(jsonify({'error': 'parameters invalid'}), 400)
+
     if db.session.query(Users).filter_by(username=data['username']).count() > 0:
         return make_response(jsonify({'error': 'user already exists'}), 400)
 
