@@ -11,7 +11,7 @@ from database import db
 @pytest.fixture
 def app():
     app = prepare_app()
-    src_path = os.path.join(os.path.dirname(__file__), '..', 'src')
+    src_path = os.path.join(os.path.dirname(__file__), '..')
     app.config['TESTING'] = True
     app.config['LIVESERVER_PORT'] = 0
     db_file = os.path.join(os.path.dirname(__file__), "../test.db")
@@ -23,8 +23,8 @@ def app():
     db.init_app(app)
     db.drop_all()
     with app.app_context():
-        alembic_cfg = Config(os.path.join(src_path, "../alembic.ini"))
-        alembic_cfg.set_main_option('script_location', os.path.join(src_path, "../migrations"))
+        alembic_cfg = Config(os.path.join(src_path, "alembic.ini"))
+        alembic_cfg.set_main_option('script_location', os.path.join(src_path, "migrations"))
         alembic_cfg.set_main_option('sqlalchemy.url', in_memory_db_url)
         upgrade(alembic_cfg, revision='head')
     return app
