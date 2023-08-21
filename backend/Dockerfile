@@ -18,7 +18,4 @@ RUN poetry check
 RUN poetry install --no-interaction --no-cache --without dev
 COPY . /app
 EXPOSE 5000
-#CMD [ "poetry", "run", "python", "-m", "flask", "run", "--host=0.0.0.0" ]
 CMD [ "poetry", "run", "waitress-serve", "--host", "0.0.0.0", "--port", "5000", "--call", "app:create_app"]
-#CMD [ "flask", "--app", "app", "run"]
-#CMD [ "sleep", "3600"]

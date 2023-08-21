@@ -34,4 +34,4 @@ jobs:
         if: steps.cache-deps.outputs.cache-hit != 'true'
       - run: poetry install --no-interaction
       - run: cp consts_tpl.py consts_secrets.py
-      - run: poetry run pytest
+      - run: poetry run python -m pytest
