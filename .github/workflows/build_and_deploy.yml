@@ -56,3 +56,25 @@ jobs:
         run: |
           docker build . --tag ghcr.io/axadiw/miami:latest
           docker push ghcr.io/axadiw/miami:latest
+
+  deploy:
+    if: github.event_name == 'push' && contains(github.event.ref, '/tags/')
+    defaults:
+      run:
+        working-directory: ./backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v3
+
+      - name: Deploy
+        uses: kitconcept/docker-stack-deploy@v1.0.1
+        with:
+          registry: "ghcr.io"
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+          remote_host: ${{ secrets.REMOTE_HOST }}
+          remote_user: ${{ secrets.REMOTE_USER }}
+          remote_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
+          stack_file: "docker-compose-prod.yml"
+          stack_name: "miami"
