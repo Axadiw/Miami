@@ -8,10 +8,12 @@ services:
       - POSTGRES_DB_FILE=/run/secrets/MIAMI_POSTGRES_DB
       - POSTGRES_USER_FILE=/run/secrets/MIAMI_POSTGRES_USER
       - POSTGRES_PASSWORD_FILE=/run/secrets/MIAMI_POSTGRES_PASSWORD
+      - MIAMI_FLASK_SECRET=/run/secrets/MIAMI_FLASK_SECRET
     secrets:
       - MIAMI_POSTGRES_DB
       - MIAMI_POSTGRES_USER
       - MIAMI_POSTGRES_PASSWORD
+      - MIAMI_FLASK_SECRET
     volumes:
       - ./postgres:/var/lib/postgresql/data
     ports:
@@ -24,12 +26,16 @@ services:
     ports:
       - 8080:8080
 
-  frontend:
-    image: mongo
+  backend:
+    image: alpine
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     secrets:
       - MIAMI_POSTGRES_DB
       - MIAMI_POSTGRES_USER
       - MIAMI_POSTGRES_PASSWORD
+      - MIAMI_FLASK_SECRET
 
 secrets:
   MIAMI_POSTGRES_PASSWORD:
@@ -37,4 +43,6 @@ secrets:
   MIAMI_POSTGRES_DB:
     external: true
   MIAMI_POSTGRES_USER:
+    external: true
+  MIAMI_FLASK_SECRET:
     external: true

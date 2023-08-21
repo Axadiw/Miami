@@ -6,13 +6,12 @@ from sqlalchemy import pool
 
 from alembic import context
 
-import backend.src.models.models
-from backend.src.consts_secrets import db_username, db_password, db_name
-from backend.src.models import Base
+from consts_secrets import db_username, db_password, db_name
+from models import Base
 
-# from backend.src.models.books import Base
+# from src.models.books import Base
 
-# from backend.src.models import *
+# from src.models import *
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

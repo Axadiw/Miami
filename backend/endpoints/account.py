@@ -1,9 +1,9 @@
 from flask import jsonify, request, Blueprint
 
-from backend.src.database import db
-from backend.src.endpoints.session import token_required
-from backend.src.models.user_configs import UserConfigs
-from backend.src.models.users import Users
+from database import db
+from endpoints.session import token_required
+from models.user_configs import UserConfigs
+from models.users import Users
 
 ALLOWED_USER_CONFIG_KEYS = ['3commas_account', '3commas_api_key', '3commas_secret', 'bybit_api_key', 'bybit_api_secret']
 

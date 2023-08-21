@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 
-from backend.src.models import Base
+from models import Base
 
 
 class UserConfigs(Base):

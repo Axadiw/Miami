@@ -6,9 +6,9 @@ import jwt
 from flask import jsonify, make_response, request, Blueprint
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from backend.src.consts_tpl import flask_api_secret
-from backend.src.database import db
-from backend.src.models.users import Users
+from consts_tpl import flask_api_secret
+from database import db
+from models.users import Users
 
 session_routes = Blueprint('session_routes', __name__)
 
