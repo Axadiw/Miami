@@ -17,5 +17,6 @@ COPY poetry.lock pyproject.toml ./
 RUN poetry check
 RUN poetry install --no-interaction --no-cache --without dev
 COPY . /app
+COPY /app/consts_tpl.py /app/consts_secrets.py
 EXPOSE 5000
 CMD [ "poetry", "run", "waitress-serve", "--host", "0.0.0.0", "--port", "5000", "--call", "app:create_app"]
