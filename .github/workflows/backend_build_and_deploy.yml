@@ -63,6 +63,7 @@ jobs:
       - name: Deploy to remote server
         uses: astappiev/docker-compose-remote-action@master
         with:
+          ssh_jump_host:
           ssh_host: ${{ secrets.REMOTE_HOST }}
           ssh_user: ${{ secrets.REMOTE_USERNAME }}
           ssh_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
