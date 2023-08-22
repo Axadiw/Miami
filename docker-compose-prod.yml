@@ -16,7 +16,7 @@ services:
       - /home/miami/postgres:/var/lib/postgresql/data
 
   backend:
-    image: ghcr.io/axadiw/miami:latest
+    image: ghcr.io/axadiw/miami-backend:latest
     secrets:
       - MIAMI_POSTGRES_DB
       - MIAMI_POSTGRES_USER
