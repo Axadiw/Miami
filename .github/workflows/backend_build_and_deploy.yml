@@ -67,6 +67,7 @@ jobs:
           ssh_user: ${{ secrets.REMOTE_USERNAME }}
           ssh_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
           ssh_host_public_key: ${{ secrets.REMOTE_PUBLIC_KEY }}
+          ssh_jump_public_key: 
           docker_compose_filename: docker-compose-prod.yml
           docker_use_stack: true
           docker_args: --with-registry-auth ${{ secrets.REMOTE_STACK_NAME }}
