@@ -63,7 +63,7 @@ jobs:
       - name: Deploy to remote server
         uses: sagebind/docker-swarm-deploy-action@v2
         with:
-          remote_host: ssh://${{ secrets.REMOTE_USERNAME }}@${{ secrets.REMOTE_HOST }}
+          remote_host: ${{ secrets.REMOTE_USERNAME }}@${{ secrets.REMOTE_HOST }}
           ssh_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
           ssh_public_key: ${{ secrets.REMOTE_PUBLIC_KEY }}
           args: stack deploy --with-registry-auth --compose-file docker-compose-prod.yml ${{ secrets.REMOTE_STACK_NAME }}
