@@ -1,4 +1,4 @@
-name: Build & Deploy
+name: [Backend] Build & Deploy
 on:
   push:
     branches: [master]
@@ -52,14 +52,18 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build the Docker image
+      - name: Build the Docker image (latest)
         run: |
           docker build . --tag ghcr.io/axadiw/miami-backend:latest
           docker push ghcr.io/axadiw/miami-backend:latest
-      - name: Deploy
+      - name: Build the Docker image (tag version)
+        run: |
+          docker build . --tag ghcr.io/axadiw/miami-backend:${{  github.ref_name }}"
+          docker push ghcr.io/axadiw/miami-backend:${{  github.ref_name }}"
+      - name: Deploy to remote server
         uses: sagebind/docker-swarm-deploy-action@v2
         with:
           remote_host: ${{ secrets.REMOTE_HOST }}
           ssh_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
           ssh_public_key: ${{ secrets.REMOTE_PUBLIC_KEY }}
-          args: stack deploy --compose-file docker-compose-prod.yml miami
+          args: stack deploy --with-registry-auth --compose-file docker-compose-prod.yml miami
