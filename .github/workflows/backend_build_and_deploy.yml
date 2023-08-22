@@ -71,6 +71,7 @@ jobs:
           remote_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
           stack_file: "docker-compose-prod.yml"
           stack_name: ${{ secrets.REMOTE_STACK_NAME }}
+          debug: 1
 #      - name: Deploy to remote server
 #        uses: sagebind/docker-swarm-deploy-action@v2
 #        with:
