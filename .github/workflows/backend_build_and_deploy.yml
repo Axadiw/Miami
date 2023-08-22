@@ -67,7 +67,8 @@ jobs:
           ssh_user: ${{ secrets.REMOTE_USERNAME }}
           ssh_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
           ssh_host_public_key: ${{ secrets.REMOTE_PUBLIC_KEY }}
-          ssh_jump_public_key: '-'
+          ssh_jump_host: ${{ secrets.REMOTE_HOST }}
+          ssh_jump_public_key: ${{ secrets.REMOTE_PUBLIC_KEY }}
           docker_compose_filename: docker-compose-prod.yml
           docker_compose_prefix: ${{ secrets.REMOTE_STACK_NAME }}
           docker_use_stack: true
