@@ -61,9 +61,20 @@ jobs:
           docker build . --tag ghcr.io/axadiw/miami-backend:${{  github.ref_name }}
           docker push ghcr.io/axadiw/miami-backend:${{  github.ref_name }}
       - name: Deploy to remote server
-        uses: sagebind/docker-swarm-deploy-action@v2
+        uses: kitconcept/docker-stack-deploy@v1.0.1
         with:
-          remote_host: ${{ secrets.REMOTE_USERNAME }}@${{ secrets.REMOTE_HOST }}
-          ssh_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
-          ssh_public_key: ${{ secrets.REMOTE_PUBLIC_KEY }}
-          args: stack deploy --with-registry-auth --compose-file docker-compose-prod.yml ${{ secrets.REMOTE_STACK_NAME }}
+          registry: "ghcr.io"
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+          remote_host: ${{ secrets.REMOTE_HOST }}
+          remote_user: ${{ secrets.REMOTE_USERNAME }}
+          remote_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
+          stack_file: "docker-compose-prod.yml"
+          stack_name: ${{ secrets.REMOTE_STACK_NAME }}
+#      - name: Deploy to remote server
+#        uses: sagebind/docker-swarm-deploy-action@v2
+#        with:
+#          remote_host: ${{ secrets.REMOTE_USERNAME }}@${{ secrets.REMOTE_HOST }}
+#          ssh_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
+#          ssh_public_key: ${{ secrets.REMOTE_PUBLIC_KEY }}
+#          args: stack deploy --with-registry-auth --compose-file docker-compose-prod.yml ${{ secrets.REMOTE_STACK_NAME }}
