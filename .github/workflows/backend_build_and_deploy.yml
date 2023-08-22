@@ -58,8 +58,8 @@ jobs:
           docker push ghcr.io/axadiw/miami-backend:latest
       - name: Build the Docker image (tag version)
         run: |
-          docker build . --tag ghcr.io/axadiw/miami-backend:${{  github.ref_name }}"
-          docker push ghcr.io/axadiw/miami-backend:${{  github.ref_name }}"
+          docker build . --tag ghcr.io/axadiw/miami-backend:${{  github.ref_name }}
+          docker push ghcr.io/axadiw/miami-backend:${{  github.ref_name }}
       - name: Deploy to remote server
         uses: sagebind/docker-swarm-deploy-action@v2
         with:
