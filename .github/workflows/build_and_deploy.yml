@@ -38,7 +38,7 @@ jobs:
       - run: cp consts_tpl.py consts_secrets.py
       - run: poetry run python -m pytest
 
-  publish:
+  publish_and_deploy:
     if: github.event_name == 'push' && contains(github.event.ref, '/tags/')
     defaults:
       run:
@@ -54,28 +54,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build the Docker image
         run: |
-          docker build . --tag ghcr.io/axadiw/miami:latest
-          docker push ghcr.io/axadiw/miami:latest
-
-  deploy:
-    if: github.event_name == 'push' && contains(github.event.ref, '/tags/')
-    defaults:
-      run:
-        working-directory: ./backend
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout codebase
-        uses: actions/checkout@v3
-
+          docker build . --tag ghcr.io/axadiw/miami-backend:latest
+          docker push ghcr.io/axadiw/miami-backend:latest
       - name: Deploy
-        uses: kitconcept/docker-stack-deploy@v1.0.1
+        uses: sagebind/docker-swarm-deploy-action@v2
         with:
-          registry: "ghcr.io"
-          username: ${{ secrets.GHCR_USERNAME }}
-          password: ${{ secrets.GHCR_TOKEN }}
           remote_host: ${{ secrets.REMOTE_HOST }}
-          remote_user: ${{ secrets.REMOTE_USER }}
-          remote_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
-          stack_file: "docker-compose-prod.yml"
-          stack_name: "miami"
-          debug: 1
+          ssh_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
+          ssh_public_key: ${{ secrets.REMOTE_PUBLIC_KEY }}
+          args: stack deploy --compose-file docker-compose-prod.yml miami

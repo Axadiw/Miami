@@ -3,22 +3,20 @@ version: '3.1'
 services:
 
   db:
-    image: postgres
+    image: postgres:15
     environment:
       - POSTGRES_DB_FILE=/run/secrets/MIAMI_POSTGRES_DB
       - POSTGRES_USER_FILE=/run/secrets/MIAMI_POSTGRES_USER
       - POSTGRES_PASSWORD_FILE=/run/secrets/MIAMI_POSTGRES_PASSWORD
-      - MIAMI_FLASK_SECRET=/run/secrets/MIAMI_FLASK_SECRET
     secrets:
       - MIAMI_POSTGRES_DB
       - MIAMI_POSTGRES_USER
       - MIAMI_POSTGRES_PASSWORD
-      - MIAMI_FLASK_SECRET
     volumes:
-      - ./postgres:/var/lib/postgresql/data
+      - /home/miami/postgres:/var/lib/postgresql/data
 
-  frontend:
-    image: node
+  backend:
+    image: ghcr.io/axadiw/miami:latest
     secrets:
       - MIAMI_POSTGRES_DB
       - MIAMI_POSTGRES_USER
