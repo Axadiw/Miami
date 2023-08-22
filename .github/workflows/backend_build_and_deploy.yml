@@ -60,16 +60,16 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: ./backend
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/aarch64
           push: true
-          tags: axadiw/miami-backend:latest
+          tags: ghcr.io/axadiw/miami-backend:latest
       - name: Build the Docker image (tag version)
         uses: docker/build-push-action@v4
         with:
           context: ./backend
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/aarch64
           push: true
-          tags: axadiw/miami-backend:${{  github.ref_name }}
+          tags: ghcr.io/axadiw/miami-backend:${{  github.ref_name }}
       - name: Deploy to remote server
         uses: kitconcept/docker-stack-deploy@v1.0.1
         with:
