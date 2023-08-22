@@ -61,17 +61,23 @@ jobs:
           docker build . --tag ghcr.io/axadiw/miami-backend:${{  github.ref_name }}
           docker push ghcr.io/axadiw/miami-backend:${{  github.ref_name }}
       - name: Deploy to remote server
-        uses: astappiev/docker-compose-remote-action@master
+        uses: sagebind/docker-swarm-deploy-action@v2
         with:
-          ssh_host: ${{ secrets.REMOTE_HOST }}
-          ssh_user: ${{ secrets.REMOTE_USERNAME }}
+          remote_host: ssh://${{ secrets.REMOTE_USERNAME }}@${{ secrets.REMOTE_HOST }}
           ssh_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
-          ssh_host_public_key: ${{ secrets.REMOTE_PUBLIC_KEY }}
-          ssh_jump_host: ${{ secrets.REMOTE_HOST }}
-          ssh_jump_public_key: ${{ secrets.REMOTE_PUBLIC_KEY }}
-          docker_compose_filename: docker-compose-prod.yml
-          docker_compose_prefix: ${{ secrets.REMOTE_STACK_NAME }}
-          docker_use_stack: true
-          docker_args: --with-registry-auth
-          workspace_keep: true
-          workspace: ${{ secrets.REMOTE_WORKSPACE }}
+          ssh_public_key: ${{ secrets.REMOTE_PUBLIC_KEY }}
+          args: stack deploy --compose-file --with-registry-auth docker-compose-prod.yml ${{ secrets.REMOTE_STACK_NAME }}
+#      - name: Deploy to remote server
+#        uses: astappiev/docker-compose-remote-action@master
+#        with:
+#          ssh_host: ${{ secrets.REMOTE_HOST }}
+#          ssh_user: ${{ secrets.REMOTE_USERNAME }}
+#          ssh_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
+#          ssh_host_public_key: ${{ secrets.REMOTE_PUBLIC_KEY }}
+#          ssh_jump_host: ${{ secrets.REMOTE_HOST }}
+#          ssh_jump_public_key: ${{ secrets.REMOTE_PUBLIC_KEY }}
+#          docker_compose_filename: docker-compose-prod.yml
+#          docker_compose_prefix: ${{ secrets.REMOTE_STACK_NAME }}
+#          docker_use_stack: true
+#          docker_args: --with-registry-auth
+#          workspace: ${{ secrets.REMOTE_WORKSPACE }}
