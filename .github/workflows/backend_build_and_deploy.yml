@@ -59,14 +59,14 @@ jobs:
       - name: Build the Docker image (latest)
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: ./backend
           platforms: linux/amd64,linux/arm64
           push: true
           tags: axadiw/miami-backend:latest
       - name: Build the Docker image (tag version)
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: ./backend
           platforms: linux/amd64,linux/arm64
           push: true
           tags: axadiw/miami-backend:${{  github.ref_name }}
