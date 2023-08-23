@@ -50,8 +50,6 @@ services:
       - MIAMI_FLASK_SECRET
     ports:
       - "5000:5000"
-    networks:
-      - frontend
     environment:
       - VIRTUAL_HOST=api.miamitrade.pro
       - LETSENCRYPT_HOST=api.miamitrade.pro
