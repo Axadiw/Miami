@@ -49,7 +49,9 @@ services:
       - MIAMI_POSTGRES_PASSWORD
       - MIAMI_FLASK_SECRET
     ports:
-      - 5000:5000
+      - target: 5000
+        published: 5000
+        mode: host
     environment:
       - VIRTUAL_HOST=api.miamitrade.pro
       - LETSENCRYPT_HOST=api.miamitrade.pro
