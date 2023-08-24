@@ -1,0 +1,140 @@
+name: Build
+on:
+  push:
+    branches: [master]
+    tags:
+      - '*'
+jobs:
+  backend_test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: 3.11
+      - name: cache poetry install
+        uses: actions/cache@v3
+        with:
+          path: ~/.local
+          key: poetry-1.5.1
+      - uses: snok/install-poetry@v1
+        with:
+          version: 1.5.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      - name: cache deps
+        id: cache-deps
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: pydeps-${{ hashFiles('**/poetry.lock') }}
+      - run: poetry install --no-interaction --no-root
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+      - run: poetry install --no-interaction
+      - run: cp consts_tpl.py consts_secrets.py
+      - run: poetry run python -m pytest
+
+  frontend_test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - uses: actions/checkout@v3
+
+  backend_build_and_publish:
+    if: github.event_name == 'push' && contains(github.event.ref, '/tags/')
+    defaults:
+      run:
+        working-directory: ./backend
+    runs-on: ubuntu-latest
+    needs: [backend_test]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build the Docker image (latest)
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          platforms: linux/aarch64
+          push: true
+          tags: ghcr.io/axadiw/miami-backend:latest
+      - name: Build the Docker image (tag version)
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          platforms: linux/aarch64
+          push: true
+          tags: ghcr.io/axadiw/miami-backend:${{  github.ref_name }}
+
+  frontend_build_and_publish:
+    if: github.event_name == 'push' && contains(github.event.ref, '/tags/')
+    defaults:
+      run:
+        working-directory: ./frontend
+    runs-on: ubuntu-latest
+    needs: [frontend_test]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build the Docker image (latest)
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          platforms: linux/aarch64
+          push: true
+          tags: ghcr.io/axadiw/miami-frontend:latest
+      - name: Build the Docker image (tag version)
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          platforms: linux/aarch64
+          push: true
+          tags: ghcr.io/axadiw/miami-frontend:${{  github.ref_name }}
+
+  deploy:
+    defaults:
+      run:
+        working-directory: ./frontend
+    runs-on: ubuntu-latest
+    needs: [frontend_build_and_publish, backend_build_and_publish]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Deploy to remote server
+        uses: kitconcept/docker-stack-deploy@v1.0.1
+        with:
+          registry: "ghcr.io"
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+          remote_host: ${{ secrets.REMOTE_HOST }}
+          remote_user: ${{ secrets.REMOTE_USERNAME }}
+          remote_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
+          stack_file: "docker-compose-prod.yml"
+          stack_name: ${{ secrets.REMOTE_STACK_NAME }}
