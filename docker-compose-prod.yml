@@ -21,18 +21,124 @@ services:
       - MIAMI_POSTGRES_USER
       - MIAMI_POSTGRES_PASSWORD
       - MIAMI_FLASK_SECRET
-    environment:
-      - VIRTUAL_HOST=api.miamitrade.pro
-      - LETSENCRYPT_HOST=api.miamitrade.pro
-      - VIRTUAL_PORT=5000
-      - LETSENCRYPT_EMAIL=admin@miamitrade.pro
-    networks:
-      - webproxy
-networks:
-  webproxy:
-    external:
-      name: webproxy
+    ports:
+      - "5000:5000"
+    dns:
+      - 8.8.8.8
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - "node.labels.accepting==all"
+      labels:
+        swarm-proxy: "true"
+        swarm-proxy-upstream: "host.docker.internal"
+        swarm-proxy-port: "5000"
+        swarm-proxy-host: "api.miamitrade.pro"
+        swarm-proxy-email: "admin@miamitrade.pro"
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 128M
 
+  proxy:
+    image: modjular/swarm-proxy
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
+    dns:
+      - 8.8.8.8
+    healthcheck:
+      test: ["CMD-SHELL", "curl --head --silent --fail http://localhost/.well-known/acme-challenge/active.html || exit 1"]
+      start_period: 15s
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - "node.labels.accepting==load-balancer"
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 70M
+    volumes:
+      - type: volume
+        source: html
+        target: /usr/share/nginx/html
+      - type: volume
+        source: certs
+        target: /etc/nginx/certs
+      - type: volume
+        source: vhostd
+        target: /etc/nginx/vhost.d
+      - type: volume
+        source: confd
+        target: /etc/nginx/conf.d
+      - type: volume
+        source: servd
+        target: /etc/nginx/serv.d
+      - type: volume
+        source: locd
+        target: /etc/nginx/loc.d
+      - type: volume
+        source: dhparam
+        target: /etc/nginx/dhparam
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  letsencrypt:
+    image: modjular/swarm-proxy-letsencrypt
+    dns:
+      - 8.8.8.8
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - "node.labels.accepting==all"
+          - "node.role==manager"
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 70M
+    volumes:
+      - type: volume
+        source: html
+        target: /usr/share/nginx/html
+      - type: volume
+        source: certs
+        target: /etc/nginx/certs
+      - type: volume
+        source: vhostd
+        target: /etc/nginx/vhost.d
+      - type: volume
+        source: confd
+        target: /etc/nginx/conf.d
+      - type: volume
+        source: servd
+        target: /etc/nginx/serv.d
+      - type: volume
+        source: locd
+        target: /etc/nginx/loc.d
+      - type: volume
+        source: dhparam
+        target: /etc/nginx/dhparam
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+volumes:
+  html:
+  vhostd:
+  confd:
+  servd:
+  locd:
+  certs:
+  dhparam:
+    
 secrets:
   MIAMI_POSTGRES_PASSWORD:
     external: true
