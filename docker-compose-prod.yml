@@ -15,7 +15,7 @@ services:
       - /home/miami/postgres:/var/lib/postgresql/data
 
   frontend:
-    image: yeasy/simple-web:latest
+    image: ghcr.io/axadiw/miami-frontend:latest
     deploy:
       labels:
         - "traefik.enable=true"
