@@ -14,21 +14,21 @@ services:
     volumes:
       - /home/miami/postgres:/var/lib/postgresql/data
 
-  frontend:
-    image: ghcr.io/axadiw/miami-frontend:latest
-    deploy:
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.miami-frontend.rule=Host(`miamitrade.pro`, `www.miamitrade.pro`)"
-        - "traefik.http.routers.miami-frontend.entrypoints=http"
-        - "traefik.http.routers.miami-frontend.middlewares=https-redirect"
-        - "traefik.http.routers.miami-frontend-https.rule=Host(`miamitrade.pro`, `www.miamitrade.pro`)"
-        - "traefik.http.routers.miami-frontend-https.entrypoints=https"
-        - "traefik.http.routers.miami-frontend-https.tls=true"
-        - "traefik.http.routers.miami-frontend-https.tls.certresolver=le"
-        - "traefik.docker.network=traefik-public"
-        - "traefik.constraint-label=traefik-public"
-        - "traefik.http.services.miami-frontend-https.loadbalancer.server.port=80"
+#  frontend:
+#    image: ghcr.io/axadiw/miami-frontend:latest
+#    deploy:
+#      labels:
+#        - "traefik.enable=true"
+#        - "traefik.http.routers.miami-frontend.rule=Host(`miamitrade.pro`, `www.miamitrade.pro`)"
+#        - "traefik.http.routers.miami-frontend.entrypoints=http"
+#        - "traefik.http.routers.miami-frontend.middlewares=https-redirect"
+#        - "traefik.http.routers.miami-frontend-https.rule=Host(`miamitrade.pro`, `www.miamitrade.pro`)"
+#        - "traefik.http.routers.miami-frontend-https.entrypoints=https"
+#        - "traefik.http.routers.miami-frontend-https.tls=true"
+#        - "traefik.http.routers.miami-frontend-https.tls.certresolver=le"
+#        - "traefik.docker.network=traefik-public"
+#        - "traefik.constraint-label=traefik-public"
+#        - "traefik.http.services.miami-frontend-https.loadbalancer.server.port=80"
 
 
   backend:
