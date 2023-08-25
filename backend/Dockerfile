@@ -10,6 +10,8 @@ RUN python3 -m venv $POETRY_VENV \
 	&& $POETRY_VENV/bin/pip install poetry==${POETRY_VERSION}
 
 FROM python-base as runtime
+ARG VERSION
+ENV MIAMI_VERSION=$VERSION
 COPY --from=poetry-base ${POETRY_VENV} ${POETRY_VENV}
 ENV PATH="${PATH}:${POETRY_VENV}/bin"
 WORKDIR /app
