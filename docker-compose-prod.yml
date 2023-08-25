@@ -24,7 +24,6 @@ services:
         - "traefik.http.routers.miami-frontend.middlewares=https-redirect"
         - "traefik.http.routers.miami-frontend-https.rule=Host(`miamitrade.pro`, `www.miamitrade.pro`)"
         - "traefik.http.routers.miami-frontend-https.entrypoints=https"
-        - "traefik.http.routers.miami-frontend-https.middlewares=non-www-to-www"
         - "traefik.http.routers.miami-frontend-https.tls=true"
         - "traefik.http.routers.miami-frontend-https.tls.certresolver=le"
         - "traefik.docker.network=traefik-public"
