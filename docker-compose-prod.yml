@@ -26,17 +26,17 @@ services:
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.miami-backend.rule=Host(`adminer.miamitrade.pro`)"
-        - "traefik.http.routers.miami-backend.entrypoints=http"
-        - "traefik.http.routers.miami-backend.middlewares=https-redirect"
-        - "traefik.http.routers.miami-backend-https.rule=Host(`adminer.miamitrade.pro`)"
-        - "traefik.http.routers.miami-backend-https.entrypoints=https"
+        - "traefik.http.routers.miami-adminer.rule=Host(`adminer.miamitrade.pro`)"
+        - "traefik.http.routers.miami-adminer.entrypoints=http"
+        - "traefik.http.routers.miami-adminer.middlewares=https-redirect"
+        - "traefik.http.routers.miami-adminer-https.rule=Host(`adminer.miamitrade.pro`)"
+        - "traefik.http.routers.miami-adminer-https.entrypoints=https"
 
-        - "traefik.http.routers.miami-backend-https.tls=true"
-        - "traefik.http.routers.miami-backend-https.tls.certresolver=le"
+        - "traefik.http.routers.miami-adminer-https.tls=true"
+        - "traefik.http.routers.miami-adminer-https.tls.certresolver=le"
         - "traefik.docker.network=traefik-public"
         - "traefik.constraint-label=traefik-public"
-        - "traefik.http.services.miami-backend-https.loadbalancer.server.port=8080"
+        - "traefik.http.services.miami-adminer-https.loadbalancer.server.port=8080"
 
   frontend:
     image: ghcr.io/axadiw/miami-frontend:latest
