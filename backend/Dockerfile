@@ -19,5 +19,4 @@ RUN poetry install --no-interaction --no-cache --without dev
 COPY . /app
 COPY ./consts_tpl.py /app/consts_secrets.py
 EXPOSE 5000
-RUN poetry run alembic upgrade heads
-CMD [ "poetry", "run", "waitress-serve", "--host", "0.0.0.0", "--port", "5000", "--call", "app:create_app"]
+CMD [ "/bin/sh", "entrypoint.sh"]
