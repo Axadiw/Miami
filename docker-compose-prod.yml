@@ -16,6 +16,8 @@ services:
 
   frontend:
     image: ghcr.io/axadiw/miami-frontend:latest
+    networks:
+      - traefik-public
     deploy:
       labels:
         - "traefik.enable=true"
