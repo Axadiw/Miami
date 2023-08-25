@@ -16,28 +16,6 @@ services:
     volumes:
       - /home/miami/postgres:/var/lib/postgresql/data
 
-  adminer:
-    image: adminer
-    depends_on:
-      - db
-    networks:
-      - traefik-public
-      - miami-internal
-    deploy:
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.miami-adminer.rule=Host(`adminer.miamitrade.pro`)"
-        - "traefik.http.routers.miami-adminer.entrypoints=http"
-        - "traefik.http.routers.miami-adminer.middlewares=https-redirect"
-        - "traefik.http.routers.miami-adminer-https.rule=Host(`adminer.miamitrade.pro`)"
-        - "traefik.http.routers.miami-adminer-https.entrypoints=https"
-
-        - "traefik.http.routers.miami-adminer-https.tls=true"
-        - "traefik.http.routers.miami-adminer-https.tls.certresolver=le"
-        - "traefik.docker.network=traefik-public"
-        - "traefik.constraint-label=traefik-public"
-        - "traefik.http.services.miami-adminer-https.loadbalancer.server.port=8080"
-
   frontend:
     image: ghcr.io/axadiw/miami-frontend:latest
     networks:
