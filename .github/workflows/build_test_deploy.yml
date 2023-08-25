@@ -69,6 +69,8 @@ jobs:
         with:
           context: ./backend
           platforms: linux/aarch64
+          build-args: |
+            VERSION=${{ github.ref_name }}
           push: true
           tags: ghcr.io/axadiw/miami-backend:latest
       - name: Build the Docker image (tag version)
@@ -76,6 +78,8 @@ jobs:
         with:
           context: ./backend
           platforms: linux/aarch64
+          build-args: |
+            VERSION=${{ github.ref_name }}
           push: true
           tags: ghcr.io/axadiw/miami-backend:${{  github.ref_name }}
 
@@ -103,8 +107,6 @@ jobs:
         with:
           context: ./frontend
           platforms: linux/aarch64
-          build-args: |
-            VERSION=${{  github.ref_name }}
           push: true
           tags: ghcr.io/axadiw/miami-frontend:latest
       - name: Build the Docker image (tag version)
@@ -112,8 +114,6 @@ jobs:
         with:
           context: ./frontend
           platforms: linux/aarch64
-          build-args: |
-            VERSION=${{  github.ref_name }}
           push: true
           tags: ghcr.io/axadiw/miami-frontend:${{  github.ref_name }}
 
