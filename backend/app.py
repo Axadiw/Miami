@@ -1,5 +1,5 @@
 from flask import Flask
-
+from flask_cors import CORS
 from consts_secrets import db_username, db_password, db_name
 from consts_tpl import flask_api_secret
 from database import db
@@ -20,6 +20,7 @@ def register_extensions(app):
 
 def prepare_app():
     app = Flask(__name__)
+    CORS(app)
     app.config['SECRET_KEY'] = flask_api_secret
     app.config[
         'SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_username}:{db_password}@db/{db_name}'
