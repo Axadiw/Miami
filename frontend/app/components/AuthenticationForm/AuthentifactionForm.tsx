@@ -12,7 +12,7 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useEffect } from 'react';
-import { registerUser } from '@/api/User';
+import { loginUser, registerUser } from '@/app/api/User';
 
 export function AuthenticationForm(props: PaperProps) {
   const [type, toggle] = useToggle(['login', 'register']);
@@ -40,31 +40,34 @@ export function AuthenticationForm(props: PaperProps) {
 
       <form
         onSubmit={form.onSubmit(async () => {
-          await registerUser(form.values.login, form.values.password, form.values.email);
+          if (type === 'register') {
+            await registerUser(form.values.login, form.values.password, form.values.email);
+          } else {
+            await loginUser(form.values.login, form.values.password);
+          }
         })}
       >
         <Stack>
-          {type === 'register' && (
-            <TextInput
-              required
-              label="Login"
-              placeholder="Login"
-              value={form.values.login}
-              onChange={(event) => form.setFieldValue('login', event.currentTarget.value)}
-              radius="md"
-            />
-          )}
-
           <TextInput
             required
-            label="Email"
-            placeholder="user@miamitrade.pro"
-            value={form.values.email}
-            onChange={(event) => form.setFieldValue('email', event.currentTarget.value)}
-            error={form.errors.email && 'Invalid email'}
+            label="Login"
+            placeholder="Login"
+            value={form.values.login}
+            onChange={(event) => form.setFieldValue('login', event.currentTarget.value)}
             radius="md"
           />
 
+          {type === 'register' && (
+            <TextInput
+              required
+              label="Email"
+              placeholder="user@miamitrade.pro"
+              value={form.values.email}
+              onChange={(event) => form.setFieldValue('email', event.currentTarget.value)}
+              error={form.errors.email && 'Invalid email'}
+              radius="md"
+            />
+          )}
           <PasswordInput
             required
             label="Password"
