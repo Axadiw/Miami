@@ -1,11 +1,22 @@
 'use client';
 import { ActionIcon, useMantineColorScheme } from '@mantine/core';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { IconMoonStars, IconSun } from '@tabler/icons-react';
 
 export function ColorSchemeToggle() {
+  const [mounted, setMounted] = useState(false);
+
+  // useEffect only runs on the client, so now we can safely show the UI
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <ActionIcon

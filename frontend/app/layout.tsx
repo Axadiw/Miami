@@ -19,6 +19,7 @@ import { useDisclosure } from '@mantine/hooks';
 import logoImage from '../public/logo.png';
 import { usePathname, useRouter } from 'next/navigation';
 import Loading from '@/app/loading';
+import { ColorSchemeToggle } from '@/app/components/ColorSchemeToggle/ColorSchemeToggle';
 
 const data = [
   { link: '/', label: 'Dashboard', icon: IconDashboard },
@@ -70,11 +71,12 @@ export default function RootLayout({ children }: { children: any }) {
     <html lang="en">
       <head>
         <ColorSchemeScript />
-        <link rel="shortcut icon" href="/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.png" />
         <meta
           name="viewport"
           content="minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no"
         />
+        <title>Miami Trade</title>
       </head>
       <body>
         <Suspense fallback={<Loading />}>
@@ -114,7 +116,8 @@ export default function RootLayout({ children }: { children: any }) {
                       <IconLogout className={classes.linkIcon} stroke={1.5} />
                       <span>Logout</span>
                     </a>
-                    <Group>
+                    <Group p={'10px'}>
+                      <ColorSchemeToggle />
                       <Code fw={700}>version: {appVersion}</Code>
                     </Group>
                   </div>
