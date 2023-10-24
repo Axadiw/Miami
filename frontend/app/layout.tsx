@@ -102,11 +102,10 @@ export default function RootLayout({ children }: { children: any }) {
                     <IconLogout className={classes.linkIcon} stroke={1.5} />
                     <span>Logout</span>
                   </a>
+                  <Group>
+                    <Code fw={700}>version: {appVersion}</Code>
+                  </Group>
                 </div>
-                <Group>
-                  {/*<ColorSchemeToggle />*/}
-                  <Code fw={700}>version: {appVersion}</Code>
-                </Group>
               </nav>
             </AppShell.Navbar>
 
