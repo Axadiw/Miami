@@ -1,7 +1,7 @@
 'use client';
 import '@mantine/core/styles.css';
 import Image from 'next/image';
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import {
   AppShell,
   Center,
@@ -17,7 +17,8 @@ import classes from '@/app/components/NavBar/NavbarSimple.module.css';
 import { IconBolt, IconDashboard, IconLogout, IconScale, IconTarget } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import logoImage from '../public/logo.png';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import Loading from '@/app/loading';
 
 const data = [
   { link: '/', label: 'Dashboard', icon: IconDashboard },
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: any }) {
   const [opened, { toggle }] = useDisclosure();
 
   const pathName = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     const possibleTabs = data.filter((item) => item.link === pathName);
@@ -54,7 +56,9 @@ export default function RootLayout({ children }: { children: any }) {
       href={item.link}
       key={item.label}
       onClick={(event) => {
+        event.preventDefault();
         setActive(item.label);
+        router.push(item.link);
       }}
     >
       <item.icon className={classes.linkIcon} stroke={1.5} />
@@ -73,45 +77,53 @@ export default function RootLayout({ children }: { children: any }) {
         />
       </head>
       <body>
-        <MantineProvider theme={theme}>
-          <AppShell
-            header={{ height: 48 }}
-            navbar={{ width: 300, breakpoint: 'sm', collapsed: { mobile: !opened } }}
-            padding="md"
-          >
-            <AppShell.Header>
-              <Flex p={'8px'}>
-                <Center>
-                  <Image
-                    src={logoImage}
-                    alt="logo"
-                    width={32}
-                    onClick={() => {
-                      toggle();
-                    }}
-                  />
-                </Center>
-              </Flex>
-            </AppShell.Header>
-            <AppShell.Navbar>
-              <nav className={classes.navbar}>
-                <div className={classes.navbarMain}>{links}</div>
+        <Suspense fallback={<Loading />}>
+          <MantineProvider theme={theme}>
+            <AppShell
+              header={{ height: 48 }}
+              navbar={{ width: 300, breakpoint: 'sm', collapsed: { mobile: !opened } }}
+              padding="md"
+            >
+              <AppShell.Header>
+                <Flex p={'8px'}>
+                  <Center>
+                    <Image
+                      src={logoImage}
+                      alt="logo"
+                      width={32}
+                      onClick={() => {
+                        toggle();
+                      }}
+                    />
+                  </Center>
+                </Flex>
+              </AppShell.Header>
+              <AppShell.Navbar>
+                <nav className={classes.navbar}>
+                  <div className={classes.navbarMain}>{links}</div>
 
-                <div className={classes.footer}>
-                  <a href={classes.link} className={classes.link}>
-                    <IconLogout className={classes.linkIcon} stroke={1.5} />
-                    <span>Logout</span>
-                  </a>
-                  <Group>
-                    <Code fw={700}>version: {appVersion}</Code>
-                  </Group>
-                </div>
-              </nav>
-            </AppShell.Navbar>
-
-            <AppShell.Main>{children}</AppShell.Main>
-          </AppShell>
-        </MantineProvider>
+                  <div className={classes.footer}>
+                    <a
+                      href="/logout"
+                      className={classes.link}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        router.push('/logout');
+                      }}
+                    >
+                      <IconLogout className={classes.linkIcon} stroke={1.5} />
+                      <span>Logout</span>
+                    </a>
+                    <Group>
+                      <Code fw={700}>version: {appVersion}</Code>
+                    </Group>
+                  </div>
+                </nav>
+              </AppShell.Navbar>
+              <AppShell.Main>{children}</AppShell.Main>
+            </AppShell>
+          </MantineProvider>
+        </Suspense>
       </body>
     </html>
   );
