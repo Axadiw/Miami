@@ -2,5 +2,5 @@
 import { Text } from '@mantine/core';
 
 export default function NavbarSimple() {
-  return <Text>DASHBOARD</Text>;
+  return <Text>SCALED</Text>;
 }
