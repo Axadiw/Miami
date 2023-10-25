@@ -1,6 +1,14 @@
 import axios from 'axios';
 import { BASE_URL } from '@/app/consts';
 
+interface LoginResponse {
+  token: string;
+}
+
+interface RegisterResponse {
+  message: string;
+}
+
 export async function registerUser(login: string, password: string, email: string) {
   return axios
     .request({
@@ -16,10 +24,10 @@ export async function registerUser(login: string, password: string, email: strin
       }),
     })
     .then((response) => {
-      console.log(JSON.stringify(response.data));
+      return response.data as RegisterResponse;
     })
     .catch((error) => {
-      console.log(error);
+      throw new Error(error.response.data.error);
     });
 }
 
@@ -37,9 +45,9 @@ export async function loginUser(login: string, password: string) {
       },
     })
     .then((response) => {
-      console.log(JSON.stringify(response.data));
+      return response.data as LoginResponse;
     })
     .catch((error) => {
-      console.log(error);
+      throw new Error(error.response.data.error);
     });
 }

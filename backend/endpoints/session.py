@@ -12,6 +12,13 @@ from models.users import Users
 
 session_routes = Blueprint('session_routes', __name__)
 
+PARAMS_INVALID_RESPONSE = dict(error='Parameters invalid')
+USER_EXISTS_RESPONSE = dict(error='User already exists')
+INCORRECT_CREDENTIALS_RESPONSE = dict(error='Incorrect credentials')
+TOKEN_MISSING_RESPONSE = dict(error='A valid token is missing')
+TOKEN_INVALID_RESPONSE = dict(error='Invalid token')
+SUCCESS_RESPONSE = dict(message='Registered successfully')
+
 
 def token_required(f):
     @wraps(f)
@@ -21,12 +28,12 @@ def token_required(f):
             token = request.headers['x-access-tokens']
 
         if not token:
-            return jsonify({'message': 'a valid token is missing'})
+            return jsonify(TOKEN_MISSING_RESPONSE)
         try:
             data = jwt.decode(token, flask_api_secret, algorithms=["HS256"])
             current_user = db.session.query(Users).filter_by(public_id=data['public_id']).first()
         except:
-            return jsonify({'message': 'token is invalid'})
+            return jsonify(TOKEN_INVALID_RESPONSE)
 
         return f(current_user, *args, **kwargs)
 
@@ -38,10 +45,10 @@ def signup_user():
     data = request.get_json()
 
     if 'username' not in data or 'password' not in data or 'email' not in data:
-        return make_response(jsonify({'error': 'parameters invalid'}), 400)
+        return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
 
     if db.session.query(Users).filter_by(username=data['username']).count() > 0:
-        return make_response(jsonify({'error': 'user already exists'}), 400)
+        return make_response(jsonify(USER_EXISTS_RESPONSE), 400)
 
     hashed_password = generate_password_hash(data['password'])
 
@@ -49,16 +56,20 @@ def signup_user():
                      email=data['email'])
     db.session.add(new_user)
     db.session.commit()
-    return jsonify({'message': 'registered successfully'})
+    return jsonify(SUCCESS_RESPONSE)
 
 
 @session_routes.route('/login', methods=['POST'])
 def login_user():
     auth = request.authorization
     if not auth or not auth.username or not auth.password:
-        return make_response('could not verify', 401, {'Authentication': 'login required"'})
+        return make_response(jsonify(INCORRECT_CREDENTIALS_RESPONSE), 400)
 
     user = db.session.query(Users).filter_by(username=auth.username).first()
+
+    if user is None:
+        return make_response(jsonify(INCORRECT_CREDENTIALS_RESPONSE), 400)
+
     if check_password_hash(user.password, auth.password):
         token = jwt.encode(
             {'public_id': user.public_id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=45)},
@@ -66,4 +77,4 @@ def login_user():
 
         return jsonify({'token': token})
 
-    return make_response('could not verify', 401, {'Authentication': '"login required"'})
+    return make_response(jsonify(INCORRECT_CREDENTIALS_RESPONSE), 400)

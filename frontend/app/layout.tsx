@@ -28,7 +28,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Loading from '@/app/loading';
 import { ColorSchemeToggle } from '@/app/components/ColorSchemeToggle/ColorSchemeToggle';
 import { useLoggedIn } from '@/app/hooks/useLoggedIn';
-import { AuthenticationForm } from '@/app/components/AuthenticationForm/AuthentifactionForm';
+import { Authentication } from '@/app/components/AuthenticationForm/Authentication';
 import { useSetLoginToken } from '@/app/hooks/useSetLoginToken';
 
 const data = [
@@ -41,7 +41,7 @@ const data = [
 export default function RootLayout({ children }: { children: any }) {
   const [active, setActive] = useState('');
   const [appVersion, setAppVersion] = useState('');
-  const [opened, { toggle }] = useDisclosure();
+  const [opened, { close: closeNavbar, toggle }] = useDisclosure();
   const isLoggedIn = useLoggedIn();
   const setLoginToken = useSetLoginToken();
 
@@ -72,6 +72,7 @@ export default function RootLayout({ children }: { children: any }) {
         event.preventDefault();
         setActive(item.label);
         router.push(item.link);
+        closeNavbar();
       }}
     >
       <item.icon className={classes.linkIcon} stroke={1.5} />
@@ -79,7 +80,7 @@ export default function RootLayout({ children }: { children: any }) {
     </a>
   ));
 
-  const loggedOffContent = <AuthenticationForm />;
+  const loggedOffContent = <Authentication />;
 
   const loggedInContent = (
     <AppShell
