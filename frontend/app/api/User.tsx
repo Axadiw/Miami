@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { BASE_URL } from '@/app/api/consts';
+import { BASE_URL } from '@/app/consts';
 
 export async function registerUser(login: string, password: string, email: string) {
   return axios

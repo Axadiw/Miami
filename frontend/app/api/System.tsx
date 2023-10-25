@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { BASE_URL } from '@/app/api/consts';
+import { BASE_URL } from '@/app/consts';
 
 interface VersionResponse {
   message: string;
