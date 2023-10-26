@@ -82,6 +82,19 @@ export default function RootLayout({ children }: { children: any }) {
 
   const loggedOffContent = <Authentication />;
 
+  const gaAnalytics =
+    process.env.NODE_ENV === 'development' ? (
+      <></>
+    ) : (
+      <>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-9C1V7Z121V"></script>
+        <script>
+          window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments)}
+          gtag('js', new Date()); gtag('config', 'G-9C1V7Z121V');
+        </script>
+      </>
+    );
+
   const loggedInContent = (
     <AppShell
       header={{ height: 48 }}
@@ -146,6 +159,7 @@ export default function RootLayout({ children }: { children: any }) {
           name="viewport"
           content="minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no"
         />
+        {gaAnalytics}
         <title>Miami Trade</title>
       </head>
       <body>
