@@ -19,17 +19,18 @@
     "storybook:build": "storybook build"
   },
   "dependencies": {
+    "@mantine/code-highlight": "7.1.5",
     "@mantine/core": "7.1.1",
     "@mantine/ds": "^7.1.5",
     "@mantine/form": "7.1.1",
     "@mantine/hooks": "7.1.1",
-    "@mantine/code-highlight": "7.1.5",
     "@next/bundle-analyzer": "^13.4.4",
     "@tabler/icons-react": "^2.20.0",
     "axios": "1.5.1",
     "next": "13.4.4",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "sharp": "^0.32.6"
   },
   "devDependencies": {
     "@babel/core": "^7.22.1",

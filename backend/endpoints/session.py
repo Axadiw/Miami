@@ -28,12 +28,12 @@ def token_required(f):
             token = request.headers['x-access-tokens']
 
         if not token:
-            return jsonify(TOKEN_MISSING_RESPONSE)
+            return make_response(jsonify(TOKEN_MISSING_RESPONSE), 400)
         try:
             data = jwt.decode(token, flask_api_secret, algorithms=["HS256"])
             current_user = db.session.query(Users).filter_by(public_id=data['public_id']).first()
         except:
-            return jsonify(TOKEN_INVALID_RESPONSE)
+            return make_response(jsonify(TOKEN_INVALID_RESPONSE), 400)
 
         return f(current_user, *args, **kwargs)
 

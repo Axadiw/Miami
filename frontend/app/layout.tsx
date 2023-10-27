@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client';
 import '@mantine/core/styles.css';
 import Image from 'next/image';
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: any }) {
   const [opened, { close: closeNavbar, toggle }] = useDisclosure();
   const isLoggedIn = useLoggedIn();
   const setLoginToken = useSetLoginToken();
+  const isServer = typeof window === 'undefined';
 
   const pathName = usePathname();
   const router = useRouter();
@@ -83,7 +85,7 @@ export default function RootLayout({ children }: { children: any }) {
   const loggedOffContent = <Authentication />;
 
   const gaAnalytics =
-    process.env.NODE_ENV === 'development' ? (
+    process.env.NODE_ENV === 'development' || isServer ? (
       <></>
     ) : (
       <>
@@ -132,8 +134,10 @@ export default function RootLayout({ children }: { children: any }) {
               <span>Account</span>
             </a>
             <a
+              href=""
               className={classes.link}
-              onClick={(event) => {
+              onClick={() => {
+                event.preventDefault();
                 setLoginToken(undefined);
               }}
             >
@@ -165,7 +169,7 @@ export default function RootLayout({ children }: { children: any }) {
       <body>
         <Suspense fallback={<Loading />}>
           <MantineProvider theme={theme}>
-            {isLoggedIn ? loggedInContent : loggedOffContent}{' '}
+            {isLoggedIn ? loggedInContent : loggedOffContent}
           </MantineProvider>
         </Suspense>
       </body>

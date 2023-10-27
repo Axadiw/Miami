@@ -1,6 +1,3 @@
-'use client';
-import { Text } from '@mantine/core';
+import AccountPage from '@/app/account/accountPage';
 
-export default function NavbarSimple() {
-  return <Text>ACCOUNT</Text>;
-}
+export default AccountPage;
