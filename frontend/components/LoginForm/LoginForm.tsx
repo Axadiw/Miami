@@ -1,13 +1,13 @@
 import { useForm } from '@mantine/form';
-import { Alert, Button, Group, PaperProps, PasswordInput, Stack, TextInput } from '@mantine/core';
-import { loginUser } from '@/app/api/User';
+import { Alert, Button, Group, PasswordInput, Stack, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { IconInfoCircle } from '@tabler/icons-react';
-import { useSetLoginToken } from '@/app/hooks/useSetLoginToken';
+import { loginUser } from '@/api/LoginUser';
+import { useLoginContext } from '@/contexts/LoginContext';
 
-export function LoginForm(props: PaperProps) {
+export function LoginForm() {
   const [error, setError] = useState<string | undefined>();
-  const setLoginToken = useSetLoginToken();
+  const { setLoginToken } = useLoginContext();
   const form = useForm({
     initialValues: {
       login: '',

@@ -1,8 +1,8 @@
 import { useToggle } from '@mantine/hooks';
 import { Anchor, Group, Paper, PaperProps, Space } from '@mantine/core';
-import { RegisterForm } from '@/app/components/RegisterForm/RegisterForm';
-import { LoginForm } from '@/app/components/LoginForm/LoginForm';
-import { ColorSchemeToggle } from '@/app/components/ColorSchemeToggle/ColorSchemeToggle';
+import { RegisterForm } from '@/components/RegisterForm/RegisterForm';
+import { LoginForm } from '@/components/LoginForm/LoginForm';
+import { ColorSchemeToggle } from '@/components/ColorSchemeToggle/ColorSchemeToggle';
 import React from 'react';
 
 export function Authentication(props: PaperProps) {

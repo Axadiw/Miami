@@ -1,11 +1,12 @@
 'use client';
 
 import { Alert, Button, Group, Stack, TextInput } from '@mantine/core';
-import { useLoginToken } from '@/app/hooks/useLoginToken';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import { getAccountInfo, saveAccountInfo } from '@/app/api/User';
 import { useForm } from '@mantine/form';
+import { getAccountInfo } from '@/api/GetAccountInfo';
+import { saveAccountInfo } from '@/api/SaveAccountInfo';
+import { useLoginContext } from '@/contexts/LoginContext';
 
 export interface UserConfig {
   threeCommasAccountId: string;
@@ -18,7 +19,7 @@ export interface UserConfig {
 
 export default function AccountPage() {
   const [error, setError] = useState<string | undefined>();
-  const token = useLoginToken();
+  const { loginToken } = useLoginContext();
 
   const form = useForm({
     initialValues: {
@@ -30,22 +31,21 @@ export default function AccountPage() {
       email: '',
     },
   });
-  useEffect(() => {}, []);
 
   useEffect(() => {
-    const updateVersion = async () => {
-      if (token) {
+    const updateInfo = async () => {
+      if (loginToken) {
         try {
           setError(undefined);
-          const accountInfo = await getAccountInfo(token);
+          const accountInfo = await getAccountInfo(loginToken);
           form.setValues({ ...accountInfo });
         } catch (error: any) {
           setError(error.message);
         }
       }
     };
-    updateVersion();
-  }, [token]);
+    updateInfo().catch((error: any) => setError(error.message));
+  }, [loginToken]);
   return (
     <Stack>
       {error !== undefined && (
@@ -55,10 +55,10 @@ export default function AccountPage() {
       )}
       <form
         onSubmit={form.onSubmit(async () => {
-          if (token) {
+          if (loginToken) {
             try {
               setError(undefined);
-              await saveAccountInfo(token, { ...form.values } as UserConfig);
+              await saveAccountInfo(loginToken, { ...form.values } as UserConfig);
             } catch (error: any) {
               setError(error.message);
             }

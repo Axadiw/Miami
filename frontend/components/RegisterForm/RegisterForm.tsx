@@ -1,8 +1,8 @@
 import { useForm } from '@mantine/form';
 import { Alert, Button, Group, PasswordInput, Stack, TextInput } from '@mantine/core';
-import { registerUser } from '@/app/api/User';
 import { useState } from 'react';
 import { IconInfoCircle } from '@tabler/icons-react';
+import { registerUser } from '@/api/RegisterUser';
 
 interface RegisterFormProps {
   switchToLoginCallback: () => void;

@@ -6,7 +6,6 @@ import { IconMoonStars, IconSun } from '@tabler/icons-react';
 export function ColorSchemeToggle() {
   const [mounted, setMounted] = useState(false);
 
-  // useEffect only runs on the client, so now we can safely show the UI
   useEffect(() => {
     setMounted(true);
   }, []);

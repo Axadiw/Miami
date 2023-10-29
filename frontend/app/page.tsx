@@ -1,11 +1,3 @@
-'use client';
-import { Text } from '@mantine/core';
+import DashboardPage from '@/app/dashboard/dashboardPage';
 
-export default function NavbarSimple() {
-  return (
-    <Text>
-      Welcome to Miami Trade - risk aware trading platform
-      <br />{' '}
-    </Text>
-  );
-}
+export default DashboardPage;
