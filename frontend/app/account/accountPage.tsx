@@ -2,11 +2,10 @@
 
 import { Alert, Button, Group, Stack, TextInput } from '@mantine/core';
 import { IconInfoCircle } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from '@mantine/form';
-import { getAccountInfo } from '@/api/GetAccountInfo';
-import { saveAccountInfo } from '@/api/SaveAccountInfo';
-import { useLoginContext } from '@/contexts/LoginContext';
+import { useGetAccountInfo } from '@/api/useGetAccountInfo';
+import { useSaveAccountInfo } from '@/api/useSaveAccountInfo';
 
 export interface UserConfig {
   threeCommasAccountId: string;
@@ -18,9 +17,6 @@ export interface UserConfig {
 }
 
 export default function AccountPage() {
-  const [error, setError] = useState<string | undefined>();
-  const { loginToken } = useLoginContext();
-
   const form = useForm({
     initialValues: {
       threeCommasAccountId: '',
@@ -32,37 +28,25 @@ export default function AccountPage() {
     },
   });
 
+  const { data: fetchData, error: fetchError } = useGetAccountInfo();
+  const { error: saveError, mutate: saveAccountInfo } = useSaveAccountInfo();
+
   useEffect(() => {
-    const updateInfo = async () => {
-      if (loginToken) {
-        try {
-          setError(undefined);
-          const accountInfo = await getAccountInfo(loginToken);
-          form.setValues({ ...accountInfo });
-        } catch (error: any) {
-          setError(error.message);
-        }
-      }
-    };
-    updateInfo().catch((error: any) => setError(error.message));
-  }, [loginToken]);
+    form.setValues({ ...fetchData });
+  }, [fetchData]);
+
+  const errorMessage = fetchError?.message ?? saveError?.message;
+
   return (
     <Stack>
-      {error !== undefined && (
+      {errorMessage !== undefined && (
         <Alert variant="light" color="red" radius="md" title="Error" icon={<IconInfoCircle />}>
-          {error}
+          {errorMessage}
         </Alert>
       )}
       <form
         onSubmit={form.onSubmit(async () => {
-          if (loginToken) {
-            try {
-              setError(undefined);
-              await saveAccountInfo(loginToken, { ...form.values } as UserConfig);
-            } catch (error: any) {
-              setError(error.message);
-            }
-          }
+          saveAccountInfo({ ...form.values } as UserConfig);
         })}
       >
         <Stack>

@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { BASE_URL } from '@/app/consts';
 import { UserConfig } from '@/app/account/accountPage';
+import { useQuery } from '@tanstack/react-query';
+import { useLoginContext } from '@/contexts/LoginContext';
 
 interface ConfigPair {
   key: string;
@@ -12,7 +14,13 @@ interface AccountInfoResponse {
   email: string;
 }
 
-export async function getAccountInfo(token: string) {
+export const AccountInfoCacheKey = 'AccountInfoCacheKey';
+
+async function getAccountInfo(token: string | null) {
+  if (token === null) {
+    return Promise.reject(NotLoggedInError);
+  }
+
   return axios
     .request({
       method: 'get',
@@ -59,3 +67,11 @@ export async function getAccountInfo(token: string) {
       throw new Error(error.response.data.error);
     });
 }
+
+export const useGetAccountInfo = () => {
+  const { loginToken } = useLoginContext();
+  return useQuery({
+    queryKey: [AccountInfoCacheKey],
+    queryFn: () => getAccountInfo(loginToken),
+  });
+};

@@ -28,6 +28,14 @@ export const LoginContextProvider = ({ children }: { children: ReactNode }) => {
     setLoginToken(localStorage.getItem(LOGIN_TOKEN_LOCAL_STORAGE_KEY));
   }, []);
 
+  useEffect(() => {
+    if (loginToken) {
+      localStorage.setItem(LOGIN_TOKEN_LOCAL_STORAGE_KEY, loginToken);
+    } else {
+      localStorage.removeItem(LOGIN_TOKEN_LOCAL_STORAGE_KEY);
+    }
+  }, [loginToken]);
+
   const value = useMemo(() => ({ loginToken, setLoginToken }), [loginToken, setLoginToken]);
 
   return <LoginContext.Provider value={value}>{children}</LoginContext.Provider>;

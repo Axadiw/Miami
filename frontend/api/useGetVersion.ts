@@ -1,11 +1,14 @@
 import axios from 'axios';
 import { BASE_URL } from '@/app/consts';
+import { useQuery } from '@tanstack/react-query';
 
 interface VersionResponse {
   message: string;
 }
 
-export async function getVersion() {
+export const GetVersionCacheKey = 'GetVersionCacheKey';
+
+async function getVersion() {
   return axios
     .request({
       method: 'get',
@@ -19,8 +22,12 @@ export async function getVersion() {
     })
     .then((parsedData) => {
       return parsedData.message;
-    })
-    .catch((error) => {
-      console.log(error);
     });
 }
+
+export const useGetVersion = () => {
+  return useQuery({
+    queryKey: [GetVersionCacheKey],
+    queryFn: () => getVersion(),
+  });
+};

@@ -14,8 +14,8 @@ import { ColorSchemeToggle } from '@/components/ColorSchemeToggle/ColorSchemeTog
 import React, { useEffect, useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { usePathname, useRouter } from 'next/navigation';
-import { getVersion } from '@/api/GetVersion';
 import { useLoginContext } from '@/contexts/LoginContext';
+import { useGetVersion } from '@/api/useGetVersion';
 
 const data = [
   { link: '/', label: 'Dashboard', icon: IconDashboard },
@@ -26,25 +26,19 @@ const data = [
 
 export function LoggedInContentContainer({ children }: { children: any }) {
   const [active, setActive] = useState('');
-  const [appVersion, setAppVersion] = useState('');
   const [opened, { close: closeNavbar, toggle }] = useDisclosure();
   const { setLoginToken } = useLoginContext();
 
   const pathName = usePathname();
   const router = useRouter();
 
+  const { status: versionDataFetchStatus, data: versionData } = useGetVersion();
+
   useEffect(() => {
     const possibleTabs = data.filter((item) => item.link === pathName);
     if (possibleTabs.length === 1) {
       setActive(possibleTabs[0].label);
     }
-  }, []);
-
-  useEffect(() => {
-    const updateVersion = async () => {
-      setAppVersion((await getVersion()) ?? '');
-    };
-    updateVersion().catch(console.error);
   }, []);
 
   const links = data.map((item) => (
@@ -114,7 +108,9 @@ export function LoggedInContentContainer({ children }: { children: any }) {
             </a>
             <Group p={'10px'}>
               <ColorSchemeToggle />
-              <Code fw={700}>version: {appVersion}</Code>
+              <Code fw={700}>
+                version: {versionDataFetchStatus === 'success' ? versionData : ''}
+              </Code>
             </Group>
           </div>
         </nav>

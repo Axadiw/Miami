@@ -8,8 +8,11 @@ import Loading from '@/app/loading';
 import { LoginContextProvider } from '@/contexts/LoginContext';
 import { AppContainer } from '@/components/AppContainer/AppContainer';
 import Script from 'next/script';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 export default function RootLayout({ children }: { children: any }) {
+  const queryClient = new QueryClient();
   return (
     <html lang="en">
       <head>
@@ -23,20 +26,27 @@ export default function RootLayout({ children }: { children: any }) {
       </head>
       <body>
         <>
-          <Script src="https://www.googletagmanager.com/gtag/js?id=G-9C1V7Z121V" />
-          <Script id="google-analytics">
-            {`
+          {process.env.NODE_ENV !== 'development' && (
+            <>
+              <Script src="https://www.googletagmanager.com/gtag/js?id=G-9C1V7Z121V" />
+              <Script id="google-analytics">
+                {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
 
             gtag('config', 'G-9C1V7Z121V');
           `}
-          </Script>
+              </Script>
+            </>
+          )}
           <Suspense fallback={<Loading />}>
             <MantineProvider theme={theme}>
               <LoginContextProvider>
-                <AppContainer>{children}</AppContainer>
+                <QueryClientProvider client={queryClient}>
+                  <AppContainer>{children}</AppContainer>
+                  <ReactQueryDevtools initialIsOpen={false} />
+                </QueryClientProvider>
               </LoginContextProvider>
             </MantineProvider>
           </Suspense>
