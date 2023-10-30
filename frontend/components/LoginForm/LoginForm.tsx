@@ -5,7 +5,7 @@ import { useLoginUser } from '@/api/useLoginUser';
 import { useLoginContext } from '@/contexts/LoginContext';
 
 export function LoginForm() {
-  const { error: loginError, mutateAsync: loginUser, data: loginData, isPending } = useLoginUser();
+  const { error: loginError, mutateAsync: loginUser, isPending } = useLoginUser();
   const { setLoginToken } = useLoginContext();
 
   const form = useForm({

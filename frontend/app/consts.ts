@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-mutable-exports
 export let BASE_URL = 'https://api.miamitrade.pro';
 
 if (process.env.NODE_ENV === 'development') {

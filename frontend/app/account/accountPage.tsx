@@ -33,7 +33,7 @@ export default function AccountPage() {
 
   useEffect(() => {
     form.setValues({ ...fetchData });
-  }, [fetchData]);
+  }, [fetchData, form]);
 
   const errorMessage = fetchError?.message ?? saveError?.message;
 
@@ -65,7 +65,7 @@ export default function AccountPage() {
             label="Email"
             value={form.values.email}
             onChange={(event) => form.setFieldValue('email', event.currentTarget.value)}
-            disabled={true}
+            disabled
             radius="md"
           />
           <TextInput

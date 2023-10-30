@@ -1,7 +1,5 @@
 import { AppShell, Center, Code, Flex, Group } from '@mantine/core';
 import Image from 'next/image';
-import logoImage from '@/public/logo.png';
-import classes from '@/app/styles/NavbarSimple.module.css';
 import {
   IconBolt,
   IconDashboard,
@@ -10,10 +8,12 @@ import {
   IconSettings,
   IconTarget,
 } from '@tabler/icons-react';
-import { ColorSchemeToggle } from '@/components/ColorSchemeToggle/ColorSchemeToggle';
 import React, { useEffect, useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { usePathname, useRouter } from 'next/navigation';
+import { ColorSchemeToggle } from '@/components/ColorSchemeToggle/ColorSchemeToggle';
+import classes from '@/app/styles/NavbarSimple.module.css';
+import logoImage from '@/public/logo.png';
 import { useLoginContext } from '@/contexts/LoginContext';
 import { useAppGetVersion } from '@/api/useAppGetVersion';
 
@@ -39,7 +39,7 @@ export function LoggedInContentContainer({ children }: { children: any }) {
     if (possibleTabs.length === 1) {
       setActive(possibleTabs[0].label);
     }
-  }, []);
+  }, [pathName]);
 
   const links = data.map((item) => (
     <a
@@ -66,7 +66,7 @@ export function LoggedInContentContainer({ children }: { children: any }) {
       padding="md"
     >
       <AppShell.Header>
-        <Flex p={'8px'}>
+        <Flex p="8px">
           <Center>
             <Image
               src={logoImage}
@@ -108,7 +108,7 @@ export function LoggedInContentContainer({ children }: { children: any }) {
               <IconLogout className={classes.linkIcon} stroke={1.5} />
               <span>Logout</span>
             </a>
-            <Group p={'10px'}>
+            <Group p="10px">
               <ColorSchemeToggle />
               <Code fw={700}>
                 version: {versionDataFetchStatus === 'success' ? versionData : ''}

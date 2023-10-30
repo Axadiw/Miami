@@ -1,9 +1,9 @@
 import { useToggle } from '@mantine/hooks';
 import { Anchor, Group, Paper, PaperProps, Space } from '@mantine/core';
+import React from 'react';
 import { RegisterForm } from '@/components/RegisterForm/RegisterForm';
 import { LoginForm } from '@/components/LoginForm/LoginForm';
 import { ColorSchemeToggle } from '@/components/ColorSchemeToggle/ColorSchemeToggle';
-import React from 'react';
 
 export function Authentication(props: PaperProps) {
   const [type, toggle] = useToggle(['login', 'register']);
@@ -26,7 +26,7 @@ export function Authentication(props: PaperProps) {
             : "Don't have an account? Register"}
         </Anchor>
       </Group>
-      <Space h={'lg'} />
+      <Space h="lg" />
       <ColorSchemeToggle />
     </Paper>
   );
