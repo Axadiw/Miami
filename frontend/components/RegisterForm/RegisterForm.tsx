@@ -3,8 +3,12 @@ import { Alert, Button, Group, PasswordInput, Stack, TextInput } from '@mantine/
 import { IconInfoCircle } from '@tabler/icons-react';
 import { useRegisterUser } from '@/api/useRegisterUser';
 
-export function RegisterForm() {
-  const { error: registerError, mutate: registerUser } = useRegisterUser();
+interface RegisterFormProps {
+  switchToLoginCallback: () => void;
+}
+
+export function RegisterForm(props: RegisterFormProps) {
+  const { error: registerError, mutateAsync: registerUser, isPending } = useRegisterUser();
   const form = useForm({
     initialValues: {
       email: '',
@@ -22,11 +26,12 @@ export function RegisterForm() {
   return (
     <form
       onSubmit={form.onSubmit(async () => {
-        registerUser({
+        await registerUser({
           login: form.values.login,
           password: form.values.password,
           email: form.values.email,
         });
+        props.switchToLoginCallback();
       })}
     >
       <Stack>
@@ -70,7 +75,7 @@ export function RegisterForm() {
       </Stack>
 
       <Group justify="space-between" mt="xl">
-        <Button type="submit" radius="xl">
+        <Button type="submit" radius="xl" loading={isPending}>
           Register
         </Button>
       </Group>

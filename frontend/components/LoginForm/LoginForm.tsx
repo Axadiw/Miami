@@ -2,9 +2,11 @@ import { useForm } from '@mantine/form';
 import { Alert, Button, Group, PasswordInput, Stack, TextInput } from '@mantine/core';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { useLoginUser } from '@/api/useLoginUser';
+import { useLoginContext } from '@/contexts/LoginContext';
 
 export function LoginForm() {
-  const { error: loginError, mutate: loginUser } = useLoginUser();
+  const { error: loginError, mutateAsync: loginUser, data: loginData, isPending } = useLoginUser();
+  const { setLoginToken } = useLoginContext();
 
   const form = useForm({
     initialValues: {
@@ -21,7 +23,14 @@ export function LoginForm() {
   return (
     <form
       onSubmit={form.onSubmit(async () => {
-        loginUser({ login: form.values.login, password: form.values.password });
+        setLoginToken(
+          (
+            await loginUser({
+              login: form.values.login,
+              password: form.values.password,
+            })
+          ).token
+        );
       })}
     >
       <Stack>
@@ -56,7 +65,7 @@ export function LoginForm() {
       </Stack>
 
       <Group justify="space-between" mt="xl">
-        <Button type="submit" radius="xl">
+        <Button type="submit" radius="xl" loading={isPending}>
           Login
         </Button>
       </Group>

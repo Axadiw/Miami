@@ -90,6 +90,7 @@ export function LoggedInContentContainer({ children }: { children: any }) {
               onClick={(event) => {
                 event.preventDefault();
                 router.push('/account');
+                closeNavbar();
               }}
             >
               <IconSettings className={classes.linkIcon} stroke={1.5} />
@@ -101,6 +102,7 @@ export function LoggedInContentContainer({ children }: { children: any }) {
               onClick={(event) => {
                 event.preventDefault();
                 setLoginToken(null);
+                closeNavbar();
               }}
             >
               <IconLogout className={classes.linkIcon} stroke={1.5} />

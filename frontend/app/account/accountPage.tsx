@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Button, Group, Stack, TextInput } from '@mantine/core';
+import { Alert, Button, Group, Skeleton, Stack, TextInput } from '@mantine/core';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { useForm } from '@mantine/form';
@@ -28,7 +28,7 @@ export default function AccountPage() {
     },
   });
 
-  const { data: fetchData, error: fetchError } = useGetAccountInfo();
+  const { data: fetchData, isLoading: fetchLoading, error: fetchError } = useGetAccountInfo();
   const { error: saveError, mutate: saveAccountInfo } = useSaveAccountInfo();
 
   useEffect(() => {
@@ -36,6 +36,17 @@ export default function AccountPage() {
   }, [fetchData]);
 
   const errorMessage = fetchError?.message ?? saveError?.message;
+
+  if (fetchLoading) {
+    return (
+      <>
+        <Skeleton height={50} circle mb="xl" />
+        <Skeleton height={8} radius="xl" />
+        <Skeleton height={8} mt={6} radius="xl" />
+        <Skeleton height={8} mt={6} width="70%" radius="xl" />
+      </>
+    );
+  }
 
   return (
     <Stack>

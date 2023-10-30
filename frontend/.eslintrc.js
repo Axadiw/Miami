@@ -5,7 +5,7 @@ module.exports = {
     'plugin:jest/recommended',
     'plugin:@tanstack/eslint-plugin-query/recommended',
   ],
-  plugins: ['testing-library', 'jest', '@tanstack/query'],
+  plugins: ['testing-library', 'jest', '@tanstack/query', 'react', 'react-hooks'],
   overrides: [
     {
       files: ['**/?(*.)+(spec|test).[jt]s?(x)'],
