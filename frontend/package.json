@@ -1,5 +1,5 @@
 {
-  "name": "mantine-next-template",
+  "name": "miami-trade",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -74,5 +74,6 @@
     "storybook-dark-mode": "^3.0.0",
     "ts-jest": "^29.1.0",
     "typescript": "5.0.4"
-  }
+  },
+  "packageManager": "yarn@4.0.1"
 }
