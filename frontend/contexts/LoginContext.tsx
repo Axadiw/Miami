@@ -17,9 +17,7 @@ interface LoginContext {
 
 export const LoginContext = createContext<LoginContext>({} as LoginContext);
 
-export const useLoginContext = () => {
-  return useContext(LoginContext);
-};
+export const useLoginContext = () => useContext(LoginContext);
 
 export const LoginContextProvider = ({ children }: { children: ReactNode }) => {
   const [loginToken, setLoginToken] = useState<string | null>(null);

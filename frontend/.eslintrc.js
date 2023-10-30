@@ -1,5 +1,7 @@
 module.exports = {
   extends: [
+    'eslint:recommended',
+    'prettier',
     'mantine',
     'plugin:@next/next/recommended',
     'plugin:jest/recommended',
