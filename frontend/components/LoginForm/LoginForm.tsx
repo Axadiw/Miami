@@ -6,7 +6,7 @@ import { useLoginContext } from '@/contexts/LoginContext';
 
 export function LoginForm() {
   const { error: loginError, mutateAsync: loginUser, isPending } = useLoginUser();
-  const { setaaaLoginToken } = useLoginContext();
+  const { setLoginToken } = useLoginContext();
 
   const form = useForm({
     initialValues: {
