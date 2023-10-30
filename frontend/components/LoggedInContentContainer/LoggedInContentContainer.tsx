@@ -15,7 +15,7 @@ import React, { useEffect, useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLoginContext } from '@/contexts/LoginContext';
-import { useGetVersion } from '@/api/useGetVersion';
+import { useAppGetVersion } from '@/api/useAppGetVersion';
 
 const data = [
   { link: '/', label: 'Dashboard', icon: IconDashboard },
@@ -32,7 +32,7 @@ export function LoggedInContentContainer({ children }: { children: any }) {
   const pathName = usePathname();
   const router = useRouter();
 
-  const { status: versionDataFetchStatus, data: versionData } = useGetVersion();
+  const { status: versionDataFetchStatus, data: versionData } = useAppGetVersion();
 
   useEffect(() => {
     const possibleTabs = data.filter((item) => item.link === pathName);

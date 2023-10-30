@@ -1,13 +1,11 @@
 import { useForm } from '@mantine/form';
 import { Alert, Button, Group, PasswordInput, Stack, TextInput } from '@mantine/core';
-import { useState } from 'react';
 import { IconInfoCircle } from '@tabler/icons-react';
-import { loginUser } from '@/api/LoginUser';
-import { useLoginContext } from '@/contexts/LoginContext';
+import { useLoginUser } from '@/api/useLoginUser';
 
 export function LoginForm() {
-  const [error, setError] = useState<string | undefined>();
-  const { setLoginToken } = useLoginContext();
+  const { error: loginError, mutate: loginUser } = useLoginUser();
+
   const form = useForm({
     initialValues: {
       login: '',
@@ -23,16 +21,11 @@ export function LoginForm() {
   return (
     <form
       onSubmit={form.onSubmit(async () => {
-        try {
-          setError(undefined);
-          setLoginToken((await loginUser(form.values.login, form.values.password)).token);
-        } catch (error: any) {
-          setError(error.message);
-        }
+        loginUser({ login: form.values.login, password: form.values.password });
       })}
     >
       <Stack>
-        {error !== undefined && (
+        {loginError && (
           <Alert
             variant="light"
             color="red"
@@ -40,7 +33,7 @@ export function LoginForm() {
             title="Login error"
             icon={<IconInfoCircle />}
           >
-            {error}
+            {loginError.message}
           </Alert>
         )}
         <TextInput

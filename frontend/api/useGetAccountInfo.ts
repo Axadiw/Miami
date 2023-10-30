@@ -14,7 +14,7 @@ interface AccountInfoResponse {
   email: string;
 }
 
-export const AccountInfoCacheKey = 'AccountInfoCacheKey';
+export const AccountInfoCacheKey = 'Account info';
 
 async function getAccountInfo(token: string | null) {
   if (token === null) {

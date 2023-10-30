@@ -6,9 +6,9 @@ interface VersionResponse {
   message: string;
 }
 
-export const GetVersionCacheKey = 'GetVersionCacheKey';
+export const GetAppVersionCacheKey = 'App version';
 
-async function getVersion() {
+async function getAppVersion() {
   return axios
     .request({
       method: 'get',
@@ -25,9 +25,9 @@ async function getVersion() {
     });
 }
 
-export const useGetVersion = () => {
+export const useAppGetVersion = () => {
   return useQuery({
-    queryKey: [GetVersionCacheKey],
-    queryFn: () => getVersion(),
+    queryKey: [GetAppVersionCacheKey],
+    queryFn: () => getAppVersion(),
   });
 };

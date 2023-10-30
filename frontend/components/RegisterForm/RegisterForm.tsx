@@ -1,15 +1,10 @@
 import { useForm } from '@mantine/form';
 import { Alert, Button, Group, PasswordInput, Stack, TextInput } from '@mantine/core';
-import { useState } from 'react';
 import { IconInfoCircle } from '@tabler/icons-react';
-import { registerUser } from '@/api/RegisterUser';
+import { useRegisterUser } from '@/api/useRegisterUser';
 
-interface RegisterFormProps {
-  switchToLoginCallback: () => void;
-}
-
-export function RegisterForm(props: RegisterFormProps) {
-  const [error, setError] = useState<string | undefined>();
+export function RegisterForm() {
+  const { error: registerError, mutate: registerUser } = useRegisterUser();
   const form = useForm({
     initialValues: {
       email: '',
@@ -27,17 +22,15 @@ export function RegisterForm(props: RegisterFormProps) {
   return (
     <form
       onSubmit={form.onSubmit(async () => {
-        try {
-          setError(undefined);
-          await registerUser(form.values.login, form.values.password, form.values.email);
-          props.switchToLoginCallback();
-        } catch (error: any) {
-          setError(error.message);
-        }
+        registerUser({
+          login: form.values.login,
+          password: form.values.password,
+          email: form.values.email,
+        });
       })}
     >
       <Stack>
-        {error !== undefined && (
+        {registerError && (
           <Alert
             variant="light"
             color="red"
@@ -45,7 +38,7 @@ export function RegisterForm(props: RegisterFormProps) {
             title="Login error"
             icon={<IconInfoCircle />}
           >
-            {error}
+            {registerError.message}
           </Alert>
         )}
         <TextInput

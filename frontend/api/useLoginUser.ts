@@ -1,11 +1,17 @@
 import axios from 'axios';
 import { BASE_URL } from '@/app/consts';
+import { useMutation } from '@tanstack/react-query';
 
 interface LoginResponse {
   token: string;
 }
 
-export async function loginUser(login: string, password: string) {
+export interface LoginProps {
+  login: string;
+  password: string;
+}
+
+export async function loginUser(props: LoginProps) {
   return axios
     .request({
       method: 'post',
@@ -14,8 +20,8 @@ export async function loginUser(login: string, password: string) {
         'Content-Type': 'application/json',
       },
       auth: {
-        username: login,
-        password: password,
+        username: props.login,
+        password: props.password,
       },
     })
     .then((response) => {
@@ -25,3 +31,11 @@ export async function loginUser(login: string, password: string) {
       throw new Error(error.response.data.error);
     });
 }
+
+export const useLoginUser = () => {
+  return useMutation({
+    mutationFn: (props: LoginProps) => {
+      return loginUser(props);
+    },
+  });
+};

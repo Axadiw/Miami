@@ -10,15 +10,7 @@ export function Authentication(props: PaperProps) {
 
   return (
     <Paper radius="md" p="xl" withBorder {...props}>
-      {type === 'register' ? (
-        <RegisterForm
-          switchToLoginCallback={() => {
-            toggle();
-          }}
-        />
-      ) : (
-        <LoginForm />
-      )}
+      {type === 'register' ? <RegisterForm /> : <LoginForm />}
       <Group justify="space-between" mt="xl">
         <Anchor component="button" type="button" c="dimmed" onClick={() => toggle()} size="xs">
           {type === 'register'
