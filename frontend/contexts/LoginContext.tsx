@@ -15,7 +15,7 @@ interface LoginContext {
   setLoginToken: Dispatch<SetStateAction<string | null>>;
 }
 
-export const LoginContsext = createContext<LoginContext>({} as LoginContext);
+export const LoginContext = createContext<LoginContext>({} as LoginContext);
 
 export const useLoginContext = () => useContext(LoginContext);
 
