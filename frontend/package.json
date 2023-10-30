@@ -16,20 +16,20 @@
     "prettier:write": "prettier --write \"**/*.{ts,tsx}\"",
     "test": "npm run prettier:check && npm run lint && npm run typecheck && npm run jest",
     "storybook": "storybook dev -p 6006",
-    "storybook:build": "storybook build"
+    "storybook:build": "storybook build",
+    "prepare": "husky install"
   },
   "dependencies": {
-    "@mantine/code-highlight": "7.1.5",
-    "@mantine/core": "7.1.1",
+    "@mantine/code-highlight": "^7.1.7",
+    "@mantine/core": "^7.1.7",
     "@mantine/ds": "^7.1.5",
     "@mantine/form": "7.1.1",
-    "@mantine/hooks": "7.1.1",
+    "@mantine/hooks": "^7.1.7",
     "@next/bundle-analyzer": "^13.4.4",
     "@tabler/icons-react": "^2.20.0",
     "@tanstack/react-query": "^5.4.3",
     "@tanstack/react-query-devtools": "^5.4.3",
     "axios": "1.5.1",
-    "husky": "^8.0.3",
     "next": "13.4.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -75,12 +75,8 @@
     "storybook": "^7.0.18",
     "storybook-dark-mode": "^3.0.0",
     "ts-jest": "^29.1.0",
-    "typescript": "5.0.4"
+    "typescript": "5.0.4",
+    "husky": "^8.0.0"
   },
-  "packageManager": "yarn@4.0.1",
-  "husky": {
-    "hooks": {
-      "pre-commit": "yarn test"
-    }
-  }
+  "packageManager": "yarn@4.0.1"
 }
