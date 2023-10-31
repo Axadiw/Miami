@@ -3,3 +3,5 @@
 
 cd frontend
 yarn test
+cd ../backend
+poetry run python -m pytest

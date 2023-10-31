@@ -5,7 +5,7 @@ from consts_tpl import flask_api_secret
 from database import db
 from endpoints.account.account import account_routes
 from endpoints.general.general import general_routes
-from endpoints.session import session_routes
+from endpoints.session.session import session_routes
 
 if not db_username or not db_password or not db_name:
     print('No database creds detected')
