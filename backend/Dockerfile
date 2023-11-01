@@ -15,7 +15,7 @@ ENV MIAMI_VERSION=$VERSION
 COPY --from=poetry-base ${POETRY_VENV} ${POETRY_VENV}
 ENV PATH="${PATH}:${POETRY_VENV}/bin"
 WORKDIR /app
-COPY poetry.lock pyproject.toml ./
+COPY README.md poetry.lock pyproject.toml ./
 RUN poetry check
 RUN poetry install --no-interaction --no-cache --without dev
 COPY . /app
