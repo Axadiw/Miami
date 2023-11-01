@@ -4,6 +4,13 @@ from endpoints.session.session import PARAMS_INVALID_RESPONSE, SUCCESS_RESPONSE,
     INCORRECT_CREDENTIALS_RESPONSE
 
 
+def get_test_user_token(client):
+    client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1'})
+    user_credentials = base64.b64encode(b"user1:pass1").decode()
+    response = client.post("/login", headers={"Authorization": "Basic {}".format(user_credentials)})
+    return response.json['token']
+
+
 def test_simple_registration(client):
     response = client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1'})
     assert response.json == SUCCESS_RESPONSE
@@ -71,6 +78,7 @@ def test_inform_when_auth_password_not_present(client):
     assert response.status_code == 400
     assert response.json == INCORRECT_CREDENTIALS_RESPONSE
 
+
 def test_show_token_when_correct_credentials_passed(client):
     client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1'})
 
@@ -79,4 +87,3 @@ def test_show_token_when_correct_credentials_passed(client):
     assert response.status_code == 200
     assert 'token' in response.json
     assert len(response.json['token']) > 0
-
