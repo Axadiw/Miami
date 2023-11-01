@@ -1,7 +1,7 @@
 import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
 import { BASE_URL } from '@/app/consts';
 import { UserConfig } from '@/app/account/accountPage';
-import { useQuery } from '@tanstack/react-query';
 import { useLoginContext } from '@/contexts/LoginContext';
 
 interface ConfigPair {
@@ -16,8 +16,8 @@ interface AccountInfoResponse {
 
 export const AccountInfoCacheKey = 'Account info';
 
-async function getAccountInfo(token: string | null) {
-  if (token === null) {
+async function getAccountInfo(token: string | null | undefined) {
+  if (!token) {
     return Promise.reject(NotLoggedInError);
   }
 
@@ -30,9 +30,7 @@ async function getAccountInfo(token: string | null) {
         'x-access-tokens': token,
       },
     })
-    .then((response) => {
-      return response.data as AccountInfoResponse;
-    })
+    .then((response) => response.data as AccountInfoResponse)
     .then((response) => {
       const userConfig: UserConfig = {
         email: response.email,
@@ -42,7 +40,7 @@ async function getAccountInfo(token: string | null) {
         threeCommasApiKey: '',
         threeCommasSecret: '',
       };
-      for (let item of response.config_keys) {
+      for (const item of response.config_keys) {
         switch (item.key) {
           case 'bybit_api_key':
             userConfig.byBitApiKey = item.value;
@@ -71,7 +69,7 @@ async function getAccountInfo(token: string | null) {
 export const useGetAccountInfo = () => {
   const { loginToken } = useLoginContext();
   return useQuery({
-    queryKey: [AccountInfoCacheKey],
+    queryKey: [AccountInfoCacheKey, loginToken],
     queryFn: () => getAccountInfo(loginToken),
   });
 };

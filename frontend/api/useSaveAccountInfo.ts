@@ -1,12 +1,12 @@
 import axios from 'axios';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { BASE_URL } from '@/app/consts';
 import { UserConfig } from '@/app/account/accountPage';
 import { useLoginContext } from '@/contexts/LoginContext';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AccountInfoCacheKey } from '@/api/useGetAccountInfo';
 
-export const saveAccountInfo = async (token: string | null, info: UserConfig) => {
-  if (token === null) {
+export const saveAccountInfo = async (token: string | null | undefined, info: UserConfig) => {
+  if (!token) {
     return Promise.reject(NotLoggedInError);
   }
 
@@ -35,9 +35,7 @@ export const useSaveAccountInfo = () => {
   const { loginToken } = useLoginContext();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (info: UserConfig) => {
-      return saveAccountInfo(loginToken, info);
-    },
+    mutationFn: (info: UserConfig) => saveAccountInfo(loginToken, info),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [AccountInfoCacheKey] });
     },
