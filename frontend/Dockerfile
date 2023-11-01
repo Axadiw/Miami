@@ -5,12 +5,12 @@ RUN yarn policies set-version $YARN_VERSION
 # Install dependencies only when needed
 FROM base AS deps
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-COPY --from=base /.yarn/releases/yarn-$YARN_VERSION.cjs /app/.yarn/releases
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY .yarnrc.yml package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+COPY --from=base /.yarn/releases/yarn-$YARN_VERSION.cjs /app/.yarn/releases/yarn-$YARN_VERSION.cjs
 RUN \
   if [ -f yarn.lock ]; then yarn --immutable --network-timeout 500000; \
   elif [ -f package-lock.json ]; then npm ci; \
