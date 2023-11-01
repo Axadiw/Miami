@@ -11,7 +11,6 @@ WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY .yarnrc.yml package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
-RUN mkdir -p /app/.yarn/releases
 RUN \
   if [ -f yarn.lock ]; then yarn --immutable --network-timeout 500000; \
   elif [ -f package-lock.json ]; then npm ci; \
