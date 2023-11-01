@@ -1,5 +1,5 @@
 FROM python:3.11 as python-base
-ENV POETRY_VERSION=1.5.1
+ENV POETRY_VERSION=1.6.1
 ENV POETRY_HOME=/opt/poetry
 ENV POETRY_VENV=/opt/poetry-venv
 ENV POETRY_CACHE_DIR=/opt/.cache
