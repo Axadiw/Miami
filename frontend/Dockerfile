@@ -1,15 +1,17 @@
 FROM node:18-alpine AS base
-ENV YARN_VERSION 4.0.1
-RUN yarn policies set-version $YARN_VERSION
 
 # Install dependencies only when needed
 FROM base AS deps
+ENV YARN_VERSION 4.0.1
+RUN yarn policies set-version $YARN_VERSION
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY .yarnrc.yml package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+RUN mkdir -p /app/.yarn/releases
+COPY /.yarn/releases/yarn-$YARN_VERSION.cjs /app/.yarn/releases
 RUN \
   if [ -f yarn.lock ]; then yarn --immutable --network-timeout 500000; \
   elif [ -f package-lock.json ]; then npm ci; \
