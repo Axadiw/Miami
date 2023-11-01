@@ -11,8 +11,8 @@ import {
 import { LOGIN_TOKEN_LOCAL_STORAGE_KEY } from '@/app/consts';
 
 interface LoginContext {
-  loginToken: string | null;
-  setLoginToken: Dispatch<SetStateAction<string | null>>;
+  loginToken: string | null | undefined;
+  setLoginToken: Dispatch<SetStateAction<string | null | undefined>>;
 }
 
 export const LoginContext = createContext<LoginContext>({} as LoginContext);
@@ -20,7 +20,7 @@ export const LoginContext = createContext<LoginContext>({} as LoginContext);
 export const useLoginContext = () => useContext(LoginContext);
 
 export const LoginContextProvider = ({ children }: { children: ReactNode }) => {
-  const [loginToken, setLoginToken] = useState<string | null>(null);
+  const [loginToken, setLoginToken] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
     setLoginToken(localStorage.getItem(LOGIN_TOKEN_LOCAL_STORAGE_KEY));
