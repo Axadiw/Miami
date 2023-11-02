@@ -1,6 +1,5 @@
 import datetime
 import uuid
-from functools import wraps
 
 import jwt
 from flask import jsonify, make_response, request, Blueprint
@@ -9,43 +8,22 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from consts_tpl import flask_api_secret
 from database import db
+from endpoints.consts import PARAMS_INVALID_RESPONSE, USER_EXISTS_RESPONSE, INCORRECT_CREDENTIALS_RESPONSE, \
+    TOKEN_MISSING_RESPONSE, TOKEN_VALID_RESPONSE, TOKEN_EXPIRED_RESPONSE, TOKEN_INVALID_RESPONSE, \
+    TOKEN_VALIDITY_IN_DAYS, REGISTRATION_SUCCESS_RESPONSE, EMAIL_IN_USE_RESPONSE, MINIMUM_USERNAME_LENGTH, \
+    MINIMUM_PASSWORD_LENGTH
 from models.users import Users
+import re
 
 session_routes = Blueprint('session_routes', __name__)
 
-# success
-REGISTRATION_SUCCESS_RESPONSE = dict(message='Registered successfully')
-TOKEN_VALID_RESPONSE = dict(message='Token valid')
 
-# error
-PARAMS_INVALID_RESPONSE = dict(error='Parameters invalid')
-USER_EXISTS_RESPONSE = dict(error='User already exists')
-INCORRECT_CREDENTIALS_RESPONSE = dict(error='Incorrect credentials')
-TOKEN_MISSING_RESPONSE = dict(error='A valid token is missing')
-TOKEN_INVALID_RESPONSE = dict(error='Invalid token')
-TOKEN_EXPIRED_RESPONSE = dict(error='Expired token')
-
-TOKEN_VALIDITY_IN_DAYS = 30
+def valid_email(email):
+    return bool(re.search(r"^[\w\.\+\-]+\@[\w]+\.[a-z]{2,3}$", email))
 
 
-def token_required(f):
-    @wraps(f)
-    def decorator(*args, **kwargs):
-        token = None
-        if 'x-access-tokens' in request.headers:
-            token = request.headers['x-access-tokens']
-
-        if not token:
-            return make_response(jsonify(TOKEN_MISSING_RESPONSE), 400)
-        try:
-            data = jwt.decode(token, flask_api_secret, algorithms=["HS256"])
-            current_user = db.session.query(Users).filter_by(public_id=data['public_id']).first()
-        except:
-            return make_response(jsonify(TOKEN_INVALID_RESPONSE), 400)
-
-        return f(current_user, *args, **kwargs)
-
-    return decorator
+def valid_username(email):
+    return bool(re.search(r"^[a-z0-9_]*$", email))
 
 
 @session_routes.route('/register', methods=['POST'])
@@ -55,8 +33,18 @@ def signup_user():
     if 'username' not in data or 'password' not in data or 'email' not in data:
         return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
 
+    invalid_email = not valid_email(data['email'])
+    invalid_username = not valid_username(data['username']) or len(data['username']) < MINIMUM_USERNAME_LENGTH
+    invalid_password = len(data['password']) < MINIMUM_PASSWORD_LENGTH
+
+    if invalid_email or invalid_username or invalid_password:
+        return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
+
     if db.session.query(Users).filter_by(username=data['username']).count() > 0:
         return make_response(jsonify(USER_EXISTS_RESPONSE), 400)
+
+    if db.session.query(Users).filter_by(email=data['email']).count() > 0:
+        return make_response(jsonify(EMAIL_IN_USE_RESPONSE), 400)
 
     hashed_password = generate_password_hash(data['password'])
 

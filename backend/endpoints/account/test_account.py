@@ -6,7 +6,7 @@ def test_should_return_email_in_account_info(client):
     response = client.get('/account_info', headers={"x-access-tokens": get_test_user_token(client)})
     assert response.status_code == 200
     assert 'email' in response.json
-    assert response.json['email'] == 'email1'
+    assert response.json['email'] == 'email1@gmail.com'
 
 
 def test_save_and_get_proper_values(client):
@@ -15,7 +15,7 @@ def test_save_and_get_proper_values(client):
     response = client.get('/account_info', headers={"x-access-tokens": get_test_user_token(client)})
     assert response.status_code == 200
     assert 'config_keys' in response.json
-    assert response.json['email'] == 'email1'
+    assert response.json['email'] == 'email1@gmail.com'
 
     key1_value = None
     key2_value = None

@@ -1,7 +1,7 @@
 from flask import jsonify, request, Blueprint
 
 from database import db
-from endpoints.session.session import token_required
+from endpoints.session.token_required import token_required
 from models.user_configs import UserConfigs
 from models.users import Users
 

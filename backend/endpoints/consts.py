@@ -1,0 +1,16 @@
+# success
+REGISTRATION_SUCCESS_RESPONSE = dict(message='Registered successfully')
+TOKEN_VALID_RESPONSE = dict(message='Token valid')
+
+# errors
+PARAMS_INVALID_RESPONSE = dict(error='Parameters invalid')
+USER_EXISTS_RESPONSE = dict(error='User already exists')
+EMAIL_IN_USE_RESPONSE = dict(error='E-mail in use')
+INCORRECT_CREDENTIALS_RESPONSE = dict(error='Incorrect credentials')
+TOKEN_MISSING_RESPONSE = dict(error='A valid token is missing')
+TOKEN_INVALID_RESPONSE = dict(error='Invalid token')
+TOKEN_EXPIRED_RESPONSE = dict(error='Expired token')
+
+TOKEN_VALIDITY_IN_DAYS = 30
+MINIMUM_USERNAME_LENGTH = 3
+MINIMUM_PASSWORD_LENGTH = 1

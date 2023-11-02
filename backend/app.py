@@ -6,6 +6,7 @@ from database import db
 from endpoints.account.account import account_routes
 from endpoints.general.general import general_routes
 from endpoints.session.session import session_routes
+from endpoints.session.test_token_required import token_required_test_routes
 
 if not db_username or not db_password or not db_name:
     print('No database creds detected')
@@ -16,6 +17,7 @@ def register_extensions(app):
     app.register_blueprint(account_routes)
     app.register_blueprint(session_routes)
     app.register_blueprint(general_routes)
+    app.register_blueprint(token_required_test_routes)
 
 
 def prepare_app():
