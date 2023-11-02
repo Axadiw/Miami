@@ -4,6 +4,7 @@ from functools import wraps
 
 import jwt
 from flask import jsonify, make_response, request, Blueprint
+from jwt import ExpiredSignatureError
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from consts_tpl import flask_api_secret
@@ -12,12 +13,19 @@ from models.users import Users
 
 session_routes = Blueprint('session_routes', __name__)
 
+# success
+REGISTRATION_SUCCESS_RESPONSE = dict(message='Registered successfully')
+TOKEN_VALID_RESPONSE = dict(message='Token valid')
+
+# error
 PARAMS_INVALID_RESPONSE = dict(error='Parameters invalid')
 USER_EXISTS_RESPONSE = dict(error='User already exists')
 INCORRECT_CREDENTIALS_RESPONSE = dict(error='Incorrect credentials')
 TOKEN_MISSING_RESPONSE = dict(error='A valid token is missing')
 TOKEN_INVALID_RESPONSE = dict(error='Invalid token')
-SUCCESS_RESPONSE = dict(message='Registered successfully')
+TOKEN_EXPIRED_RESPONSE = dict(error='Expired token')
+
+TOKEN_VALIDITY_IN_DAYS = 30
 
 
 def token_required(f):
@@ -56,7 +64,7 @@ def signup_user():
                      email=data['email'])
     db.session.add(new_user)
     db.session.commit()
-    return jsonify(SUCCESS_RESPONSE)
+    return jsonify(REGISTRATION_SUCCESS_RESPONSE)
 
 
 @session_routes.route('/login', methods=['POST'])
@@ -72,9 +80,26 @@ def login_user():
 
     if check_password_hash(user.password, auth.password):
         token = jwt.encode(
-            {'public_id': user.public_id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=45)},
+            {'public_id': user.public_id,
+             'exp': datetime.datetime.utcnow() + datetime.timedelta(days=TOKEN_VALIDITY_IN_DAYS)},
             flask_api_secret, "HS256")
 
         return jsonify({'token': token})
 
     return make_response(jsonify(INCORRECT_CREDENTIALS_RESPONSE), 400)
+
+
+@session_routes.route('/is_valid_token', methods=['POST'])
+def is_valid_token():
+    data = request.get_json()
+    if 'token' not in data:
+        return make_response(jsonify(TOKEN_MISSING_RESPONSE), 400)
+    token = data['token']
+
+    try:
+        jwt.decode(token, flask_api_secret, algorithms=["HS256"])
+        return make_response(jsonify(TOKEN_VALID_RESPONSE), 200)
+    except ExpiredSignatureError:
+        return make_response(jsonify(TOKEN_EXPIRED_RESPONSE), 400)
+    except:
+        return make_response(jsonify(TOKEN_INVALID_RESPONSE), 400)

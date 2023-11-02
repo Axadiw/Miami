@@ -1,7 +1,10 @@
 import base64
+import datetime
 
-from endpoints.session.session import PARAMS_INVALID_RESPONSE, SUCCESS_RESPONSE, USER_EXISTS_RESPONSE, \
-    INCORRECT_CREDENTIALS_RESPONSE
+from endpoints.session.session import PARAMS_INVALID_RESPONSE, REGISTRATION_SUCCESS_RESPONSE, USER_EXISTS_RESPONSE, \
+    INCORRECT_CREDENTIALS_RESPONSE, TOKEN_VALIDITY_IN_DAYS, TOKEN_VALID_RESPONSE, TOKEN_INVALID_RESPONSE, \
+    TOKEN_EXPIRED_RESPONSE
+from freezegun import freeze_time
 
 
 def get_test_user_token(client):
@@ -13,7 +16,7 @@ def get_test_user_token(client):
 
 def test_simple_registration(client):
     response = client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1'})
-    assert response.json == SUCCESS_RESPONSE
+    assert response.json == REGISTRATION_SUCCESS_RESPONSE
 
 
 def test_register_without_email(client):
@@ -87,3 +90,42 @@ def test_show_token_when_correct_credentials_passed(client):
     assert response.status_code == 200
     assert 'token' in response.json
     assert len(response.json['token']) > 0
+
+
+def test_valid_token_should_be_marked_as_valid(client):
+    initial_datetime = datetime.datetime(year=2000, month=1, day=1)
+    token = ''
+    with freeze_time(initial_datetime):
+        token = get_test_user_token(client)
+
+    with freeze_time(initial_datetime + datetime.timedelta(days=TOKEN_VALIDITY_IN_DAYS / 2)):
+        response = client.post("/is_valid_token", json={"token": token})
+        assert response.status_code == 200
+        assert response.json == TOKEN_VALID_RESPONSE
+
+
+def test_invalid_token_should_be_marked_as_invalid(client):
+    token = get_test_user_token(client)
+    response = client.post("/is_valid_token", json={"token": token + 'abcd'})
+    assert response.status_code == 400
+    assert response.json == TOKEN_INVALID_RESPONSE
+
+
+def test_missing_token_should(client):
+    response = client.post("/is_valid_token")
+    assert response.status_code == 415
+
+
+def test_expired_token_should_be_marked_as_invalid(client):
+    initial_datetime = datetime.datetime(year=2000, month=1, day=1)
+    token = ''
+    with freeze_time(initial_datetime):
+        token = get_test_user_token(client)
+
+    with freeze_time(initial_datetime + datetime.timedelta(days=TOKEN_VALIDITY_IN_DAYS + 1)):
+        response = client.post("/is_valid_token", json={"token": token})
+        assert response.status_code == 400
+        assert response.json == TOKEN_EXPIRED_RESPONSE
+
+# test dla duplikatu usera
+# test dla duplikatu emaila

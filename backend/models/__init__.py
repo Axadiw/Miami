@@ -1,4 +1,4 @@
-from sqlalchemy.ext.declarative import declarative_base
+import sqlalchemy
 
-Base = declarative_base()
+Base = sqlalchemy.orm.declarative_base()
 metadata = Base.metadata

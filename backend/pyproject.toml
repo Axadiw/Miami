@@ -18,6 +18,7 @@ pytest-flask = "^1.2.0"
 waitress = "^2.1.2"
 flask-cors = "^4.0.0"
 cors = "^1.0.1"
+freezegun = "^1.2.2"
 
 [tool.poetry.group.dev.dependencies]
 
