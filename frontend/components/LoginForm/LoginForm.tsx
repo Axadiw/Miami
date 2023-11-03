@@ -6,7 +6,8 @@ import { useLoginContext } from '@/contexts/LoginContext';
 
 export function LoginForm() {
   const { error: loginError, mutateAsync: loginUser, isPending } = useLoginUser();
-  const { setLoginToken } = useLoginContext();
+
+  const { setLoginToken, setLastLogoutReason, lastLogoutReason } = useLoginContext();
 
   const form = useForm({
     initialValues: {
@@ -23,6 +24,7 @@ export function LoginForm() {
   return (
     <form
       onSubmit={form.onSubmit(async () => {
+        setLastLogoutReason(undefined);
         setLoginToken(
           (
             await loginUser({
@@ -34,7 +36,7 @@ export function LoginForm() {
       })}
     >
       <Stack>
-        {loginError && (
+        {(loginError || lastLogoutReason) && (
           <Alert
             variant="light"
             color="red"
@@ -42,7 +44,7 @@ export function LoginForm() {
             title="Login error"
             icon={<IconInfoCircle />}
           >
-            {loginError.message}
+            {loginError?.message ?? lastLogoutReason}
           </Alert>
         )}
         <TextInput

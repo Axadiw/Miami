@@ -33,7 +33,8 @@ export default function AccountPage() {
 
   useEffect(() => {
     form.setValues({ ...fetchData });
-  }, [fetchData, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchData]);
 
   const errorMessage = fetchError?.message ?? saveError?.message;
 

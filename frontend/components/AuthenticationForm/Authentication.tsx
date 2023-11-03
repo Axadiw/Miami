@@ -1,15 +1,15 @@
 import { useToggle } from '@mantine/hooks';
-import { Anchor, Group, Paper, PaperProps, Space } from '@mantine/core';
+import { Anchor, Group, Paper, Space } from '@mantine/core';
 import React from 'react';
 import { RegisterForm } from '@/components/RegisterForm/RegisterForm';
 import { LoginForm } from '@/components/LoginForm/LoginForm';
 import { ColorSchemeToggle } from '@/components/ColorSchemeToggle/ColorSchemeToggle';
 
-export function Authentication(props: PaperProps) {
+export function Authentication() {
   const [type, toggle] = useToggle(['login', 'register']);
 
   return (
-    <Paper radius="md" p="xl" withBorder {...props}>
+    <Paper radius="md" p="xl" withBorder>
       {type === 'register' ? (
         <RegisterForm
           switchToLoginCallback={() => {
