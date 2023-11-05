@@ -9,7 +9,11 @@ interface RegisterFormProps {
 
 export function RegisterForm(props: RegisterFormProps) {
   const dataLayer = useDataLayerContext();
-  const { error: registerError, mutateAsync: registerUser, isPending } = dataLayer.useRegisterUser;
+  const {
+    error: registerError,
+    mutateAsync: registerUser,
+    isPending,
+  } = dataLayer.useRegisterUser();
   const form = useForm({
     initialValues: {
       email: '',

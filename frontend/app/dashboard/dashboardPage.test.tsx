@@ -1,22 +1,51 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import moxios from 'moxios';
-import { RootContainer } from '@/components/RootContainer/RootContainer';
+import React from 'react';
+import { MantineProvider } from '@mantine/core';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import DashboardPage from '@/app/dashboard/dashboardPage';
+import { ContentContainer } from '@/components/ContentContainer/ContentContainer';
+import { MockedDataLayerBuilder } from '@/contexts/__testing__/MockedDataLayer';
+import { DataLayerContext } from '@/contexts/DataLayerContext';
+import { theme } from '@/theme';
+import { LoginContextProvider } from '@/contexts/LoginContext';
+
+jest.mock('next/navigation', () => ({
+  useRouter() {
+    return {
+      prefetch: () => null,
+    };
+  },
+  usePathname() {
+    return {};
+  },
+}));
 
 describe('dashboardPage', () => {
-  beforeEach(() => {
-    // import and pass your custom axios instance to this method
-    moxios.install();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: Infinity,
+      },
+    },
   });
-  afterEach(() => {
-    // import and pass your custom axios instance to this method
-    moxios.uninstall();
-  });
+  const dataLayer = new MockedDataLayerBuilder()
+    .loginUserReturn()
+    .checkIfLoginTokenIsValidReturns()
+    .appGetVersionReturns()
+    .build();
   const setup = () => {
     render(
-      <RootContainer>
-        <DashboardPage />
-      </RootContainer>
+      <QueryClientProvider client={queryClient}>
+        <LoginContextProvider>
+          <DataLayerContext.Provider value={dataLayer}>
+            <MantineProvider theme={theme}>
+              <ContentContainer>
+                <DashboardPage />
+              </ContentContainer>
+            </MantineProvider>
+          </DataLayerContext.Provider>
+        </LoginContextProvider>
+      </QueryClientProvider>
     );
   };
   it('should show login page if no login token available', () => {
@@ -31,19 +60,7 @@ describe('dashboardPage', () => {
     ).toBeInTheDocument();
   });
 
-  it.skip('should show dashboard page after login', async () => {
-    moxios.stubRequest('post', '/login', {
-      status: 200,
-      responseText: 'hello',
-    });
-    // const allowedHeaders = ['ClientName', 'ClientVersion', 'Content-Type', 'Authorization'];
-    // const nockHeaders = {
-    //   'Access-Control-Allow-Origin': '*',
-    //   'Access-Control-Allow-Headers': allowedHeaders.join(','),
-    // };
-    //
-    // nock(BASE_URL).intercept('*', '/login').reply(200, undefined, nockHeaders).persist();
-    // const scope = nock(BASE_URL).persist().post('/login').reply(200, 'BLABLA');
+  it('should show dashboard page after login', async () => {
     setup();
     fireEvent.change(
       screen.getByRole('textbox', {

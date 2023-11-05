@@ -9,16 +9,16 @@ import { RegisterProps, RegisterResponse, useRegisterUser } from '@/api/useRegis
 import { useSaveAccountInfo } from '@/api/useSaveAccountInfo';
 import { UserConfig } from '@/app/account/accountPage';
 
-interface DataLayerContext {
-  useAppGetVersion: UseQueryResult<string, Error>;
-  useCheckIfLoginTokenIsValid: UseQueryResult<boolean, Error>;
-  useGetAccountInfo: UseQueryResult<UserConfig, Error>;
-  useLoginUser: UseMutationResult<LoginResponse, Error, LoginProps, unknown>;
-  useRegisterUser: UseMutationResult<RegisterResponse, Error, RegisterProps, unknown>;
-  useSaveAccountInfo: UseMutationResult<AxiosResponse<any, any>, Error, UserConfig, unknown>;
+export interface DataLayer {
+  useAppGetVersion: () => UseQueryResult<string, Error>;
+  useCheckIfLoginTokenIsValid: () => UseQueryResult<boolean, Error>;
+  useGetAccountInfo: () => UseQueryResult<UserConfig, Error>;
+  useLoginUser: () => UseMutationResult<LoginResponse, Error, LoginProps, unknown>;
+  useRegisterUser: () => UseMutationResult<RegisterResponse, Error, RegisterProps, unknown>;
+  useSaveAccountInfo: () => UseMutationResult<AxiosResponse<any, any>, Error, UserConfig, unknown>;
 }
 
-export const DataLayerContext = createContext<DataLayerContext>({} as DataLayerContext);
+export const DataLayerContext = createContext<DataLayer>({} as DataLayer);
 
 export const useDataLayerContext = () => useContext(DataLayerContext);
 
@@ -31,12 +31,12 @@ export const DataLayerContextProvider = ({ children }: { children: ReactNode }) 
   const saveAccountInfo = useSaveAccountInfo();
   const value = useMemo(
     () => ({
-      useAppGetVersion: appGetVersion,
-      useCheckIfLoginTokenIsValid: checkIfLoginTokenIsValid,
-      useGetAccountInfo: getAccountInfo,
-      useLoginUser: loginUser,
-      useRegisterUser: registerUser,
-      useSaveAccountInfo: saveAccountInfo,
+      useAppGetVersion: () => appGetVersion,
+      useCheckIfLoginTokenIsValid: () => checkIfLoginTokenIsValid,
+      useGetAccountInfo: () => getAccountInfo,
+      useLoginUser: () => loginUser,
+      useRegisterUser: () => registerUser,
+      useSaveAccountInfo: () => saveAccountInfo,
     }),
     [
       appGetVersion,

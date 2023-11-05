@@ -6,7 +6,7 @@ import { useDataLayerContext } from '@/contexts/DataLayerContext';
 
 export function LoginForm() {
   const dataLayer = useDataLayerContext();
-  const { error: loginError, mutateAsync: loginUser, isPending } = dataLayer.useLoginUser;
+  const { error: loginError, mutateAsync: loginUser, isPending } = dataLayer.useLoginUser();
 
   const { setLoginToken, setLastLogoutReason, lastLogoutReason } = useLoginContext();
 
@@ -26,14 +26,11 @@ export function LoginForm() {
     <form
       onSubmit={form.onSubmit(async () => {
         setLastLogoutReason(undefined);
-        setLoginToken(
-          (
-            await loginUser({
-              login: form.values.login,
-              password: form.values.password,
-            })
-          ).token
-        );
+        const loginResponse = await loginUser({
+          login: form.values.login,
+          password: form.values.password,
+        });
+        setLoginToken(loginResponse.token);
       })}
     >
       <Stack>

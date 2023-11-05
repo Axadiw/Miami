@@ -2,7 +2,6 @@
 
 import '@mantine/core/styles.css';
 import React from 'react';
-import { ColorSchemeScript } from '@mantine/core';
 import Script from 'next/script';
 import { RootContainer } from '@/components/RootContainer/RootContainer';
 
@@ -10,7 +9,7 @@ export default function RootLayout({ children }: { children: any }) {
   return (
     <html lang="en">
       <head>
-        <ColorSchemeScript />
+        {/*<ColorSchemeScript />*/}
         <link rel="shortcut icon" href="/favicon.png" />
         <meta
           name="viewport"

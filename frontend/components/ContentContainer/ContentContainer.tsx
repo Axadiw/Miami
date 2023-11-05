@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { LoggedInContentContainer } from '@/components/LoggedInContentContainer/LoggedInContentContainer';
 import { Authentication } from '@/components/AuthenticationForm/Authentication';
 import { useLoginContext } from '@/contexts/LoginContext';
@@ -7,10 +7,9 @@ import { useDataLayerContext } from '@/contexts/DataLayerContext';
 
 export function ContentContainer({ children }: { children: any }) {
   const { loginToken, setLoginToken, setLastLogoutReason } = useLoginContext();
-
   const dataLayer = useDataLayerContext();
   const { data: isLoginTokenValid, isSuccess: isLoginTokenValidSuccess } =
-    dataLayer.useCheckIfLoginTokenIsValid;
+    dataLayer.useCheckIfLoginTokenIsValid();
 
   useEffect(() => {
     if (loginToken && !isLoginTokenValid && isLoginTokenValidSuccess) {
@@ -25,9 +24,13 @@ export function ContentContainer({ children }: { children: any }) {
 
   const isLoggedIn = loginToken !== null;
 
-  return isLoggedIn ? (
-    <LoggedInContentContainer>{children}</LoggedInContentContainer>
-  ) : (
-    <Authentication />
+  return (
+    <Suspense fallback={<Loading />}>
+      {isLoggedIn ? (
+        <LoggedInContentContainer>{children}</LoggedInContentContainer>
+      ) : (
+        <Authentication />
+      )}
+    </Suspense>
   );
 }

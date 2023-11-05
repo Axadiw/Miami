@@ -1,4 +1,4 @@
-import { AppShell, Center, Code, Flex, Group, useMantineColorScheme } from '@mantine/core';
+import { AppShell, Center, Code, Flex, Group } from '@mantine/core';
 import Image from 'next/image';
 import {
   IconBolt,
@@ -11,7 +11,6 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { usePathname, useRouter } from 'next/navigation';
-import { ColorSchemeToggle } from '@/components/ColorSchemeToggle/ColorSchemeToggle';
 import classes from '@/app/styles/NavbarSimple.module.css';
 import darkLogoImage from '@/public/logo-dark.png';
 import lightLogoImage from '@/public/logo-light.png';
@@ -32,12 +31,12 @@ export function LoggedInContentContainer({ children }: { children: any }) {
 
   const pathName = usePathname();
   const router = useRouter();
-  const { colorScheme } = useMantineColorScheme();
-  const isDarkTheme = colorScheme === 'dark';
-  // const isDarkTheme = true;
+  // const { colorScheme } = useMantineColorScheme();
+  // const isDarkTheme = colorScheme === 'dark';
+  const isDarkTheme = true;
 
   const dataLayer = useDataLayerContext();
-  const { status: versionDataFetchStatus, data: versionData } = dataLayer.useAppGetVersion;
+  const { status: versionDataFetchStatus, data: versionData } = dataLayer.useAppGetVersion();
 
   useEffect(() => {
     const possibleTabs = data.filter((item) => item.link === pathName);
@@ -114,7 +113,7 @@ export function LoggedInContentContainer({ children }: { children: any }) {
               <span>Logout</span>
             </a>
             <Group p="10px">
-              <ColorSchemeToggle />
+              {/*<ColorSchemeToggle />*/}
               <Code fw={700}>
                 version: {versionDataFetchStatus === 'success' ? versionData : ''}
               </Code>

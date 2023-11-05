@@ -32,8 +32,8 @@ export default function AccountPage() {
     data: fetchData,
     isLoading: fetchLoading,
     error: fetchError,
-  } = dataLayer.useGetAccountInfo;
-  const { error: saveError, mutate: saveAccountInfo } = dataLayer.useSaveAccountInfo;
+  } = dataLayer.useGetAccountInfo();
+  const { error: saveError, mutate: saveAccountInfo } = dataLayer.useSaveAccountInfo();
 
   useEffect(() => {
     form.setValues({ ...fetchData });
