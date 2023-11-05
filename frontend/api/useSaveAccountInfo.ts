@@ -1,9 +1,20 @@
 import axios from 'axios';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, UseMutationResult, useQueryClient } from '@tanstack/react-query';
 import { BASE_URL } from '@/app/consts';
 import { UserConfig } from '@/app/account/accountPage';
-import { useLoginContext } from '@/contexts/LoginContext';
+import { useLoginContext } from '@/contexts/LoginContext/LoginContext';
 import { AccountInfoCacheKey } from '@/api/useGetAccountInfo';
+
+export type UseSaveAccountInfoResult = UseMutationResult<
+  SaveAccountInfoResponse,
+  Error,
+  UserConfig,
+  unknown
+>;
+
+export interface SaveAccountInfoResponse {
+  message: string;
+}
 
 export const saveAccountInfo = async (token: string | null | undefined, info: UserConfig) => {
   if (!token) {
@@ -11,7 +22,7 @@ export const saveAccountInfo = async (token: string | null | undefined, info: Us
   }
 
   try {
-    return await axios.request({
+    return (await axios.request({
       method: 'post',
       url: `${BASE_URL}/save_config`,
       headers: {
@@ -25,13 +36,13 @@ export const saveAccountInfo = async (token: string | null | undefined, info: Us
         bybit_api_key: info.byBitApiKey,
         bybit_api_secret: info.byBitApiSecret,
       }),
-    });
+    })) as SaveAccountInfoResponse;
   } catch (error: any) {
     throw new Error(error.response.data.error);
   }
 };
 
-export const useSaveAccountInfo = () => {
+export const useSaveAccountInfo = (): UseSaveAccountInfoResult => {
   const { loginToken } = useLoginContext();
   const queryClient = useQueryClient();
   return useMutation({

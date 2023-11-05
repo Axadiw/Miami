@@ -1,7 +1,7 @@
 import { useForm } from '@mantine/form';
 import { Alert, Button, Group, PasswordInput, Stack, TextInput } from '@mantine/core';
 import { IconInfoCircle } from '@tabler/icons-react';
-import { useDataLayerContext } from '@/contexts/DataLayerContext';
+import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 
 interface RegisterFormProps {
   switchToLoginCallback: () => void;

@@ -4,7 +4,7 @@ import { Alert, Button, Group, Skeleton, Stack, TextInput } from '@mantine/core'
 import { IconInfoCircle } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { useForm } from '@mantine/form';
-import { useDataLayerContext } from '@/contexts/DataLayerContext';
+import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 
 export interface UserConfig {
   threeCommasAccountId: string;

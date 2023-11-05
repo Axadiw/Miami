@@ -1,9 +1,9 @@
 import React, { Suspense, useEffect } from 'react';
 import { LoggedInContentContainer } from '@/components/LoggedInContentContainer/LoggedInContentContainer';
 import { Authentication } from '@/components/AuthenticationForm/Authentication';
-import { useLoginContext } from '@/contexts/LoginContext';
+import { useLoginContext } from '@/contexts/LoginContext/LoginContext';
 import Loading from '@/app/loading';
-import { useDataLayerContext } from '@/contexts/DataLayerContext';
+import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 
 export function ContentContainer({ children }: { children: any }) {
   const { loginToken, setLoginToken, setLastLogoutReason } = useLoginContext();

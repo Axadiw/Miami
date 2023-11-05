@@ -3,6 +3,7 @@ import { Anchor, Group, Paper, Space } from '@mantine/core';
 import React from 'react';
 import { RegisterForm } from '@/components/RegisterForm/RegisterForm';
 import { LoginForm } from '@/components/LoginForm/LoginForm';
+import { ColorSchemeToggle } from '@/components/ColorSchemeToggle/ColorSchemeToggle';
 
 export function Authentication() {
   const [type, toggle] = useToggle(['login', 'register']);
@@ -26,7 +27,7 @@ export function Authentication() {
         </Anchor>
       </Group>
       <Space h="lg" />
-      {/*<ColorSchemeToggle />*/}
+      <ColorSchemeToggle />
     </Paper>
   );
 }

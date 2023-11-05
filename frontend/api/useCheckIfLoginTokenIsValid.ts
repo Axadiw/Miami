@@ -1,15 +1,19 @@
 import axios from 'axios';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { BASE_URL } from '@/app/consts';
-import { useLoginContext } from '@/contexts/LoginContext';
+import { useLoginContext } from '@/contexts/LoginContext/LoginContext';
 
-interface IsValidTokenResponse {
+export type UseCheckIfLoginValidResult = UseQueryResult<boolean, Error>;
+
+interface CheckIsValidTokenResponse {
   message: string;
 }
 
-export const IsLoginTokenValidCacheKey = 'Is Login Token Valid';
+export const CheckIsLoginTokenValidCacheKey = 'Is Login Token Valid';
 
-export const checkIfLoginTokenIsValid = async (token: string | null | undefined) => {
+export const checkIfLoginTokenIsValid = async (
+  token: string | null | undefined
+): Promise<boolean> => {
   if (!token) {
     return Promise.resolve(false);
   }
@@ -26,7 +30,7 @@ export const checkIfLoginTokenIsValid = async (token: string | null | undefined)
           token,
         }),
       })
-      .then((response) => response.data as IsValidTokenResponse)
+      .then((response) => response.data as CheckIsValidTokenResponse)
       .then((response) => response.message === 'Token valid')
       .catch(() => false);
   } catch (error: any) {
@@ -34,10 +38,10 @@ export const checkIfLoginTokenIsValid = async (token: string | null | undefined)
   }
 };
 
-export const useCheckIfLoginTokenIsValid = () => {
+export const useCheckIfLoginTokenIsValid = (): UseCheckIfLoginValidResult => {
   const { loginToken } = useLoginContext();
   return useQuery({
-    queryKey: [IsLoginTokenValidCacheKey, loginToken],
+    queryKey: [CheckIsLoginTokenValidCacheKey, loginToken],
     queryFn: () => checkIfLoginTokenIsValid(loginToken),
     refetchInterval: 60 * 1000,
   });

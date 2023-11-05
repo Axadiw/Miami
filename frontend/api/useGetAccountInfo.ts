@@ -1,8 +1,10 @@
 import axios from 'axios';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { BASE_URL } from '@/app/consts';
 import { UserConfig } from '@/app/account/accountPage';
-import { useLoginContext } from '@/contexts/LoginContext';
+import { useLoginContext } from '@/contexts/LoginContext/LoginContext';
+
+export type UseGetAccountInfoResult = UseQueryResult<UserConfig, Error>;
 
 interface ConfigPair {
   key: string;
@@ -16,7 +18,7 @@ interface AccountInfoResponse {
 
 export const AccountInfoCacheKey = 'Account info';
 
-async function getAccountInfo(token: string | null | undefined) {
+async function getAccountInfo(token: string | null | undefined): Promise<UserConfig> {
   if (!token) {
     return Promise.reject(NotLoggedInError);
   }
@@ -66,7 +68,7 @@ async function getAccountInfo(token: string | null | undefined) {
     });
 }
 
-export const useGetAccountInfo = () => {
+export const useGetAccountInfo = (): UseGetAccountInfoResult => {
   const { loginToken } = useLoginContext();
   return useQuery({
     queryKey: [AccountInfoCacheKey, loginToken],

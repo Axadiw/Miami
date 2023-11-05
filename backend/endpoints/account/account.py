@@ -1,6 +1,7 @@
 from flask import jsonify, request, Blueprint
 
 from database import db
+from endpoints.consts import USER_CONFIG_SAVED_RESPONSE
 from endpoints.session.token_required import token_required
 from models.user_configs import UserConfigs
 from models.users import Users
@@ -24,7 +25,7 @@ def save_config(user):
                 db.session.add(UserConfigs(user_id=user.id, key=key, value=data[key]))
         db.session.commit()
 
-    return jsonify({'message': 'config saved'})
+    return jsonify(USER_CONFIG_SAVED_RESPONSE)
 
 
 @account_routes.route('/account_info', methods=['GET'])

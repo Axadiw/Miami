@@ -1,8 +1,8 @@
 import { useForm } from '@mantine/form';
 import { Alert, Button, Group, PasswordInput, Stack, TextInput } from '@mantine/core';
 import { IconInfoCircle } from '@tabler/icons-react';
-import { useLoginContext } from '@/contexts/LoginContext';
-import { useDataLayerContext } from '@/contexts/DataLayerContext';
+import { useLoginContext } from '@/contexts/LoginContext/LoginContext';
+import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 
 export function LoginForm() {
   const dataLayer = useDataLayerContext();

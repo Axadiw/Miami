@@ -4,10 +4,10 @@ import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import DashboardPage from '@/app/dashboard/dashboardPage';
 import { ContentContainer } from '@/components/ContentContainer/ContentContainer';
-import { MockedDataLayerBuilder } from '@/contexts/__testing__/MockedDataLayer';
-import { DataLayerContext } from '@/contexts/DataLayerContext';
 import { theme } from '@/theme';
-import { LoginContextProvider } from '@/contexts/LoginContext';
+import { LoginContextProvider } from '@/contexts/LoginContext/LoginContext';
+import { MockedDataLayerBuilder } from '@/contexts/DataLayerContext/__testing__/MockedDataLayer';
+import { DataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 
 jest.mock('next/navigation', () => ({
   useRouter() {

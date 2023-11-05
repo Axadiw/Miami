@@ -1,4 +1,4 @@
-import { AppShell, Center, Code, Flex, Group } from '@mantine/core';
+import { AppShell, Center, Code, Flex, Group, useMantineColorScheme } from '@mantine/core';
 import Image from 'next/image';
 import {
   IconBolt,
@@ -14,8 +14,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import classes from '@/app/styles/NavbarSimple.module.css';
 import darkLogoImage from '@/public/logo-dark.png';
 import lightLogoImage from '@/public/logo-light.png';
-import { useLoginContext } from '@/contexts/LoginContext';
-import { useDataLayerContext } from '@/contexts/DataLayerContext';
+import { useLoginContext } from '@/contexts/LoginContext/LoginContext';
+import { ColorSchemeToggle } from '@/components/ColorSchemeToggle/ColorSchemeToggle';
+import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 
 const data = [
   { link: '/', label: 'Dashboard', icon: IconDashboard },
@@ -31,9 +32,8 @@ export function LoggedInContentContainer({ children }: { children: any }) {
 
   const pathName = usePathname();
   const router = useRouter();
-  // const { colorScheme } = useMantineColorScheme();
-  // const isDarkTheme = colorScheme === 'dark';
-  const isDarkTheme = true;
+  const { colorScheme } = useMantineColorScheme();
+  const isDarkTheme = colorScheme === 'dark';
 
   const dataLayer = useDataLayerContext();
   const { status: versionDataFetchStatus, data: versionData } = dataLayer.useAppGetVersion();
@@ -113,7 +113,7 @@ export function LoggedInContentContainer({ children }: { children: any }) {
               <span>Logout</span>
             </a>
             <Group p="10px">
-              {/*<ColorSchemeToggle />*/}
+              <ColorSchemeToggle />
               <Code fw={700}>
                 version: {versionDataFetchStatus === 'success' ? versionData : ''}
               </Code>

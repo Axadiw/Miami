@@ -1,21 +1,21 @@
 import { createContext, ReactNode, useContext, useMemo } from 'react';
-import { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
-import { AxiosResponse } from 'axios';
-import { useAppGetVersion } from '@/api/useAppGetVersion';
-import { useCheckIfLoginTokenIsValid } from '@/api/useCheckIfLoginTokenIsValid';
-import { useGetAccountInfo } from '@/api/useGetAccountInfo';
-import { LoginProps, LoginResponse, useLoginUser } from '@/api/useLoginUser';
-import { RegisterProps, RegisterResponse, useRegisterUser } from '@/api/useRegisterUser';
-import { useSaveAccountInfo } from '@/api/useSaveAccountInfo';
-import { UserConfig } from '@/app/account/accountPage';
+import { useAppGetVersion, UseGetAppVersionResult } from '@/api/useAppGetVersion';
+import {
+  useCheckIfLoginTokenIsValid,
+  UseCheckIfLoginValidResult,
+} from '@/api/useCheckIfLoginTokenIsValid';
+import { useGetAccountInfo, UseGetAccountInfoResult } from '@/api/useGetAccountInfo';
+import { useLoginUser, UseLoginUserResult } from '@/api/useLoginUser';
+import { useRegisterUser, UseRegisterUserResult } from '@/api/useRegisterUser';
+import { useSaveAccountInfo, UseSaveAccountInfoResult } from '@/api/useSaveAccountInfo';
 
 export interface DataLayer {
-  useAppGetVersion: () => UseQueryResult<string, Error>;
-  useCheckIfLoginTokenIsValid: () => UseQueryResult<boolean, Error>;
-  useGetAccountInfo: () => UseQueryResult<UserConfig, Error>;
-  useLoginUser: () => UseMutationResult<LoginResponse, Error, LoginProps, unknown>;
-  useRegisterUser: () => UseMutationResult<RegisterResponse, Error, RegisterProps, unknown>;
-  useSaveAccountInfo: () => UseMutationResult<AxiosResponse<any, any>, Error, UserConfig, unknown>;
+  useAppGetVersion: () => UseGetAppVersionResult;
+  useCheckIfLoginTokenIsValid: () => UseCheckIfLoginValidResult;
+  useGetAccountInfo: () => UseGetAccountInfoResult;
+  useLoginUser: () => UseLoginUserResult;
+  useRegisterUser: () => UseRegisterUserResult;
+  useSaveAccountInfo: () => UseSaveAccountInfoResult;
 }
 
 export const DataLayerContext = createContext<DataLayer>({} as DataLayer);
