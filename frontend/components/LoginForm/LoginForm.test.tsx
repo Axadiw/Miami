@@ -1,17 +1,13 @@
 import { render, screen } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MantineProvider } from '@mantine/core';
 import { LoginForm } from '@/components/LoginForm/LoginForm';
+import { RootContainer } from '@/components/RootContainer/RootContainer';
 
 describe('LoginForm', () => {
   const setup = () => {
-    const queryClient = new QueryClient();
     render(
-      <MantineProvider>
-        <QueryClientProvider client={queryClient}>
-          <LoginForm />
-        </QueryClientProvider>
-      </MantineProvider>
+      <RootContainer>
+        <LoginForm />
+      </RootContainer>
     );
   };
   it('shows correct text', () => {

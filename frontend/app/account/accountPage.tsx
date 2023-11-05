@@ -4,8 +4,7 @@ import { Alert, Button, Group, Skeleton, Stack, TextInput } from '@mantine/core'
 import { IconInfoCircle } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { useForm } from '@mantine/form';
-import { useGetAccountInfo } from '@/api/useGetAccountInfo';
-import { useSaveAccountInfo } from '@/api/useSaveAccountInfo';
+import { useDataLayerContext } from '@/contexts/DataLayerContext';
 
 export interface UserConfig {
   threeCommasAccountId: string;
@@ -28,8 +27,13 @@ export default function AccountPage() {
     },
   });
 
-  const { data: fetchData, isLoading: fetchLoading, error: fetchError } = useGetAccountInfo();
-  const { error: saveError, mutate: saveAccountInfo } = useSaveAccountInfo();
+  const dataLayer = useDataLayerContext();
+  const {
+    data: fetchData,
+    isLoading: fetchLoading,
+    error: fetchError,
+  } = dataLayer.useGetAccountInfo;
+  const { error: saveError, mutate: saveAccountInfo } = dataLayer.useSaveAccountInfo;
 
   useEffect(() => {
     form.setValues({ ...fetchData });

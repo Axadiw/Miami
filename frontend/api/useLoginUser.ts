@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { BASE_URL } from '@/app/consts';
 import { useMutation } from '@tanstack/react-query';
+import { BASE_URL } from '@/app/consts';
 
-interface LoginResponse {
+export interface LoginResponse {
   token: string;
 }
 
@@ -24,18 +24,13 @@ export async function loginUser(props: LoginProps) {
         password: props.password,
       },
     })
-    .then((response) => {
-      return response.data as LoginResponse;
-    })
+    .then((response) => response.data as LoginResponse)
     .catch((error) => {
       throw new Error(error.response.data.error);
     });
 }
 
-export const useLoginUser = () => {
-  return useMutation({
-    mutationFn: (props: LoginProps) => {
-      return loginUser(props);
-    },
+export const useLoginUser = () =>
+  useMutation({
+    mutationFn: (props: LoginProps) => loginUser(props),
   });
-};

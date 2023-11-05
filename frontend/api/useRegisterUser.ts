@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { BASE_URL } from '@/app/consts';
 import { useMutation } from '@tanstack/react-query';
+import { BASE_URL } from '@/app/consts';
 
-interface RegisterResponse {
+export interface RegisterResponse {
   message: string;
 }
 
@@ -14,7 +14,7 @@ export interface RegisterProps {
 
 const registerUser = async (props: RegisterProps) => {
   try {
-    let response = await axios.request({
+    const response = await axios.request({
       method: 'post',
       url: `${BASE_URL}/register`,
       headers: {
@@ -32,10 +32,7 @@ const registerUser = async (props: RegisterProps) => {
   }
 };
 
-export const useRegisterUser = () => {
-  return useMutation({
-    mutationFn: (props: RegisterProps) => {
-      return registerUser(props);
-    },
+export const useRegisterUser = () =>
+  useMutation({
+    mutationFn: (props: RegisterProps) => registerUser(props),
   });
-};

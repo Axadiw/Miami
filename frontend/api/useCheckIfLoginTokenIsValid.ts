@@ -1,5 +1,7 @@
 import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
 import { BASE_URL } from '@/app/consts';
+import { useLoginContext } from '@/contexts/LoginContext';
 
 interface IsValidTokenResponse {
   message: string;
@@ -30,4 +32,13 @@ export const checkIfLoginTokenIsValid = async (token: string | null | undefined)
   } catch (error: any) {
     throw new Error(error.response.data.error);
   }
+};
+
+export const useCheckIfLoginTokenIsValid = () => {
+  const { loginToken } = useLoginContext();
+  return useQuery({
+    queryKey: [IsLoginTokenValidCacheKey, loginToken],
+    queryFn: () => checkIfLoginTokenIsValid(loginToken),
+    refetchInterval: 60 * 1000,
+  });
 };

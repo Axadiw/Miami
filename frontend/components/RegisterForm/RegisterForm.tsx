@@ -1,14 +1,15 @@
 import { useForm } from '@mantine/form';
 import { Alert, Button, Group, PasswordInput, Stack, TextInput } from '@mantine/core';
 import { IconInfoCircle } from '@tabler/icons-react';
-import { useRegisterUser } from '@/api/useRegisterUser';
+import { useDataLayerContext } from '@/contexts/DataLayerContext';
 
 interface RegisterFormProps {
   switchToLoginCallback: () => void;
 }
 
 export function RegisterForm(props: RegisterFormProps) {
-  const { error: registerError, mutateAsync: registerUser, isPending } = useRegisterUser();
+  const dataLayer = useDataLayerContext();
+  const { error: registerError, mutateAsync: registerUser, isPending } = dataLayer.useRegisterUser;
   const form = useForm({
     initialValues: {
       email: '',

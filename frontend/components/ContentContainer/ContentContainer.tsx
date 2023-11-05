@@ -1,22 +1,16 @@
 import React, { useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { LoggedInContentContainer } from '@/components/LoggedInContentContainer/LoggedInContentContainer';
 import { Authentication } from '@/components/AuthenticationForm/Authentication';
 import { useLoginContext } from '@/contexts/LoginContext';
 import Loading from '@/app/loading';
-import {
-  checkIfLoginTokenIsValid,
-  IsLoginTokenValidCacheKey,
-} from '@/api/useCheckIfLoginTokenIsValid';
+import { useDataLayerContext } from '@/contexts/DataLayerContext';
 
-export function AppContainer({ children }: { children: any }) {
+export function ContentContainer({ children }: { children: any }) {
   const { loginToken, setLoginToken, setLastLogoutReason } = useLoginContext();
 
-  const { data: isLoginTokenValid, isSuccess: isLoginTokenValidSuccess } = useQuery({
-    queryKey: [IsLoginTokenValidCacheKey, loginToken],
-    queryFn: () => checkIfLoginTokenIsValid(loginToken),
-    refetchInterval: 60 * 1000,
-  });
+  const dataLayer = useDataLayerContext();
+  const { data: isLoginTokenValid, isSuccess: isLoginTokenValidSuccess } =
+    dataLayer.useCheckIfLoginTokenIsValid;
 
   useEffect(() => {
     if (loginToken && !isLoginTokenValid && isLoginTokenValidSuccess) {

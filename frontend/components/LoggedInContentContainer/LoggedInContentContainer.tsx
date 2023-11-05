@@ -1,4 +1,4 @@
-import { AppShell, Center, Code, Flex, Group } from '@mantine/core';
+import { AppShell, Center, Code, Flex, Group, useMantineColorScheme } from '@mantine/core';
 import Image from 'next/image';
 import {
   IconBolt,
@@ -13,9 +13,10 @@ import { useDisclosure } from '@mantine/hooks';
 import { usePathname, useRouter } from 'next/navigation';
 import { ColorSchemeToggle } from '@/components/ColorSchemeToggle/ColorSchemeToggle';
 import classes from '@/app/styles/NavbarSimple.module.css';
-import logoImage from '@/public/logo.png';
+import darkLogoImage from '@/public/logo-dark.png';
+import lightLogoImage from '@/public/logo-light.png';
 import { useLoginContext } from '@/contexts/LoginContext';
-import { useAppGetVersion } from '@/api/useAppGetVersion';
+import { useDataLayerContext } from '@/contexts/DataLayerContext';
 
 const data = [
   { link: '/', label: 'Dashboard', icon: IconDashboard },
@@ -31,8 +32,12 @@ export function LoggedInContentContainer({ children }: { children: any }) {
 
   const pathName = usePathname();
   const router = useRouter();
+  const { colorScheme } = useMantineColorScheme();
+  const isDarkTheme = colorScheme === 'dark';
+  // const isDarkTheme = true;
 
-  const { status: versionDataFetchStatus, data: versionData } = useAppGetVersion();
+  const dataLayer = useDataLayerContext();
+  const { status: versionDataFetchStatus, data: versionData } = dataLayer.useAppGetVersion;
 
   useEffect(() => {
     const possibleTabs = data.filter((item) => item.link === pathName);
@@ -69,7 +74,7 @@ export function LoggedInContentContainer({ children }: { children: any }) {
         <Flex p="8px">
           <Center>
             <Image
-              src={logoImage}
+              src={isDarkTheme ? darkLogoImage : lightLogoImage}
               alt="logo"
               width={32}
               onClick={() => {

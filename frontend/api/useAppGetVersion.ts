@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { BASE_URL } from '@/app/consts';
 import { useQuery } from '@tanstack/react-query';
+import { BASE_URL } from '@/app/consts';
 
 interface VersionResponse {
   message: string;
@@ -17,17 +17,12 @@ async function getAppVersion() {
         'Content-Type': 'application/json',
       },
     })
-    .then((response) => {
-      return response.data as VersionResponse;
-    })
-    .then((parsedData) => {
-      return parsedData.message;
-    });
+    .then((response) => response.data as VersionResponse)
+    .then((parsedData) => parsedData.message);
 }
 
-export const useAppGetVersion = () => {
-  return useQuery({
+export const useAppGetVersion = () =>
+  useQuery({
     queryKey: [GetAppVersionCacheKey],
     queryFn: () => getAppVersion(),
   });
-};

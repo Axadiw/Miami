@@ -1,11 +1,12 @@
 import { useForm } from '@mantine/form';
 import { Alert, Button, Group, PasswordInput, Stack, TextInput } from '@mantine/core';
 import { IconInfoCircle } from '@tabler/icons-react';
-import { useLoginUser } from '@/api/useLoginUser';
 import { useLoginContext } from '@/contexts/LoginContext';
+import { useDataLayerContext } from '@/contexts/DataLayerContext';
 
 export function LoginForm() {
-  const { error: loginError, mutateAsync: loginUser, isPending } = useLoginUser();
+  const dataLayer = useDataLayerContext();
+  const { error: loginError, mutateAsync: loginUser, isPending } = dataLayer.useLoginUser;
 
   const { setLoginToken, setLastLogoutReason, lastLogoutReason } = useLoginContext();
 

@@ -1,18 +1,12 @@
 'use client';
 
 import '@mantine/core/styles.css';
-import React, { Suspense } from 'react';
-import { ColorSchemeScript, MantineProvider } from '@mantine/core';
+import React from 'react';
+import { ColorSchemeScript } from '@mantine/core';
 import Script from 'next/script';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { theme } from '@/theme';
-import Loading from '@/app/loading';
-import { LoginContextProvider } from '@/contexts/LoginContext';
-import { AppContainer } from '@/components/AppContainer/AppContainer';
+import { RootContainer } from '@/components/RootContainer/RootContainer';
 
 export default function RootLayout({ children }: { children: any }) {
-  const [queryClient] = React.useState(() => new QueryClient());
   return (
     <html lang="en">
       <head>
@@ -40,16 +34,7 @@ export default function RootLayout({ children }: { children: any }) {
               </Script>
             </>
           )}
-          <Suspense fallback={<Loading />}>
-            <MantineProvider theme={theme}>
-              <LoginContextProvider>
-                <QueryClientProvider client={queryClient}>
-                  <AppContainer>{children}</AppContainer>
-                  <ReactQueryDevtools initialIsOpen={false} />
-                </QueryClientProvider>
-              </LoginContextProvider>
-            </MantineProvider>
-          </Suspense>
+          <RootContainer>{children}</RootContainer>
         </>
       </body>
     </html>
