@@ -2,6 +2,7 @@
 REGISTRATION_SUCCESS_RESPONSE = dict(message='Registered successfully')
 TOKEN_VALID_RESPONSE = dict(message='Token valid')
 USER_CONFIG_SAVED_RESPONSE = dict(message='Config saved')
+PASSWORD_CHANGED_RESPONSE = dict(message='Password changed successfully')
 
 # errors
 PARAMS_INVALID_RESPONSE = dict(error='Parameters invalid')

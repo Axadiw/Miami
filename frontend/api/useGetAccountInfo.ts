@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { BASE_URL } from '@/app/consts';
-import { UserConfig } from '@/app/account/accountPage';
 import { useLoginContext } from '@/contexts/LoginContext/LoginContext';
+import { UserConfig } from '@/app/account/components/userConfig/userConfigTab';
 
 export type UseGetAccountInfoResult = UseQueryResult<UserConfig, Error>;
 

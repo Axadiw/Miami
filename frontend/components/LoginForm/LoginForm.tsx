@@ -17,8 +17,7 @@ export function LoginForm() {
     },
 
     validate: {
-      login: (val) => (val.length <= 0 ? "Login can't be empty" : null),
-      password: (val) => (val.length <= 0 ? 'Password should include at least 6 characters' : null),
+      login: (val) => (val.length < 3 ? 'Login should have at least 3 characters' : null),
     },
   });
 
@@ -26,11 +25,15 @@ export function LoginForm() {
     <form
       onSubmit={form.onSubmit(async () => {
         setLastLogoutReason(undefined);
-        const loginResponse = await loginUser({
-          login: form.values.login,
-          password: form.values.password,
-        });
-        setLoginToken(loginResponse.token);
+        try {
+          const loginResponse = await loginUser({
+            login: form.values.login,
+            password: form.values.password,
+          });
+          setLoginToken(loginResponse.token);
+        } catch (e) {
+          /* empty */
+        }
       })}
     >
       <Stack>
@@ -50,7 +53,9 @@ export function LoginForm() {
           label="Login"
           placeholder="Login"
           value={form.values.login}
+          error={form.errors.login}
           onChange={(event) => form.setFieldValue('login', event.currentTarget.value)}
+          onBlur={() => form.validate()}
           radius="md"
         />
         <PasswordInput
@@ -59,13 +64,14 @@ export function LoginForm() {
           placeholder="Your password"
           value={form.values.password}
           onChange={(event) => form.setFieldValue('password', event.currentTarget.value)}
-          error={form.errors.password && 'Password should include at least 6 characters'}
+          onBlur={() => form.validate()}
+          error={form.errors.password}
           radius="md"
         />
       </Stack>
 
       <Group justify="space-between" mt="xl">
-        <Button type="submit" radius="xl" loading={isPending}>
+        <Button type="submit" radius="xl" loading={isPending} disabled={form.isValid.length === 0}>
           Login
         </Button>
       </Group>

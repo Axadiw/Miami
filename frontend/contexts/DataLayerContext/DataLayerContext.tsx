@@ -8,6 +8,7 @@ import { useGetAccountInfo, UseGetAccountInfoResult } from '@/api/useGetAccountI
 import { useLoginUser, UseLoginUserResult } from '@/api/useLoginUser';
 import { useRegisterUser, UseRegisterUserResult } from '@/api/useRegisterUser';
 import { useSaveAccountInfo, UseSaveAccountInfoResult } from '@/api/useSaveAccountInfo';
+import { useChangePassword, UseChangePasswordResult } from '@/api/useChangePassword';
 
 export interface DataLayer {
   useAppGetVersion: () => UseGetAppVersionResult;
@@ -16,6 +17,7 @@ export interface DataLayer {
   useLoginUser: () => UseLoginUserResult;
   useRegisterUser: () => UseRegisterUserResult;
   useSaveAccountInfo: () => UseSaveAccountInfoResult;
+  useChangePassword: () => UseChangePasswordResult;
 }
 
 export const DataLayerContext = createContext<DataLayer>({} as DataLayer);
@@ -29,6 +31,7 @@ export const DataLayerContextProvider = ({ children }: { children: ReactNode }) 
   const loginUser = useLoginUser();
   const registerUser = useRegisterUser();
   const saveAccountInfo = useSaveAccountInfo();
+  const changePassword = useChangePassword();
   const value = useMemo(
     () => ({
       useAppGetVersion: () => appGetVersion,
@@ -37,9 +40,11 @@ export const DataLayerContextProvider = ({ children }: { children: ReactNode }) 
       useLoginUser: () => loginUser,
       useRegisterUser: () => registerUser,
       useSaveAccountInfo: () => saveAccountInfo,
+      useChangePassword: () => changePassword,
     }),
     [
       appGetVersion,
+      changePassword,
       checkIfLoginTokenIsValid,
       getAccountInfo,
       loginUser,

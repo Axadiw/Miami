@@ -1,118 +1,30 @@
 'use client';
 
-import { Alert, Button, Group, Skeleton, Stack, TextInput } from '@mantine/core';
-import { IconInfoCircle } from '@tabler/icons-react';
-import { useEffect } from 'react';
-import { useForm } from '@mantine/form';
-import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
-
-export interface UserConfig {
-  threeCommasAccountId: string;
-  threeCommasApiKey: string;
-  threeCommasSecret: string;
-  byBitApiKey: string;
-  byBitApiSecret: string;
-  email: string;
-}
+import { rem, Tabs } from '@mantine/core';
+import { IconMessageCircle, IconPhoto } from '@tabler/icons-react';
+import UserConfigTab from '@/app/account/components/userConfig/userConfigTab';
+import { ChangePasswordTab } from '@/app/account/components/changePassword/changePasswordTab';
 
 export default function AccountPage() {
-  const form = useForm({
-    initialValues: {
-      threeCommasAccountId: '',
-      threeCommasApiKey: '',
-      threeCommasSecret: '',
-      byBitApiKey: '',
-      byBitApiSecret: '',
-      email: '',
-    },
-  });
-
-  const dataLayer = useDataLayerContext();
-  const {
-    data: fetchData,
-    isLoading: fetchLoading,
-    error: fetchError,
-  } = dataLayer.useGetAccountInfo();
-  const { error: saveError, mutate: saveAccountInfo } = dataLayer.useSaveAccountInfo();
-
-  useEffect(() => {
-    form.setValues({ ...fetchData });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchData]);
-
-  const errorMessage = fetchError?.message ?? saveError?.message;
-
-  if (fetchLoading) {
-    return (
-      <>
-        <Skeleton height={50} circle mb="xl" />
-        <Skeleton height={8} radius="xl" />
-        <Skeleton height={8} mt={6} radius="xl" />
-        <Skeleton height={8} mt={6} width="70%" radius="xl" />
-      </>
-    );
-  }
-
+  const iconStyle = { width: rem(12), height: rem(12) };
   return (
-    <Stack>
-      {errorMessage !== undefined && (
-        <Alert variant="light" color="red" radius="md" title="Error" icon={<IconInfoCircle />}>
-          {errorMessage}
-        </Alert>
-      )}
-      <form
-        onSubmit={form.onSubmit(async () => {
-          saveAccountInfo({ ...form.values } as UserConfig);
-        })}
-      >
-        <Stack>
-          <TextInput
-            label="Email"
-            value={form.values.email}
-            onChange={(event) => form.setFieldValue('email', event.currentTarget.value)}
-            disabled
-            radius="md"
-          />
-          <TextInput
-            label="3commas Account ID"
-            value={form.values.threeCommasAccountId}
-            onChange={(event) =>
-              form.setFieldValue('threeCommasAccountId', event.currentTarget.value)
-            }
-            radius="md"
-          />
-          <TextInput
-            label="3commas API Key"
-            value={form.values.threeCommasApiKey}
-            onChange={(event) => form.setFieldValue('threeCommasApiKey', event.currentTarget.value)}
-            radius="md"
-          />
-          <TextInput
-            label="3commas API Secret"
-            value={form.values.threeCommasSecret}
-            onChange={(event) => form.setFieldValue('threeCommasSecret', event.currentTarget.value)}
-            radius="md"
-          />
-          <TextInput
-            label="Bybit API Key"
-            value={form.values.byBitApiKey}
-            onChange={(event) => form.setFieldValue('byBitApiKey', event.currentTarget.value)}
-            radius="md"
-          />
-          <TextInput
-            label="Bybit API Secret"
-            value={form.values.byBitApiSecret}
-            onChange={(event) => form.setFieldValue('byBitApiSecret', event.currentTarget.value)}
-            radius="md"
-          />
-        </Stack>
+    <Tabs defaultValue="options">
+      <Tabs.List>
+        <Tabs.Tab value="options" leftSection={<IconPhoto style={iconStyle} />}>
+          Options
+        </Tabs.Tab>
+        <Tabs.Tab value="password" leftSection={<IconMessageCircle style={iconStyle} />}>
+          Change password
+        </Tabs.Tab>
+      </Tabs.List>
 
-        <Group justify="space-between" mt="xl">
-          <Button type="submit" radius="xl">
-            Save
-          </Button>
-        </Group>
-      </form>
-    </Stack>
+      <Tabs.Panel value="options">
+        <UserConfigTab />
+      </Tabs.Panel>
+
+      <Tabs.Panel value="password">
+        <ChangePasswordTab />
+      </Tabs.Panel>
+    </Tabs>
   );
 }

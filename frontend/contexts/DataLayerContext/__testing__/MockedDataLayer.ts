@@ -7,6 +7,7 @@ import { UseSaveAccountInfoResult } from '@/api/useSaveAccountInfo';
 import { MockedMutationResult } from '@/contexts/DataLayerContext/__testing__/MockedMutationResult';
 import { MockedQueryResult } from '@/contexts/DataLayerContext/__testing__/MockedQueryResult';
 import { DataLayer } from '@/contexts/DataLayerContext/DataLayerContext';
+import { UseChangePasswordResult } from '@/api/useChangePassword';
 
 export class MockedDataLayerBuilder {
   private useAppGetVersion = jest.fn<UseGetAppVersionResult, []>();
@@ -15,6 +16,7 @@ export class MockedDataLayerBuilder {
   private useLoginUser = jest.fn<UseLoginUserResult, []>();
   private useRegisterUser = jest.fn<UseRegisterUserResult, []>();
   private useSaveAccountInfo = jest.fn<UseSaveAccountInfoResult, []>();
+  private useChangePassword = jest.fn<UseChangePasswordResult, []>();
 
   loginUserReturn(
     result: UseLoginUserResult = MockedMutationResult(
@@ -44,6 +46,7 @@ export class MockedDataLayerBuilder {
       useLoginUser: this.useLoginUser,
       useRegisterUser: this.useRegisterUser,
       useSaveAccountInfo: this.useSaveAccountInfo,
+      useChangePassword: this.useChangePassword,
     };
   }
 }

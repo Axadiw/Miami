@@ -11,7 +11,8 @@ from database import db
 from endpoints.consts import PARAMS_INVALID_RESPONSE, USER_EXISTS_RESPONSE, INCORRECT_CREDENTIALS_RESPONSE, \
     TOKEN_MISSING_RESPONSE, TOKEN_VALID_RESPONSE, TOKEN_EXPIRED_RESPONSE, TOKEN_INVALID_RESPONSE, \
     TOKEN_VALIDITY_IN_DAYS, REGISTRATION_SUCCESS_RESPONSE, EMAIL_IN_USE_RESPONSE, MINIMUM_USERNAME_LENGTH, \
-    MINIMUM_PASSWORD_LENGTH
+    MINIMUM_PASSWORD_LENGTH, PASSWORD_CHANGED_RESPONSE
+from endpoints.session.token_required import token_required
 from models.users import Users
 import re
 
@@ -91,3 +92,24 @@ def is_valid_token():
         return make_response(jsonify(TOKEN_EXPIRED_RESPONSE), 400)
     except:
         return make_response(jsonify(TOKEN_INVALID_RESPONSE), 400)
+
+
+@session_routes.route('/change_password', methods=['POST'])
+@token_required
+def change_password(user):
+    data = request.get_json()
+    user = db.session.query(Users).filter_by(public_id=user.public_id).first()
+
+    if 'old_password' not in data or 'new_password' not in data:
+        return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
+
+    if not check_password_hash(user.password, data['old_password']):
+        return make_response(jsonify(INCORRECT_CREDENTIALS_RESPONSE), 400)
+
+    if len(data['new_password']) < MINIMUM_PASSWORD_LENGTH:
+        return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
+
+    user.password = generate_password_hash(data['new_password'])
+    db.session.commit()
+
+    return make_response(jsonify(PASSWORD_CHANGED_RESPONSE), 200)

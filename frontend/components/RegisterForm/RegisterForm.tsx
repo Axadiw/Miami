@@ -24,7 +24,6 @@ export function RegisterForm(props: RegisterFormProps) {
     validate: {
       email: (val) => (/^\S+@\S+$/.test(val) ? null : 'Invalid email'),
       login: (val) => (val.length <= 0 ? "Login can't be empty" : null),
-      password: (val) => (val.length <= 6 ? 'Password should include at least 6 characters' : null),
     },
   });
 

@@ -1,11 +1,12 @@
 import base64
 import datetime
 
-from endpoints.consts import EMAIL_IN_USE_RESPONSE
+from freezegun import freeze_time
+
+from endpoints.consts import EMAIL_IN_USE_RESPONSE, TOKEN_MISSING_RESPONSE, PASSWORD_CHANGED_RESPONSE
 from endpoints.session.session import PARAMS_INVALID_RESPONSE, REGISTRATION_SUCCESS_RESPONSE, USER_EXISTS_RESPONSE, \
     INCORRECT_CREDENTIALS_RESPONSE, TOKEN_VALIDITY_IN_DAYS, TOKEN_VALID_RESPONSE, TOKEN_INVALID_RESPONSE, \
     TOKEN_EXPIRED_RESPONSE
-from freezegun import freeze_time
 
 
 # REGISTER
@@ -99,7 +100,7 @@ def test_incorrect_chars_in_params(client):
 
 # LOGIN
 def test_show_incorrect_credentials_when_unknown_user_selected_during_login(client):
-    client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1'})
+    client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1@gmail.com'})
 
     user_credentials = base64.b64encode(b"non_existing_user:pass1").decode()
     response = client.post("/login", headers={"Authorization": "Basic {}".format(user_credentials)})
@@ -108,7 +109,7 @@ def test_show_incorrect_credentials_when_unknown_user_selected_during_login(clie
 
 
 def test_show_incorrect_credentials_when_incorrect_password_selected(client):
-    client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1'})
+    client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1@gmail.com'})
 
     user_credentials = base64.b64encode(b"user1:nonpass1").decode()
     response = client.post("/login", headers={"Authorization": "Basic {}".format(user_credentials)})
@@ -179,3 +180,67 @@ def test_expired_token_should_be_marked_as_invalid(client):
         response = client.post("/is_valid_token", json={"token": token})
         assert response.status_code == 400
         assert response.json == TOKEN_EXPIRED_RESPONSE
+
+
+# change password
+def test_change_password_without_token(client):
+    response = client.post("/change_password")
+    assert response.status_code == 400
+    assert response.json == TOKEN_MISSING_RESPONSE
+
+
+def test_change_password_with_correct_password(client):
+    client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1@gmail.com'})
+    login_response = client.post("/login", headers={"Authorization": "Basic {}".format(
+        base64.b64encode(b"user1:pass1").decode())})
+    response = client.post("/change_password", headers={"x-access-tokens": login_response.json['token']},
+                           json={'old_password': 'pass1', 'new_password': 'pass2'})
+    assert response.status_code == 200
+    assert response.json == PASSWORD_CHANGED_RESPONSE
+
+    old_login_response = client.post("/login", headers={"Authorization": "Basic {}".format(
+        base64.b64encode(b"user1:pass1").decode())})
+    assert old_login_response.status_code == 400
+    assert old_login_response.json == INCORRECT_CREDENTIALS_RESPONSE
+
+    new_login_response = client.post("/login", headers={"Authorization": "Basic {}".format(
+        base64.b64encode(b"user1:pass2").decode())})
+    assert new_login_response.status_code == 200
+    assert 'token' in new_login_response.json
+    assert len(new_login_response.json['token']) > 0
+
+
+def test_change_password_with_incorrect_password(client):
+    client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1@gmail.com'})
+    login_response = client.post("/login", headers={"Authorization": "Basic {}".format(
+        base64.b64encode(b"user1:pass1").decode())})
+
+    response = client.post("/change_password", headers={"x-access-tokens": (login_response.json['token'])},
+                           json={'old_password': 'pass3', 'new_password': 'pass2'})
+    assert response.status_code == 400
+    assert response.json == INCORRECT_CREDENTIALS_RESPONSE
+
+
+def test_change_password_with_new_password_not_meeting_standards(client):
+    client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1@gmail.com'})
+    login_response = client.post("/login", headers={"Authorization": "Basic {}".format(
+        base64.b64encode(b"user1:pass1").decode())})
+
+    response = client.post("/change_password", headers={"x-access-tokens": (login_response.json['token'])},
+                           json={'old_password': 'pass1', 'new_password': ''})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+
+def test_change_password_without_old_password(client):
+    response = client.post("/change_password", headers={"x-access-tokens": get_test_user_token(client)},
+                           json={'new_password': 'bbb'})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+
+def test_change_password_without_new_password(client):
+    response = client.post("/change_password", headers={"x-access-tokens": get_test_user_token(client)},
+                           json={'old_password': 'aaa'})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE

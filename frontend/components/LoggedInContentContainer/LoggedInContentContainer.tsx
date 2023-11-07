@@ -23,6 +23,7 @@ const data = [
   { link: '/market', label: 'Market', icon: IconBolt },
   { link: '/scaled', label: 'Scaled', icon: IconScale },
   { link: '/limit', label: 'Limit', icon: IconTarget },
+  { link: '/account', label: 'Account', icon: IconSettings },
 ];
 
 export function LoggedInContentContainer({ children }: { children: any }) {
@@ -88,18 +89,6 @@ export function LoggedInContentContainer({ children }: { children: any }) {
           <div className={classes.navbarMain}>{links}</div>
 
           <div className={classes.footer}>
-            <a
-              href="/account"
-              className={classes.link}
-              onClick={(event) => {
-                event.preventDefault();
-                router.push('/account');
-                closeNavbar();
-              }}
-            >
-              <IconSettings className={classes.linkIcon} stroke={1.5} />
-              <span>Account</span>
-            </a>
             <a
               href=""
               className={classes.link}
