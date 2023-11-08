@@ -24,6 +24,15 @@ def test_simple_registration(client):
     response = client.post("/register", json={"username": "user2", 'password': 'Apass1', 'email': 'email2@gmail.com'})
     assert response.json == REGISTRATION_SUCCESS_RESPONSE
 
+    response = client.post("/register", json={"username": "USER3", 'password': 'Apass1', 'email': 'email3@gmail.com'})
+    assert response.json == REGISTRATION_SUCCESS_RESPONSE
+
+    response = client.post("/register", json={"username": "USER4", 'password': 'Apass1', 'email': 'EMAIL4@gmail.com'})
+    assert response.json == REGISTRATION_SUCCESS_RESPONSE
+
+    response = client.post("/register", json={"username": "USER5", 'password': 'Apass1', 'email': 'EMAIL5@GMAIL.COM'})
+    assert response.json == REGISTRATION_SUCCESS_RESPONSE
+
 
 def test_register_without_email(client):
     response = client.post("/register", json={"username": "user1", 'password': 'pass1'})
@@ -50,9 +59,23 @@ def test_dont_allow_duplicate_registrations(client):
     assert response.json == USER_EXISTS_RESPONSE
 
 
+def test_dont_allow_duplicate_even_when_casing_is_different_registrations(client):
+    client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1@gmail.com'})
+    response = client.post("/register", json={"username": "User1", 'password': 'pass1', 'email': 'email1@gmail.com'})
+    assert response.status_code == 400
+    assert response.json == USER_EXISTS_RESPONSE
+
+
 def test_show_duplicated_email_during_registration(client):
     client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email@gmail.com'})
     response = client.post("/register", json={"username": "user2", 'password': 'pass1', 'email': 'email@gmail.com'})
+    assert response.status_code == 400
+    assert response.json == EMAIL_IN_USE_RESPONSE
+
+
+def test_show_duplicated_email_during_registration_different_casing(client):
+    client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email@gmail.com'})
+    response = client.post("/register", json={"username": "user2", 'password': 'pass1', 'email': 'Email@gmail.com'})
     assert response.status_code == 400
     assert response.json == EMAIL_IN_USE_RESPONSE
 
@@ -141,6 +164,16 @@ def test_show_token_when_correct_credentials_passed(client):
     client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1@gmail.com'})
 
     user_credentials = base64.b64encode(b"user1:pass1").decode()
+    response = client.post("/login", headers={"Authorization": "Basic {}".format(user_credentials)})
+    assert response.status_code == 200
+    assert 'token' in response.json
+    assert len(response.json['token']) > 0
+
+
+def test_show_token_when_correct_credentials_passed_even_when_casing_different(client):
+    client.post("/register", json={"username": "user1", 'password': 'pass1', 'email': 'email1@gmail.com'})
+
+    user_credentials = base64.b64encode(b"User1:pass1").decode()
     response = client.post("/login", headers={"Authorization": "Basic {}".format(user_credentials)})
     assert response.status_code == 200
     assert 'token' in response.json

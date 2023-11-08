@@ -20,11 +20,11 @@ session_routes = Blueprint('session_routes', __name__)
 
 
 def valid_email(email):
-    return bool(re.search(r"^[\w\.\+\-]+\@[\w]+\.[a-z]{2,3}$", email))
+    return bool(re.search(r"^[\w\.\+\-]+\@[\w]+\.[A-Za-z]{2,3}$", email))
 
 
 def valid_username(email):
-    return bool(re.search(r"^[a-z0-9_]*$", email))
+    return bool(re.search(r"^[A-Za-z0-9_]*$", email))
 
 
 @session_routes.route('/register', methods=['POST'])
@@ -41,16 +41,17 @@ def signup_user():
     if invalid_email or invalid_username or invalid_password:
         return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
 
-    if db.session.query(Users).filter_by(username=data['username']).count() > 0:
+    if db.session.query(Users).filter_by(username=data['username'].lower()).count() > 0:
         return make_response(jsonify(USER_EXISTS_RESPONSE), 400)
 
-    if db.session.query(Users).filter_by(email=data['email']).count() > 0:
+    if db.session.query(Users).filter_by(email=data['email'].lower()).count() > 0:
         return make_response(jsonify(EMAIL_IN_USE_RESPONSE), 400)
 
     hashed_password = generate_password_hash(data['password'])
 
-    new_user = Users(public_id=str(uuid.uuid4()), username=data['username'], password=hashed_password, admin=False,
-                     email=data['email'])
+    new_user = Users(public_id=str(uuid.uuid4()), username=data['username'].lower(), password=hashed_password,
+                     admin=False,
+                     email=data['email'].lower())
     db.session.add(new_user)
     db.session.commit()
     return jsonify(REGISTRATION_SUCCESS_RESPONSE)
@@ -62,7 +63,7 @@ def login_user():
     if not auth or not auth.username or not auth.password:
         return make_response(jsonify(INCORRECT_CREDENTIALS_RESPONSE), 400)
 
-    user = db.session.query(Users).filter_by(username=auth.username).first()
+    user = db.session.query(Users).filter_by(username=auth.username.lower()).first()
 
     if user is None:
         return make_response(jsonify(INCORRECT_CREDENTIALS_RESPONSE), 400)
