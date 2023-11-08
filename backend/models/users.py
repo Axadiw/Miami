@@ -9,6 +9,6 @@ class Users(Base):
     id = Column(Integer, primary_key=True)
     public_id = Column(String(36), nullable=False, unique=True)
     username = Column(String(50), nullable=False, unique=True)
-    password = Column(String(110), nullable=False)
+    password = Column(String(170), nullable=False)
     email = Column(String(255), nullable=False)
     admin = Column(Boolean, default=False)

@@ -57,6 +57,9 @@ export function LoginForm() {
           onChange={(event) => form.setFieldValue('login', event.currentTarget.value)}
           onBlur={() => form.validate()}
           radius="md"
+          wrapperProps={{
+            autoCapitalize: 'off',
+          }}
         />
         <PasswordInput
           required
