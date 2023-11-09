@@ -1,6 +1,6 @@
 from multiprocessing import Process
 
-from data_harvesters.bybit_harvester.bybit_harvester import harvest_bybit
+from data_harvesters.bybit_harvester import harvest_bybit
 
 
 def run_data_harvesters():
