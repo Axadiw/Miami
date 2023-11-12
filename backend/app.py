@@ -2,7 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from consts_secrets import db_username, db_password, db_name
 from consts_tpl import flask_api_secret
-from data_harvesters.data_harversters import run_data_harvesters
+from data_harvesters.data_harversters import launch_data_harvesters
 from database import db
 from endpoints.account.account import account_routes
 from endpoints.general.general import general_routes
@@ -38,5 +38,5 @@ def prepare_app():
 def create_app():
     application = prepare_app()
     db.init_app(application)
-    run_data_harvesters()
+    launch_data_harvesters()
     return application
