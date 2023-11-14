@@ -21,12 +21,23 @@ def upgrade() -> None:
     op.create_table('Exchanges',
                     sa.Column('id', sa.Integer(), nullable=False),
                     sa.Column('name', sa.String(length=20), nullable=False),
+                    sa.UniqueConstraint('name'),
                     sa.PrimaryKeyConstraint('id'),
                     )
 
     op.create_table('Symbols',
                     sa.Column('id', sa.Integer(), nullable=False),
                     sa.Column('name', sa.String(length=255), nullable=False),
+                    sa.UniqueConstraint('name'),
+                    sa.PrimaryKeyConstraint('id'),
+                    )
+
+    op.create_table('Timeframes',
+                    sa.Column('id', sa.Integer(), nullable=False),
+                    sa.Column('name', sa.String(length=20), nullable=False),
+                    sa.Column('seconds', sa.Integer(), nullable=False),
+                    sa.UniqueConstraint('name'),
+                    sa.UniqueConstraint('seconds'),
                     sa.PrimaryKeyConstraint('id'),
                     )
 
@@ -34,14 +45,16 @@ def upgrade() -> None:
                     sa.Column('id', sa.BigInteger(), nullable=False),
                     sa.Column('symbol', sa.Integer(), nullable=False),
                     sa.Column('exchange', sa.Integer(), nullable=False),
+                    sa.Column('timeframe', sa.Integer(), nullable=False),
                     sa.Column('timestamp', sa.DateTime(), nullable=False),
-                    sa.Column('open', sa.Numeric(scale=10, precision=22), nullable=False),
-                    sa.Column('high', sa.Numeric(scale=10, precision=22), nullable=False),
-                    sa.Column('low', sa.Numeric(scale=10, precision=22), nullable=False),
-                    sa.Column('close', sa.Numeric(scale=10, precision=22), nullable=False),
-                    sa.Column('volume', sa.Numeric(scale=10, precision=22), nullable=False),
+                    sa.Column('open', sa.Numeric(scale=20, precision=40), nullable=False),
+                    sa.Column('high', sa.Numeric(scale=20, precision=40), nullable=False),
+                    sa.Column('low', sa.Numeric(scale=20, precision=40), nullable=False),
+                    sa.Column('close', sa.Numeric(scale=20, precision=40), nullable=False),
+                    sa.Column('volume', sa.Numeric(scale=20, precision=40), nullable=False),
                     sa.ForeignKeyConstraint(['symbol'], ['Symbols.id'], ),
                     sa.ForeignKeyConstraint(['exchange'], ['Exchanges.id'], ),
+                    sa.ForeignKeyConstraint(['timeframe'], ['Timeframes.id'], ),
                     sa.PrimaryKeyConstraint('id'),
                     )
 
@@ -50,3 +63,4 @@ def downgrade() -> None:
     op.drop_table('OHLCV')
     op.drop_table('Exchanges')
     op.drop_table('Symbols')
+    op.drop_table('Timeframes')

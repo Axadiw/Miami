@@ -1,3 +1,5 @@
+import logging
+
 from flask import Flask
 from flask_cors import CORS
 from consts_secrets import db_username, db_password, db_name
@@ -9,8 +11,10 @@ from endpoints.general.general import general_routes
 from endpoints.session.session import session_routes
 from endpoints.session.test_token_required import token_required_test_routes
 
+logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.DEBUG)
+
 if not db_username or not db_password or not db_name:
-    print('No database creds detected')
+    logging.critical('No database creds detected')
     exit()
 
 
