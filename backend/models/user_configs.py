@@ -3,7 +3,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from models import Base
 
 
-class UserConfigs(Base):
+class UserConfig(Base):
     __tablename__ = 'UserConfigs'
 
     id = Column(Integer, primary_key=True)

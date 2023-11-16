@@ -25,5 +25,4 @@ def launch_data_harvesters():
 
 
 if __name__ == "__main__":
-    loop = get_event_loop()
-    loop.run_until_complete(harvest_bybit())
+    asyncio.run(harvest_bybit())

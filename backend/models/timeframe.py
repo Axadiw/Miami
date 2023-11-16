@@ -3,7 +3,7 @@ from sqlalchemy import Column, String, DateTime, Numeric, Integer, BigInteger
 from models import Base
 
 
-class Timeframes(Base):
+class Timeframe(Base):
     __tablename__ = 'Timeframes'
 
     id = Column(Integer, primary_key=True)

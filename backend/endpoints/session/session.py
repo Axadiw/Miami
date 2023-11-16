@@ -13,7 +13,7 @@ from endpoints.consts import PARAMS_INVALID_RESPONSE, USER_EXISTS_RESPONSE, INCO
     TOKEN_VALIDITY_IN_DAYS, REGISTRATION_SUCCESS_RESPONSE, EMAIL_IN_USE_RESPONSE, MINIMUM_USERNAME_LENGTH, \
     MINIMUM_PASSWORD_LENGTH, PASSWORD_CHANGED_RESPONSE
 from endpoints.session.token_required import token_required
-from models.users import Users
+from models.user import User
 import re
 
 session_routes = Blueprint('session_routes', __name__)
@@ -41,17 +41,17 @@ def signup_user():
     if invalid_email or invalid_username or invalid_password:
         return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
 
-    if db.session.query(Users).filter_by(username=data['username'].lower()).count() > 0:
+    if db.session.query(User).filter_by(username=data['username'].lower()).count() > 0:
         return make_response(jsonify(USER_EXISTS_RESPONSE), 400)
 
-    if db.session.query(Users).filter_by(email=data['email'].lower()).count() > 0:
+    if db.session.query(User).filter_by(email=data['email'].lower()).count() > 0:
         return make_response(jsonify(EMAIL_IN_USE_RESPONSE), 400)
 
     hashed_password = generate_password_hash(data['password'])
 
-    new_user = Users(public_id=str(uuid.uuid4()), username=data['username'].lower(), password=hashed_password,
-                     admin=False,
-                     email=data['email'].lower())
+    new_user = User(public_id=str(uuid.uuid4()), username=data['username'].lower(), password=hashed_password,
+                    admin=False,
+                    email=data['email'].lower())
     db.session.add(new_user)
     db.session.commit()
     return jsonify(REGISTRATION_SUCCESS_RESPONSE)
@@ -63,7 +63,7 @@ def login_user():
     if not auth or not auth.username or not auth.password:
         return make_response(jsonify(INCORRECT_CREDENTIALS_RESPONSE), 400)
 
-    user = db.session.query(Users).filter_by(username=auth.username.lower()).first()
+    user = db.session.query(User).filter_by(username=auth.username.lower()).first()
 
     if user is None:
         return make_response(jsonify(INCORRECT_CREDENTIALS_RESPONSE), 400)
@@ -99,7 +99,7 @@ def is_valid_token():
 @token_required
 def change_password(user):
     data = request.get_json()
-    user = db.session.query(Users).filter_by(public_id=user.public_id).first()
+    user = db.session.query(User).filter_by(public_id=user.public_id).first()
 
     if 'old_password' not in data or 'new_password' not in data:
         return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)

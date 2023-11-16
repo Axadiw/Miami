@@ -28,7 +28,9 @@ def upgrade() -> None:
     op.create_table('Symbols',
                     sa.Column('id', sa.Integer(), nullable=False),
                     sa.Column('name', sa.String(length=255), nullable=False),
+                    sa.Column('exchange', sa.Integer(), nullable=False),
                     sa.UniqueConstraint('name'),
+                    sa.ForeignKeyConstraint(['exchange'], ['Exchanges.id'], ),
                     sa.PrimaryKeyConstraint('id'),
                     )
 
@@ -58,9 +60,15 @@ def upgrade() -> None:
                     sa.PrimaryKeyConstraint('id'),
                     )
 
+    with op.batch_alter_table("OHLCV") as batch_op:
+        batch_op.create_unique_constraint('unique_sett', ['symbol', 'exchange', 'timeframe', 'timestamp'])
+
+    # TODO: Check if original is redundant
+    # op.create_unique_constraint(None, 'OHLCV', ['symbol', 'exchange', 'timeframe', 'timestamp'])
+
 
 def downgrade() -> None:
     op.drop_table('OHLCV')
-    op.drop_table('Exchanges')
     op.drop_table('Symbols')
     op.drop_table('Timeframes')
+    op.drop_table('Exchanges')
