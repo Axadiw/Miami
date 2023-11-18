@@ -18,15 +18,15 @@ class BybitConnectorCCXT(BaseExchangeConnector):
         self.connector_pro = ccxtpro.bybit()
         self.connector = ccxt.bybit()
 
-    def fetch_tickers(self, exchange: Type[Exchange]) -> List[Symbol]:
+    async def fetch_tickers(self, exchange: Type[Exchange]) -> List[Symbol]:
         self.connector.load_markets(True)
-        response = self.connector.fetch_tickers()
+        response = await self.connector_pro.fetch_tickers()
         return list(map(lambda x: Symbol(name=x[1]['symbol'], exchange=exchange.id), response.items()))
 
-    def fetch_ohlcv(self, symbol: Symbol, timeframe: Timeframe, exchange: Exchange, since: int) -> List[OHLCV]:
-        response = self.connector.fetch_ohlcv(symbol.name, timeframe.name, since * 1000, limit=20000,
-                                              params={"paginate": True, "paginationCalls": 50,
-                                                      'until': datetime.now().timestamp() * 1000})
+    async def fetch_ohlcv(self, symbol: Symbol, timeframe: Timeframe, exchange: Exchange, since: int) -> List[OHLCV]:
+        response = await self.connector_pro.fetch_ohlcv(symbol.name, timeframe.name, since * 1000, limit=20000,
+                                                        params={"paginate": True, "paginationCalls": 50,
+                                                                'until': datetime.now().timestamp() * 1000})
         new_items = list(
             map(lambda x: OHLCV(timestamp=datetime.fromtimestamp(x[0] / 1000.0),
                                 exchange=exchange.id,

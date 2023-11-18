@@ -3,6 +3,7 @@ import logging
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from multiprocessing import Process
 from time import sleep
 from typing import Type
 
@@ -11,6 +12,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import sessionmaker
 
 from consts_secrets import db_username, db_password, db_name
+from data_harvesters.bybit_harvester.bybit_harverser_watcher import BybitHarvesterWatcher
 from data_harvesters.exchange_connectors.base_exchange_connector import BaseExchangeConnector
 from models.exchange import Exchange
 from models.ohlcv import OHLCV
@@ -41,6 +43,8 @@ class BybitHarvester:
         self.db_session = self.get_session()
         self.exchange = self.create_exchange_entry()
         self.timeframes = self.create_supported_timeframes()
+        self.watcher = BybitHarvesterWatcher(client)
+        self.watcher.update_timeframes(self.timeframes)
 
     def create_supported_timeframes(self) -> list[Type[Timeframe]]:
         supported_timeframes = [
@@ -77,9 +81,9 @@ class BybitHarvester:
             self.db_session.commit()
             return self.db_session.query(Exchange).filter_by(name=EXCHANGE_NAME).first()
 
-    def update_list_of_symbols(self) -> list[Type[Symbol]]:
+    async def update_list_of_symbols(self) -> list[Type[Symbol]]:
         existing_symbols = list(self.db_session.query(Symbol).filter_by(exchange=self.exchange.id).all())
-        fetched_symbols = self.exchange_connector.fetch_tickers(self.exchange)
+        fetched_symbols = await self.exchange_connector.fetch_tickers(self.exchange)
         fetched_symbols_names = list(map(lambda x: x.name, fetched_symbols))
         existing_symbols_names = list(map(lambda x: x.name, existing_symbols))
 
@@ -100,15 +104,15 @@ class BybitHarvester:
 
         return list(self.db_session.query(Symbol).filter_by(exchange=self.exchange.id).all())
 
-    def update_all_ohlcv(self, data_to_fetch: list[DataToFetch]):
+    async def update_all_ohlcv(self, data_to_fetch: list[DataToFetch]):
         start_all_symbols = time.time()
         i = 1
 
         new_candles_for_all_symbols_count = 0
         for data in data_to_fetch:
-            new_candles = self.update_single_ohlcv(symbol=data.symbol, timeframe=data.timeframe, since=data.since,
-                                                   current_fetch=i,
-                                                   all_fetches=len(data_to_fetch))
+            new_candles = await self.update_single_ohlcv(symbol=data.symbol, timeframe=data.timeframe, since=data.since,
+                                                         current_fetch=i,
+                                                         all_fetches=len(data_to_fetch))
             if len(new_candles) > 0:
                 self.db_session.execute(insert(OHLCV).values([{"exchange": candle.exchange,
                                                                "symbol": candle.symbol,
@@ -131,18 +135,18 @@ class BybitHarvester:
             f'Took {"{:.2f}".format(end_all_symbols - start_all_symbols)} seconds')
         return new_candles_for_all_symbols_count
 
-    def update_single_ohlcv(self, symbol: Type[Symbol], timeframe: Type[Timeframe], since: datetime,
-                            current_fetch: int,
-                            all_fetches: int):
+    async def update_single_ohlcv(self, symbol: Type[Symbol], timeframe: Type[Timeframe], since: datetime,
+                                  current_fetch: int,
+                                  all_fetches: int):
         start_single_symbol = time.time()
         success = False
         new_candles = []
         while not success:
             try:
-                new_candles = self.exchange_connector.fetch_ohlcv(symbol=symbol,
-                                                                  timeframe=timeframe,
-                                                                  since=int(datetime.timestamp(since)) + 1,
-                                                                  exchange=self.exchange)
+                new_candles = await self.exchange_connector.fetch_ohlcv(symbol=symbol,
+                                                                        timeframe=timeframe,
+                                                                        since=int(datetime.timestamp(since)) + 1,
+                                                                        exchange=self.exchange)
                 end_single_symbol = time.time()
                 logging.info(
                     f'[Bybit Harvester] Finished updating OHLCV history for {symbol.name} in {timeframe.name} timeframe'
@@ -173,28 +177,24 @@ class BybitHarvester:
         logging.info(f'[Bybit Harvester] Finished calculating timestamps for further database refresh')
         return symbols_timeframes_and_timestamps
 
-    async def watch_candles(self, current_symbols: list[Type[Symbol]]):
-        logging.info(f'[Bybit Harvester] Will start watching for candles')
-        start_time = datetime.now()
+    async def start_watching(self):
+        return await self.watcher.watch_candles()
 
-        subscriptions = []
-        for timeframe in self.timeframes:
-            for symbol in current_symbols:
-                subscriptions.append([symbol.name, timeframe.name])
-        while (datetime.now() - start_time).total_seconds() < MAX_TIME_BETWEEN_SYMBOLS_FETCH:
-            try:
-                candles = await self.exchange_connector.watch_ohlcv(subscriptions)
-                logging.info(f'[Bybit Harvester] {candles}')
-            except Exception as e:
-                print(e)
-        logging.info(f'[Bybit Harvester] Finished watching for candles')
+    async def fetch_candles(self):
+        while True:
+            current_symbols = await self.update_list_of_symbols()
+            data_to_fetch = self.get_newest_ohlcv_timestamp(current_symbols, self.timeframes)
+            self.watcher.update_symbols(current_symbols)
+
+            self.watcher.refresh()
+            await self.update_all_ohlcv(data_to_fetch)
 
     async def start_loop(self):
-        while True:
-            current_symbols = self.update_list_of_symbols()
-            # await self.watch_candles(current_symbols)
-            # task = asyncio.create_task(self.watch_candles(current_symbols))
-            # await asyncio.sleep(0)
-            data_to_fetch = self.get_newest_ohlcv_timestamp(current_symbols, self.timeframes)
-            self.update_all_ohlcv(data_to_fetch)
-            # await task
+        self.watcher.update_symbols([Symbol(name='BTC/USDT:USDT', id=1)])
+
+        # loop = asyncio.get_event_loop()
+        # loop.create_task(self.start_watching())
+        # loop.create_task(self.fetch_candles())
+        # loop.run_forever()
+        await asyncio.gather(*[self.start_watching(), self.fetch_candles()])
+        # await asyncio.gather(*[self.start_watching()])

@@ -10,12 +10,12 @@ from models.timeframe import Timeframe
 class BaseExchangeConnector(ABC):
 
     @abstractmethod
-    def fetch_tickers(self, exchange: Type[Exchange]) -> List[Symbol]:
+    async def fetch_tickers(self, exchange: Type[Exchange]) -> List[Symbol]:
         pass
 
     @abstractmethod
-    def fetch_ohlcv(self, symbol: Type[Symbol], timeframe: Type[Timeframe], exchange: Type[Exchange],
-                    since: int) \
+    async def fetch_ohlcv(self, symbol: Type[Symbol], timeframe: Type[Timeframe], exchange: Type[Exchange],
+                          since: int) \
             -> List[OHLCV]:
         pass
 
