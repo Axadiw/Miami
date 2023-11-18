@@ -31,6 +31,16 @@ class DataToFetch:
     since: datetime
 
 
+async def semaphore_gather(num, coros, return_exceptions=False):
+    semaphore = asyncio.Semaphore(num)
+
+    async def _wrap_coro(coro):
+        async with semaphore:
+            return await coro
+
+    return await asyncio.gather(*(_wrap_coro(coro) for coro in coros), return_exceptions=return_exceptions)
+
+
 class BybitHarvester:
 
     @staticmethod
@@ -109,24 +119,38 @@ class BybitHarvester:
         i = 1
 
         new_candles_for_all_symbols_count = 0
+        coros = []
+        coros_results = []
         for data in data_to_fetch:
-            new_candles = await self.update_single_ohlcv(symbol=data.symbol, timeframe=data.timeframe, since=data.since,
-                                                         current_fetch=i,
-                                                         all_fetches=len(data_to_fetch))
-            if len(new_candles) > 0:
-                self.db_session.execute(insert(OHLCV).values([{"exchange": candle.exchange,
-                                                               "symbol": candle.symbol,
-                                                               "timeframe": candle.timeframe,
-                                                               "timestamp": candle.timestamp,
-                                                               "open": candle.open,
-                                                               "high": candle.high,
-                                                               "low": candle.low,
-                                                               "close": candle.close,
-                                                               "volume": candle.volume} for candle in
-                                                              new_candles]).on_conflict_do_nothing())
-                self.db_session.commit()
-            new_candles_for_all_symbols_count += len(new_candles)
+            async def job(symbol: Type[Symbol], timeframe: Type[Timeframe], since: datetime,
+                          current_fetch: int,
+                          all_fetches: int):
+                coros_results.append(await self.update_single_ohlcv(symbol=symbol, timeframe=timeframe, since=since,
+                                                                    current_fetch=current_fetch,
+                                                                    all_fetches=all_fetches))
+
             i += 1
+            coros.append(job(symbol=data.symbol, timeframe=data.timeframe, since=data.since,
+                             current_fetch=i,
+                             all_fetches=len(data_to_fetch)))
+
+        await semaphore_gather(20, coros)
+        new_candles: list[Type[OHLCV]] = []
+        for result in coros_results:
+            new_candles += result
+        if len(new_candles) > 0:
+            self.db_session.execute(insert(OHLCV).values([{"exchange": candle.exchange,
+                                                           "symbol": candle.symbol,
+                                                           "timeframe": candle.timeframe,
+                                                           "timestamp": candle.timestamp,
+                                                           "open": candle.open,
+                                                           "high": candle.high,
+                                                           "low": candle.low,
+                                                           "close": candle.close,
+                                                           "volume": candle.volume} for candle in
+                                                          new_candles]).on_conflict_do_nothing())
+            self.db_session.commit()
+        new_candles_for_all_symbols_count += len(new_candles)
 
         end_all_symbols = time.time()
         logging.info(
@@ -192,9 +216,5 @@ class BybitHarvester:
     async def start_loop(self):
         self.watcher.update_symbols([Symbol(name='BTC/USDT:USDT', id=1)])
 
-        # loop = asyncio.get_event_loop()
-        # loop.create_task(self.start_watching())
-        # loop.create_task(self.fetch_candles())
-        # loop.run_forever()
-        await asyncio.gather(*[self.start_watching(), self.fetch_candles()])
-        # await asyncio.gather(*[self.start_watching()])
+        # await asyncio.gather(*[self.start_watching(), self.fetch_candles()])
+        await self.fetch_candles()
