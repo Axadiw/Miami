@@ -20,15 +20,15 @@ from models.symbol import Symbol
 from models.timeframe import Timeframe
 
 EXCHANGE_NAME = 'bybit'
-MAX_TIME_BETWEEN_SYMBOLS_FETCH = 3600
-MAX_CANDLES_HISTORY_TO_FETCH = 20000
+MAX_CANDLES_HISTORY_TO_FETCH = 100000
+MAX_CONCURRENT_FETCHES = 15
 
 
 @dataclass
 class DataToFetch:
     symbol: Type[Symbol]
     timeframe: Type[Timeframe]
-    since: datetime
+    since: float
 
 
 async def semaphore_gather(num, coros, return_exceptions=False):
@@ -53,8 +53,9 @@ class BybitHarvester:
         self.db_session = self.get_session()
         self.exchange = self.create_exchange_entry()
         self.timeframes = self.create_supported_timeframes()
-        self.watcher = BybitHarvesterWatcher(client)
+        self.watcher = BybitHarvesterWatcher(client=client, exchange=self.exchange)
         self.watcher.update_timeframes(self.timeframes)
+        self.symbol_start_dates = {}
 
     def create_supported_timeframes(self) -> list[Type[Timeframe]]:
         supported_timeframes = [
@@ -92,52 +93,62 @@ class BybitHarvester:
             return self.db_session.query(Exchange).filter_by(name=EXCHANGE_NAME).first()
 
     async def update_list_of_symbols(self) -> list[Type[Symbol]]:
-        existing_symbols = list(self.db_session.query(Symbol).filter_by(exchange=self.exchange.id).all())
-        fetched_symbols = await self.exchange_connector.fetch_tickers(self.exchange)
-        fetched_symbols_names = list(map(lambda x: x.name, fetched_symbols))
-        existing_symbols_names = list(map(lambda x: x.name, existing_symbols))
+        while True:  # should finish after first round because of return at the end
+            try:
+                existing_symbols = list(self.db_session.query(Symbol).filter_by(exchange=self.exchange.id).all())
+                fetched_symbols = await self.exchange_connector.fetch_tickers(self.exchange)
+                fetched_symbols_names = list(map(lambda x: x.name, fetched_symbols))
+                existing_symbols_names = list(map(lambda x: x.name, existing_symbols))
 
-        for symbol in existing_symbols:
-            if symbol.name not in fetched_symbols_names:
-                self.db_session.delete(symbol)
+                for symbol in existing_symbols:
+                    if symbol.name not in fetched_symbols_names:
+                        self.db_session.delete(symbol)
 
-        new_symbols_to_add = []
-        for symbol in fetched_symbols:
-            if symbol.name not in existing_symbols_names:
-                new_symbols_to_add.append(symbol)
+                new_symbols_to_add = []
+                for symbol in fetched_symbols:
+                    if symbol.name not in existing_symbols_names:
+                        new_symbols_to_add.append(symbol)
 
-        self.db_session.bulk_save_objects(new_symbols_to_add),
-        self.db_session.commit()
+                self.db_session.bulk_save_objects(new_symbols_to_add),
+                self.db_session.commit()
 
-        new_symbols_count = len(new_symbols_to_add)
-        logging.info(f'[Bybit Harvester] Updated list of symbols ({new_symbols_count} new added)')
+                new_symbols_count = len(new_symbols_to_add)
 
-        return list(self.db_session.query(Symbol).filter_by(exchange=self.exchange.id).all())
+                self.symbol_start_dates = await self.exchange_connector.fetch_start_dates()
+                logging.info(f'[Bybit Harvester] Updated list of symbols ({new_symbols_count} new added)')
 
-    async def update_all_ohlcv(self, data_to_fetch: list[DataToFetch]):
+                return list(self.db_session.query(Symbol).filter_by(exchange=self.exchange.id).all())
+            except Exception as e:
+                logging.error(f'[Bybit Harvester] Fetch list of symbols error {e}')
+                sleep(1)
+
+    async def fetch_all_ohlcv(self, data_to_fetch: list[DataToFetch]):
         start_all_symbols = time.time()
-        i = 1
-
+        new_candles_counts = await semaphore_gather(MAX_CONCURRENT_FETCHES,
+                                                    [self.fetch_and_save_single_ohlcv(symbol=data.symbol,
+                                                                                      timeframe=data.timeframe,
+                                                                                      since=data.since,
+                                                                                      current_fetch=index + 1,
+                                                                                      all_fetches=len(
+                                                                                          data_to_fetch))
+                                                     for index, data in enumerate(data_to_fetch)])
         new_candles_for_all_symbols_count = 0
-        coros = []
-        coros_results = []
-        for data in data_to_fetch:
-            async def job(symbol: Type[Symbol], timeframe: Type[Timeframe], since: datetime,
-                          current_fetch: int,
-                          all_fetches: int):
-                coros_results.append(await self.update_single_ohlcv(symbol=symbol, timeframe=timeframe, since=since,
-                                                                    current_fetch=current_fetch,
-                                                                    all_fetches=all_fetches))
+        for count in new_candles_counts:
+            new_candles_for_all_symbols_count += count
 
-            i += 1
-            coros.append(job(symbol=data.symbol, timeframe=data.timeframe, since=data.since,
-                             current_fetch=i,
-                             all_fetches=len(data_to_fetch)))
+        end_all_symbols = time.time()
+        logging.info(
+            f'[Bybit Harvester] Finished updating OHLCV history for all symbols in all timeframes. '
+            f'Added {new_candles_for_all_symbols_count} new entries '
+            f'Took {"{:.2f}".format(end_all_symbols - start_all_symbols)} seconds')
+        return new_candles_for_all_symbols_count
 
-        await semaphore_gather(20, coros)
-        new_candles: list[Type[OHLCV]] = []
-        for result in coros_results:
-            new_candles += result
+    async def fetch_and_save_single_ohlcv(self, symbol: Type[Symbol], timeframe: Type[Timeframe], since: int,
+                                          current_fetch: int,
+                                          all_fetches: int):
+        new_candles = await self.fetch_single_ohlcv(symbol=symbol, timeframe=timeframe, since=since,
+                                                    current_fetch=current_fetch,
+                                                    all_fetches=all_fetches)
         if len(new_candles) > 0:
             self.db_session.execute(insert(OHLCV).values([{"exchange": candle.exchange,
                                                            "symbol": candle.symbol,
@@ -150,18 +161,11 @@ class BybitHarvester:
                                                            "volume": candle.volume} for candle in
                                                           new_candles]).on_conflict_do_nothing())
             self.db_session.commit()
-        new_candles_for_all_symbols_count += len(new_candles)
+        return len(new_candles)
 
-        end_all_symbols = time.time()
-        logging.info(
-            f'[Bybit Harvester] Finished updating OHLCV history for all symbols in all timeframes. '
-            f'Added {new_candles_for_all_symbols_count} new entries '
-            f'Took {"{:.2f}".format(end_all_symbols - start_all_symbols)} seconds')
-        return new_candles_for_all_symbols_count
-
-    async def update_single_ohlcv(self, symbol: Type[Symbol], timeframe: Type[Timeframe], since: datetime,
-                                  current_fetch: int,
-                                  all_fetches: int):
+    async def fetch_single_ohlcv(self, symbol: Type[Symbol], timeframe: Type[Timeframe], since: int,
+                                 current_fetch: int,
+                                 all_fetches: int):
         start_single_symbol = time.time()
         success = False
         new_candles = []
@@ -169,7 +173,7 @@ class BybitHarvester:
             try:
                 new_candles = await self.exchange_connector.fetch_ohlcv(symbol=symbol,
                                                                         timeframe=timeframe,
-                                                                        since=int(datetime.timestamp(since)) + 1,
+                                                                        since=since + 1,
                                                                         exchange=self.exchange)
                 end_single_symbol = time.time()
                 logging.info(
@@ -193,8 +197,10 @@ class BybitHarvester:
                                                                    timeframe=timeframe.id).order_by(
                     desc(OHLCV.timestamp)).limit(1).first()
 
-                last_item_timestamp = datetime.now() - timedelta(
-                    seconds=timeframe.seconds * MAX_CANDLES_HISTORY_TO_FETCH) if last_item is None else last_item.timestamp
+                last_item_timestamp = max(
+                    self.symbol_start_dates[symbol.name], max(0, 1000 * (datetime.now().timestamp() -
+                                                                         timeframe.seconds * MAX_CANDLES_HISTORY_TO_FETCH))) \
+                    if last_item is None else last_item.timestamp.timestamp()
 
                 symbols_timeframes_and_timestamps.append(DataToFetch(symbol, timeframe, last_item_timestamp))
 
@@ -209,12 +215,10 @@ class BybitHarvester:
             current_symbols = await self.update_list_of_symbols()
             data_to_fetch = self.get_newest_ohlcv_timestamp(current_symbols, self.timeframes)
             self.watcher.update_symbols(current_symbols)
-
             self.watcher.refresh()
-            await self.update_all_ohlcv(data_to_fetch)
+
+            await self.fetch_all_ohlcv(data_to_fetch)
+            await asyncio.sleep(3600)
 
     async def start_loop(self):
-        self.watcher.update_symbols([Symbol(name='BTC/USDT:USDT', id=1)])
-
-        # await asyncio.gather(*[self.start_watching(), self.fetch_candles()])
-        await self.fetch_candles()
+        await asyncio.gather(*[self.start_watching(), self.fetch_candles()])

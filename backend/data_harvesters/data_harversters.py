@@ -1,18 +1,21 @@
 import asyncio
 import logging
 from multiprocessing import Process
-
-import ccxt
+from time import sleep
 
 from data_harvesters.bybit_harvester.bybit_harvester import BybitHarvester
 from data_harvesters.exchange_connectors.bybit_exchange_connector import BybitConnectorCCXT
-from asyncio import get_event_loop
 
 
 async def harvest_bybit():
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
-    harvester = BybitHarvester(BybitConnectorCCXT())
-    await harvester.start_loop()
+    while True:
+        try:
+            logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
+            harvester = BybitHarvester(BybitConnectorCCXT())
+            await harvester.start_loop()
+        except Exception as e:
+            logging.error(f'Unhandled data harvesters error {e}')
+            sleep(30)
 
 
 def wrapper():

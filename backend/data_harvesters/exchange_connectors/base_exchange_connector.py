@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Type, Optional
 
+from ccxt.base.types import Trade
+
 from models.exchange import Exchange
 from models.ohlcv import OHLCV
 from models.symbol import Symbol
@@ -25,5 +27,14 @@ class BaseExchangeConnector(ABC):
         pass
 
     @abstractmethod
-    def watch_trades(self, symbols: List[str], since: Optional[int] = None, limit: Optional[int] = None, params={}):
+    async def watch_trades(self, symbols: List[str], since: Optional[int] = None, limit: Optional[int] = None,
+                           params={}):
+        pass
+
+    @abstractmethod
+    def build(self, trades: List[Trade], timeframe: str = '1m', since: float = 0, limit: float = 2147483647):
+        pass
+
+    @abstractmethod
+    async def fetch_start_dates(self):
         pass
