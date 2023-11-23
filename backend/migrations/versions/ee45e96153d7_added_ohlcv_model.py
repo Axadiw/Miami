@@ -49,11 +49,11 @@ def upgrade() -> None:
                     sa.Column('exchange', sa.Integer(), nullable=False),
                     sa.Column('timeframe', sa.Integer(), nullable=False),
                     sa.Column('timestamp', sa.DateTime(), nullable=False),
-                    sa.Column('open', sa.Numeric(scale=7, precision=22), nullable=False),
-                    sa.Column('high', sa.Numeric(scale=7, precision=22), nullable=False),
-                    sa.Column('low', sa.Numeric(scale=7, precision=22), nullable=False),
-                    sa.Column('close', sa.Numeric(scale=7, precision=22), nullable=False),
-                    sa.Column('volume', sa.Numeric(scale=7, precision=22), nullable=False),
+                    sa.Column('open', sa.Numeric(scale=10, precision=30), nullable=False),
+                    sa.Column('high', sa.Numeric(scale=10, precision=30), nullable=False),
+                    sa.Column('low', sa.Numeric(scale=10, precision=30), nullable=False),
+                    sa.Column('close', sa.Numeric(scale=10, precision=30), nullable=False),
+                    sa.Column('volume', sa.Numeric(scale=10, precision=30), nullable=False),
                     sa.ForeignKeyConstraint(['symbol'], ['Symbols.id'], ),
                     sa.ForeignKeyConstraint(['exchange'], ['Exchanges.id'], ),
                     sa.ForeignKeyConstraint(['timeframe'], ['Timeframes.id'], ),
@@ -61,10 +61,7 @@ def upgrade() -> None:
                     )
 
     with op.batch_alter_table("OHLCV") as batch_op:
-        batch_op.create_unique_constraint('unique_sett', ['symbol', 'exchange', 'timeframe', 'timestamp'])
-
-    # TODO: Check if original is redundant
-    # op.create_unique_constraint(None, 'OHLCV', ['symbol', 'exchange', 'timeframe', 'timestamp'])
+        batch_op.create_unique_constraint('ohlcv_unique_sett', ['symbol', 'exchange', 'timeframe', 'timestamp'])
 
 
 def downgrade() -> None:

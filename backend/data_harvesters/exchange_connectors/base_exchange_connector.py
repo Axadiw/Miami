@@ -5,6 +5,7 @@ from ccxt.base.types import Trade
 
 from models.exchange import Exchange
 from models.ohlcv import OHLCV
+from models.open_interests import OpenInterest
 from models.symbol import Symbol
 from models.timeframe import Timeframe
 
@@ -27,6 +28,10 @@ class BaseExchangeConnector(ABC):
         pass
 
     @abstractmethod
+    async def watch_tickers(self, symbols: List[str]):
+        pass
+
+    @abstractmethod
     async def watch_trades(self, symbols: List[str], since: Optional[int] = None, limit: Optional[int] = None,
                            params={}):
         pass
@@ -37,4 +42,14 @@ class BaseExchangeConnector(ABC):
 
     @abstractmethod
     async def fetch_start_dates(self):
+        pass
+
+    @abstractmethod
+    async def fetch_funding_history(self, symbol: str, since: int):
+        pass
+
+    @abstractmethod
+    async def fetch_open_interest_history(self, symbol: str, timeframe: Type[Timeframe], since: int,
+                                          exchange: Type[Exchange]) \
+            -> List[OpenInterest]:
         pass

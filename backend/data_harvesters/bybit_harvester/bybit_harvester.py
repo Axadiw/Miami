@@ -9,6 +9,7 @@ from typing import Type
 
 from sqlalchemy import desc, create_engine
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import PendingRollbackError
 from sqlalchemy.orm import sessionmaker
 
 from consts_secrets import db_username, db_password, db_name
@@ -16,6 +17,7 @@ from data_harvesters.bybit_harvester.bybit_harverser_watcher import BybitHarvest
 from data_harvesters.exchange_connectors.base_exchange_connector import BaseExchangeConnector
 from models.exchange import Exchange
 from models.ohlcv import OHLCV
+from models.open_interests import OpenInterest
 from models.symbol import Symbol
 from models.timeframe import Timeframe
 
@@ -28,7 +30,7 @@ MAX_CONCURRENT_FETCHES = 15
 class DataToFetch:
     symbol: Type[Symbol]
     timeframe: Type[Timeframe]
-    since: float
+    since: int
 
 
 async def semaphore_gather(num, coros, return_exceptions=False):
@@ -54,14 +56,23 @@ class BybitHarvester:
         self.exchange = self.create_exchange_entry()
         self.timeframes = self.create_supported_timeframes()
         self.watcher = BybitHarvesterWatcher(client=client, exchange=self.exchange)
-        self.watcher.update_timeframes(self.timeframes)
+        self.watcher.update_timeframes(self.get_ohlcv_supported_timeframes())
         self.symbol_start_dates = {}
+
+    def get_ohlcv_supported_timeframes(self) -> list[Type[Timeframe]]:
+        return list(
+            filter(lambda timeframe: timeframe.name in ['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1w'],
+                   self.timeframes))
+
+    def get_open_interest_supported_timeframes(self) -> list[Type[Timeframe]]:
+        return list(filter(lambda timeframe: timeframe.name in ['5m', '15m', '30m', '1h' '4h', '1d'], self.timeframes))
 
     def create_supported_timeframes(self) -> list[Type[Timeframe]]:
         supported_timeframes = [
             {'name': '1m', 'seconds': 60},
             {'name': '5m', 'seconds': 60 * 5},
             {'name': '15m', 'seconds': 60 * 15},
+            {'name': '30m', 'seconds': 30 * 15},
             {'name': '1h', 'seconds': 60 * 60},
             {'name': '4h', 'seconds': 60 * 60 * 4},
             {'name': '1d', 'seconds': 60 * 60 * 24},
@@ -118,11 +129,15 @@ class BybitHarvester:
                 logging.info(f'[Bybit Harvester] Updated list of symbols ({new_symbols_count} new added)')
 
                 return list(self.db_session.query(Symbol).filter_by(exchange=self.exchange.id).all())
+            except PendingRollbackError as e:
+                logging.error(f'[Bybit Harvester] Fetch list rollback error {e}')
+                self.db_session.rollback()
+                await asyncio.sleep(1)
             except Exception as e:
                 logging.error(f'[Bybit Harvester] Fetch list of symbols error {e}')
-                sleep(1)
+                await asyncio.sleep(1)
 
-    async def fetch_all_ohlcv(self, data_to_fetch: list[DataToFetch]):
+    async def fetch_all_ohlcv(self, data_to_fetch: list[DataToFetch]) -> object:
         start_all_symbols = time.time()
         new_candles_counts = await semaphore_gather(MAX_CONCURRENT_FETCHES,
                                                     [self.fetch_and_save_single_ohlcv(symbol=data.symbol,
@@ -138,7 +153,7 @@ class BybitHarvester:
 
         end_all_symbols = time.time()
         logging.info(
-            f'[Bybit Harvester] Finished updating OHLCV history for all symbols in all timeframes. '
+            f'[Bybit Harvester] Finished updating fetch_and_save_single_ohlcv history for all symbols in all timeframes. '
             f'Added {new_candles_for_all_symbols_count} new entries '
             f'Took {"{:.2f}".format(end_all_symbols - start_all_symbols)} seconds')
         return new_candles_for_all_symbols_count
@@ -150,17 +165,25 @@ class BybitHarvester:
                                                     current_fetch=current_fetch,
                                                     all_fetches=all_fetches)
         if len(new_candles) > 0:
-            self.db_session.execute(insert(OHLCV).values([{"exchange": candle.exchange,
-                                                           "symbol": candle.symbol,
-                                                           "timeframe": candle.timeframe,
-                                                           "timestamp": candle.timestamp,
-                                                           "open": candle.open,
-                                                           "high": candle.high,
-                                                           "low": candle.low,
-                                                           "close": candle.close,
-                                                           "volume": candle.volume} for candle in
-                                                          new_candles]).on_conflict_do_nothing())
-            self.db_session.commit()
+            success = False
+            while not success:
+                try:
+                    self.db_session.execute(insert(OHLCV).values([{"exchange": candle.exchange,
+                                                                   "symbol": candle.symbol,
+                                                                   "timeframe": candle.timeframe,
+                                                                   "timestamp": candle.timestamp,
+                                                                   "open": candle.open,
+                                                                   "high": candle.high,
+                                                                   "low": candle.low,
+                                                                   "close": candle.close,
+                                                                   "volume": candle.volume} for candle in
+                                                                  new_candles]).on_conflict_do_nothing())
+                    self.db_session.commit()
+                    success = True
+                except PendingRollbackError as e:
+                    logging.error(f'[Bybit Harvester] fetch_and_save_single_ohlcv rollback error {e}')
+                    self.db_session.rollback()
+                    await asyncio.sleep(1)
         return len(new_candles)
 
     async def fetch_single_ohlcv(self, symbol: Type[Symbol], timeframe: Type[Timeframe], since: int,
@@ -177,47 +200,58 @@ class BybitHarvester:
                                                                         exchange=self.exchange)
                 end_single_symbol = time.time()
                 logging.info(
-                    f'[Bybit Harvester] Finished updating OHLCV history for {symbol.name} in {timeframe.name} timeframe'
+                    f'[Bybit Harvester] Finished updating fetch_single_ohlcv history for {symbol.name} in {timeframe.name} timeframe'
                     f' ({current_fetch} / {all_fetches}). '
                     f'Added {len(new_candles)} new entries '
                     f'Took {"{:.2f}".format(end_single_symbol - start_single_symbol)} seconds')
                 success = True
             except Exception as e:
-                logging.error(f'Update Single OHLCV {e}')
-                sleep(1)
+                logging.error(f'Update Single fetch_single_ohlcv {symbol.name} {timeframe.name} {e}')
+                await asyncio.sleep(1)
 
         return new_candles
 
-    def get_newest_ohlcv_timestamp(self, symbols: list[Type[Symbol]], timeframes: list[Type[Timeframe]]) \
-            -> list[DataToFetch]:
+    async def get_newest_ohlcv_timestamp(self, symbols: list[Type[Symbol]],
+                                         timeframes: list[Type[Timeframe]]) -> list[DataToFetch]:
         symbols_timeframes_and_timestamps = []
-        for symbol in symbols:
-            for timeframe in timeframes:
-                last_item = self.db_session.query(OHLCV).filter_by(exchange=self.exchange.id, symbol=symbol.id,
-                                                                   timeframe=timeframe.id).order_by(
-                    desc(OHLCV.timestamp)).limit(1).first()
+        while True:
+            try:
+                for symbol in symbols:
+                    for timeframe in timeframes:
+                        last_item = self.db_session.query(OHLCV).filter_by(exchange=self.exchange.id,
+                                                                           symbol=symbol.id,
+                                                                           timeframe=timeframe.id).order_by(
+                            desc(OHLCV.timestamp)).limit(1).first()
 
-                last_item_timestamp = max(
-                    self.symbol_start_dates[symbol.name], max(0, 1000 * (datetime.now().timestamp() -
-                                                                         timeframe.seconds * MAX_CANDLES_HISTORY_TO_FETCH))) \
-                    if last_item is None else last_item.timestamp.timestamp()
+                        last_item_timestamp = max(
+                            self.symbol_start_dates[symbol.name], max(0, 1000 * int(datetime.now().timestamp() -
+                                                                                    timeframe.seconds * MAX_CANDLES_HISTORY_TO_FETCH))) \
+                            if last_item is None else int(last_item.timestamp.timestamp()) * 1000
 
-                symbols_timeframes_and_timestamps.append(DataToFetch(symbol, timeframe, last_item_timestamp))
+                        symbols_timeframes_and_timestamps.append(DataToFetch(symbol, timeframe, last_item_timestamp))
 
-        logging.info(f'[Bybit Harvester] Finished calculating timestamps for further database refresh')
-        return symbols_timeframes_and_timestamps
+                logging.info(
+                    f'[Bybit Harvester] Finished calculating timestamps for OHLCV for further database refresh')
+                return symbols_timeframes_and_timestamps
+            except PendingRollbackError as e:
+                logging.error(f'[Bybit Harvester] get_newest_object_timestamp OHLCV rollback error {e}')
+                self.db_session.rollback()
+                await asyncio.sleep(1)
 
     async def start_watching(self):
-        return await self.watcher.watch_candles()
+        return await asyncio.gather(*[self.watcher.watch_candles(), self.watcher.watch_tickers()])
 
     async def fetch_candles(self):
+
         while True:
             current_symbols = await self.update_list_of_symbols()
-            data_to_fetch = self.get_newest_ohlcv_timestamp(current_symbols, self.timeframes)
+            ohlcv_data_to_fetch = await self.get_newest_ohlcv_timestamp(current_symbols,
+                                                                        self.get_ohlcv_supported_timeframes())
+
             self.watcher.update_symbols(current_symbols)
             self.watcher.refresh()
 
-            await self.fetch_all_ohlcv(data_to_fetch)
+            await self.fetch_all_ohlcv(ohlcv_data_to_fetch)
             await asyncio.sleep(3600)
 
     async def start_loop(self):
