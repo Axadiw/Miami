@@ -22,6 +22,8 @@ freezegun = "^1.2.2"
 mp = "^0.5.0"
 ccxt = "^4.1.47"
 ccxtpro = "^1.0.1"
+asyncpg = "^0.29.0"
+greenlet = "^3.0.1"
 
 [build-system]
 requires = ["poetry-core"]

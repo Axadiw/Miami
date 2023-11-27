@@ -12,6 +12,7 @@ async def harvest_bybit():
         try:
             logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
             harvester = BybitHarvester(BybitConnectorCCXT())
+            await harvester.configure()
             await harvester.start_loop()
         except Exception as e:
             logging.error(f'Unhandled data harvesters error {e}')
