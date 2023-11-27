@@ -65,8 +65,8 @@ class BybitHarvesterWatcher:
                         self.db_session.execute(insert(OHLCV).values(ohlcv_candles_to_save).on_conflict_do_nothing())
                         self.db_session.commit()
 
-                    if len(ohlcv_candles_to_save):
-                        logging.debug(f'[Bybit Harvester Watcher] Added {len(ohlcv_candles_to_save)} candles')
+                    # if len(ohlcv_candles_to_save):
+                    #     logging.debug(f'[Bybit Harvester Watcher] Added {len(ohlcv_candles_to_save)} candles')
                 else:
                     await asyncio.sleep(1)  # empty subscriptions array
             except PendingRollbackError as e:
@@ -144,8 +144,8 @@ class BybitHarvesterWatcher:
                         self.db_session.execute(insert(Funding).values(funding_to_save).on_conflict_do_nothing())
                         self.db_session.execute(insert(OpenInterest).values(oi_to_save).on_conflict_do_nothing())
                         self.db_session.commit()
-                        logging.debug(
-                            f'[Bybit Harvester Watcher] Added funding and OI for {ticker["symbol"]}')
+                        # logging.debug(
+                        #     f'[Bybit Harvester Watcher] Added funding and OI for {ticker["symbol"]}')
 
                 else:
                     await asyncio.sleep(1)  # empty subscriptions array

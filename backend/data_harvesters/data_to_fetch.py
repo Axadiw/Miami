@@ -1,0 +1,21 @@
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Type
+
+from models.symbol import Symbol
+from models.timeframe import Timeframe
+
+
+@dataclass
+class DataToFetch:
+    symbol: Type[Symbol]
+    timeframe: Type[Timeframe]
+    start: datetime
+    end: datetime
+    is_last_to_fetch: bool
+
+    def length(self):
+        return self.end - self.start
+
+    def __repr__(self):
+        return f'{self.symbol.name} {self.timeframe.name} {self.start}  - {self.end} length: {self.length()}'

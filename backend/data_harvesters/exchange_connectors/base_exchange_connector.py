@@ -1,13 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import List, Type, Optional
+from datetime import datetime
+from typing import List, Type
 
-from ccxt.base.types import Trade
-
+from data_harvesters.data_to_fetch import DataToFetch
 from models.exchange import Exchange
 from models.ohlcv import OHLCV
-from models.open_interests import OpenInterest
 from models.symbol import Symbol
-from models.timeframe import Timeframe
 
 
 class BaseExchangeConnector(ABC):
@@ -17,14 +15,11 @@ class BaseExchangeConnector(ABC):
         pass
 
     @abstractmethod
-    async def fetch_ohlcv(self, symbol: Type[Symbol], timeframe: Type[Timeframe], exchange: Type[Exchange],
-                          since: int) \
-            -> List[OHLCV]:
+    async def fetch_ohlcv(self, exchange: Type[Exchange], data: DataToFetch) -> List[OHLCV]:
         pass
 
     @abstractmethod
-    async def watch_ohlcv(self, symbolsAndTimeframes: List[List[str]], since: Optional[int] = None,
-                          limit: Optional[int] = None, params={}):
+    async def watch_ohlcv(self, symbols_and_time_frames: List[List[str]]):
         pass
 
     @abstractmethod
@@ -32,24 +27,9 @@ class BaseExchangeConnector(ABC):
         pass
 
     @abstractmethod
-    async def watch_trades(self, symbols: List[str], since: Optional[int] = None, limit: Optional[int] = None,
-                           params={}):
-        pass
-
-    @abstractmethod
-    def build(self, trades: List[Trade], timeframe: str = '1m', since: float = 0, limit: float = 2147483647):
-        pass
-
-    @abstractmethod
     async def fetch_start_dates(self):
         pass
 
     @abstractmethod
-    async def fetch_funding_history(self, symbol: str, since: int):
-        pass
-
-    @abstractmethod
-    async def fetch_open_interest_history(self, symbol: str, timeframe: Type[Timeframe], since: int,
-                                          exchange: Type[Exchange]) \
-            -> List[OpenInterest]:
+    async def get_server_time(self) -> datetime:
         pass
