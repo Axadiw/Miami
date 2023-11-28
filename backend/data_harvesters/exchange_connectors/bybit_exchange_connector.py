@@ -4,7 +4,7 @@ from typing import List, Type
 import ccxt
 import ccxt.pro as ccxtpro
 
-from data_harvesters.bybit_harvester.bybit_harvester import MAX_CANDLES_HISTORY_TO_FETCH
+from data_harvesters.consts import MAX_CANDLES_HISTORY_TO_FETCH
 from data_harvesters.data_to_fetch import DataToFetch
 from data_harvesters.exchange_connectors.base_exchange_connector import BaseExchangeConnector
 from models.exchange import Exchange
@@ -61,3 +61,6 @@ class BybitConnectorCCXT(BaseExchangeConnector):
 
     async def get_server_time(self) -> datetime:
         return datetime.fromtimestamp(await self.connector_pro.fetch_time() / 1000)
+
+    async def close(self):
+        await self.connector_pro.close()

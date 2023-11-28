@@ -1,15 +1,13 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import Type
+from typing import Type, Callable
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.exc import PendingRollbackError
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from data_harvesters.database import get_db_session, get_session
-from data_harvesters.exchange_connectors.base_exchange_connector import BaseExchangeConnector
+from data_harvesters.database import get_session
 from models.exchange import Exchange
 from models.funding import Funding
 from models.ohlcv import OHLCV
@@ -20,9 +18,9 @@ from models.timeframe import Timeframe
 
 class BybitHarvesterWatcher:
 
-    def __init__(self, exchange: Type[Exchange], client: BaseExchangeConnector):
+    def __init__(self, exchange: Type[Exchange], client_generator: Callable):
         logging.info('[Bybit Harvester Watcher] Initializing ')
-        self.exchange_connector = client
+        self.exchange_connector_generator = client_generator
         self.should_refresh_candle_symbols = True
         self.should_refresh_tickers_symbols = True
         self.exchange = exchange
@@ -42,6 +40,7 @@ class BybitHarvesterWatcher:
 
     async def watch_candles(self):
         logging.info(f'[Bybit Harvester Watcher] Will start watching for candles')
+        exchange_connector = self.exchange_connector_generator()
         async with get_session() as db_session:
             subscriptions = []
             while True:
@@ -54,7 +53,7 @@ class BybitHarvesterWatcher:
                         self.should_refresh_candle_symbols = False
 
                     if len(subscriptions) > 0:
-                        candles: dict = await self.exchange_connector.watch_ohlcv(subscriptions)
+                        candles: dict = await exchange_connector.watch_ohlcv(subscriptions)
                         ohlcv_candles_to_save = await self.handle_candles(db_session, candles)
                         if len(ohlcv_candles_to_save) > 0:
                             await db_session.execute(
@@ -119,6 +118,7 @@ class BybitHarvesterWatcher:
                 await asyncio.sleep(1)
 
     async def watch_tickers(self):
+        exchange_connector = self.exchange_connector_generator()
         async with get_session() as db_session:
             logging.info(f'[Bybit Harvester Watcher] Will start watching for ticker')
             subscriptions = []
@@ -131,7 +131,7 @@ class BybitHarvesterWatcher:
                         self.should_refresh_tickers_symbols = False
 
                     if len(subscriptions) > 0:
-                        ticker: dict = await self.exchange_connector.watch_tickers(subscriptions)
+                        ticker: dict = await exchange_connector.watch_tickers(subscriptions)
                         funding_to_save, oi_to_save = await self.handle_tickers(db_session, ticker)
 
                         if funding_to_save and oi_to_save:

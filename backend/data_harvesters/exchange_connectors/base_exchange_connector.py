@@ -33,3 +33,7 @@ class BaseExchangeConnector(ABC):
     @abstractmethod
     async def get_server_time(self) -> datetime:
         pass
+
+    @abstractmethod
+    async def close(self):
+        pass

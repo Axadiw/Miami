@@ -2,24 +2,22 @@ import asyncio
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import Type, Any
+from typing import Type, Any, Callable
 
-from sqlalchemy import Row, select
-from sqlalchemy.dialects.postgresql import insert, Insert
-from sqlalchemy.exc import PendingRollbackError
+from sqlalchemy import select, text
+from sqlalchemy.dialects.postgresql import Insert
 
 from data_harvesters.bybit_harvester.bybit_harverser_watcher import BybitHarvesterWatcher
+from data_harvesters.consts import MAX_CONCURRENT_FETCHES, MAX_CANDLES_HISTORY_TO_FETCH
 from data_harvesters.data_to_fetch import DataToFetch
 from data_harvesters.database import get_session, pg_bulk_insert
-from data_harvesters.exchange_connectors.base_exchange_connector import BaseExchangeConnector
 from models.exchange import Exchange
 from models.ohlcv import OHLCV
 from models.symbol import Symbol
 from models.timeframe import Timeframe
+from timer import elapsed_timer
 
 EXCHANGE_NAME = 'bybit'
-MAX_CANDLES_HISTORY_TO_FETCH = 100000
-MAX_CONCURRENT_FETCHES = 20
 
 
 def sort_data_to_fetch_by_start_key(e):
@@ -42,15 +40,15 @@ class BybitHarvester:
     exchange: Type[Exchange]
     timeframes: list[Type[Timeframe]]
 
-    def __init__(self, client: BaseExchangeConnector):
+    def __init__(self, client_generator: Callable):
         logging.info('[Bybit Harvester] Initializing ')
 
-        self.exchange_connector = client
+        self.exchange_connector_generator = client_generator
 
     async def configure(self):
         self.exchange = await self.create_exchange_entry()
         self.timeframes = await self.create_supported_timeframes()
-        self.watcher = BybitHarvesterWatcher(client=self.exchange_connector, exchange=self.exchange)
+        self.watcher = BybitHarvesterWatcher(client_generator=self.exchange_connector_generator, exchange=self.exchange)
         self.watcher.update_timeframes(self.get_ohlcv_supported_timeframes())
         self.symbol_start_dates = {}
 
@@ -90,7 +88,6 @@ class BybitHarvester:
 
     async def create_exchange_entry(self) -> Type[Exchange]:
         async with get_session() as db_session:
-
             existing_entry = (await db_session.execute(select(Exchange).filter_by(name=EXCHANGE_NAME))).scalar()
 
             if existing_entry is not None:
@@ -102,12 +99,13 @@ class BybitHarvester:
                 return (await db_session.execute(select(Exchange).filter_by(name=EXCHANGE_NAME))).scalar()
 
     async def update_list_of_symbols(self) -> list[Type[Symbol]]:
+        exchange_connector = self.exchange_connector_generator()
         async with get_session() as db_session:
             while True:  # should finish after first round because of return at the end
                 try:
                     existing_symbols = list(
                         (await db_session.execute(select(Symbol).filter_by(exchange=self.exchange.id))).scalars())
-                    fetched_symbols = await self.exchange_connector.fetch_tickers(self.exchange)
+                    fetched_symbols = await exchange_connector.fetch_tickers(self.exchange)
                     fetched_symbols_names = list(map(lambda x: x.name, fetched_symbols))
                     existing_symbols_names = list(map(lambda x: x.name, existing_symbols))
 
@@ -124,9 +122,9 @@ class BybitHarvester:
 
                     new_symbols_count = len(new_symbols_to_add)
 
-                    self.symbol_start_dates = await self.exchange_connector.fetch_start_dates()
+                    self.symbol_start_dates = await exchange_connector.fetch_start_dates()
                     logging.info(f'[Bybit Harvester] Updated list of symbols ({new_symbols_count} new added)')
-
+                    await exchange_connector.close()
                     return list(
                         (await db_session.execute(select(Symbol).filter_by(exchange=self.exchange.id))).scalars())
                 except Exception as e:
@@ -134,22 +132,22 @@ class BybitHarvester:
                     await asyncio.sleep(1)
 
     async def fetch_all_ohlcv(self, data_to_fetch: list[DataToFetch]) -> object:
-        start_all_symbols = time.time()
-        new_candles_counts = await semaphore_gather(MAX_CONCURRENT_FETCHES,
-                                                    [self.fetch_and_save_single_ohlcv(data=data,
-                                                                                      current_fetch=index + 1,
-                                                                                      all_fetches=len(data_to_fetch))
-                                                     for index, data in enumerate(data_to_fetch)])
-        new_candles_for_all_symbols_count = 0
-        for count in new_candles_counts:
-            new_candles_for_all_symbols_count += count
+        with elapsed_timer() as elapsed:
+            new_candles_counts = await semaphore_gather(MAX_CONCURRENT_FETCHES,
+                                                        [self.fetch_and_save_single_ohlcv(data=data,
+                                                                                          current_fetch=index + 1,
+                                                                                          all_fetches=len(
+                                                                                              data_to_fetch))
+                                                         for index, data in enumerate(data_to_fetch)])
+            new_candles_for_all_symbols_count = 0
+            for count in new_candles_counts:
+                new_candles_for_all_symbols_count += count
 
-        end_all_symbols = time.time()
-        logging.info(
-            f'[Bybit Harvester] Finished updating fetch_and_save_single_ohlcv history for all symbols in all timeframes. '
-            f'Added {new_candles_for_all_symbols_count} new entries '
-            f'Took {"{:.2f}".format(end_all_symbols - start_all_symbols)} seconds')
-        return new_candles_for_all_symbols_count
+            logging.info(
+                f'[Bybit Harvester] Finished updating fetch_and_save_single_ohlcv history for all symbols in all timeframes. '
+                f'Added {new_candles_for_all_symbols_count} new entries '
+                f'Took {"{:.2f}".format(elapsed())} seconds')
+            return new_candles_for_all_symbols_count
 
     async def fetch_and_save_single_ohlcv(self, data: DataToFetch, current_fetch: int, all_fetches: int):
         async with get_session() as db_session:
@@ -158,7 +156,6 @@ class BybitHarvester:
                 success = False
                 while not success:
                     try:
-
                         def conflict_passer(statement: Insert):
                             return statement.on_conflict_do_nothing()
 
@@ -182,23 +179,23 @@ class BybitHarvester:
             return len(new_candles)
 
     async def fetch_single_ohlcv(self, data: DataToFetch, current_fetch: int, all_fetches: int):
-        start_single_symbol = time.time()
-        success = False
-        new_candles = []
-        while not success:
-            try:
-                new_candles = await self.exchange_connector.fetch_ohlcv(data=data, exchange=self.exchange)
-                end_single_symbol = time.time()
-                logging.info(
-                    f'[Bybit Harvester] Finished fetching fetch_single_ohlcv history for {data} '
-                    f' ({current_fetch} / {all_fetches}). Fetched {len(new_candles)} new entries '
-                    f'Took {"{:.2f}".format(end_single_symbol - start_single_symbol)} seconds')
-                success = True
-            except Exception as e:
-                logging.error(f'Update Single fetch_single_ohlcv {data.symbol.name} {data.timeframe.name} {e}')
-                await asyncio.sleep(1)
-
-        return new_candles
+        with elapsed_timer() as elapsed:
+            success = False
+            new_candles = []
+            exchange_connector = self.exchange_connector_generator()
+            while not success:
+                try:
+                    new_candles = await exchange_connector.fetch_ohlcv(data=data, exchange=self.exchange)
+                    logging.info(
+                        f'[Bybit Harvester] Finished fetching fetch_single_ohlcv history for {data} '
+                        f' ({current_fetch} / {all_fetches}). Fetched {len(new_candles)} new entries '
+                        f'Took {"{:.2f}".format(elapsed())} seconds')
+                    success = True
+                except Exception as e:
+                    logging.error(f'Update Single fetch_single_ohlcv {data.symbol.name} {data.timeframe.name} {e}')
+                    await asyncio.sleep(1)
+            await exchange_connector.close()
+            return new_candles
 
     def get_earliest_possible_date_for_ohlcv(self, symbol: Type[Symbol], timeframe: Type[Timeframe]) -> datetime:
         return max(self.symbol_start_dates[symbol.name],
@@ -206,44 +203,45 @@ class BybitHarvester:
                        datetime.now() - timedelta(seconds=timeframe.seconds * MAX_CANDLES_HISTORY_TO_FETCH)))
 
     async def find_all_gaps(self, current_symbols) -> list[DataToFetch]:
-        async with get_session() as db_session:
-            all_gaps = []
-            end_time = await self.exchange_connector.get_server_time()
-            for timeframe in self.get_ohlcv_supported_timeframes():
-                for symbol in current_symbols:
-                    start_time = self.get_earliest_possible_date_for_ohlcv(symbol, timeframe)
+        logging.info(f'[Bybit Harvester] Starting to look for gaps in OHLCV data')
+        exchange_connector = self.exchange_connector_generator()
+        with elapsed_timer() as elapsed:
+            async with get_session() as db_session:
+                all_gaps = []
+                end_time = await exchange_connector.get_server_time()
+                for timeframe in self.get_ohlcv_supported_timeframes():
+                    for symbol in current_symbols:
+                        start_time = self.get_earliest_possible_date_for_ohlcv(symbol, timeframe)
+                        query = (
+                            await db_session.execute(select(OHLCV.timestamp).filter_by(exchange=self.exchange.id,
+                                                                                       symbol=symbol.id,
+                                                                                       timeframe=timeframe.id)
+                                                     .filter(OHLCV.timestamp > start_time)
+                                                     .filter(OHLCV.timestamp <= end_time)
+                                                     .order_by(OHLCV.timestamp.asc())))
+                        timestamps = list(query.scalars())
+                        gaps_to_merge = self.find_gaps(symbol, timeframe, start_time, end_time, timestamps)
+                        gaps_to_merge.sort(key=sort_data_to_fetch_by_start_key)
 
-                    query = (await db_session.execute(select(OHLCV.timestamp).filter_by(exchange=self.exchange.id,
-                                                                                        symbol=symbol.id,
-                                                                                        timeframe=timeframe.id)
-                                                      .filter(OHLCV.timestamp > start_time)
-                                                      .filter(OHLCV.timestamp <= end_time)
-                                                      .order_by(OHLCV.timestamp.asc())))
-
-                    timestamps = list(query.scalars())
-
-                    gaps_to_merge = self.find_gaps(symbol, timeframe, start_time, end_time, timestamps)
-                    gaps_to_merge.sort(key=sort_data_to_fetch_by_start_key)
-
-                    merged_gaps: list[DataToFetch] = []
-                    while len(gaps_to_merge) > 0:
-                        current_gap = gaps_to_merge.pop(0)
+                        merged_gaps: list[DataToFetch] = []
                         while len(gaps_to_merge) > 0:
-                            if (gaps_to_merge[0].start - current_gap.end).total_seconds() - 5 * timeframe.seconds and \
-                                    gaps_to_merge[0].end >= current_gap.end:
-                                current_gap.end = gaps_to_merge.pop(0).end
-                            else:
-                                break
-                        if current_gap.length().total_seconds() > current_gap.timeframe.seconds:
-                            merged_gaps.append(current_gap)
+                            current_gap = gaps_to_merge.pop(0)
+                            while len(gaps_to_merge) > 0:
+                                if (gaps_to_merge[
+                                        0].start - current_gap.end).total_seconds() - 5 * timeframe.seconds and \
+                                        gaps_to_merge[0].end >= current_gap.end:
+                                    current_gap.end = gaps_to_merge.pop(0).end
+                                else:
+                                    break
+                            if current_gap.length().total_seconds() > current_gap.timeframe.seconds:
+                                merged_gaps.append(current_gap)
 
-                    if len(merged_gaps) > 0:
-                        merged_gaps[len(merged_gaps) - 1].is_last_to_fetch = True
-
-                    all_gaps += merged_gaps
-                    logging.info(
-                        f'[Bybit Harvester] Found {len(merged_gaps)} gaps for {symbol.name} {timeframe.name}')
-            return all_gaps
+                        if len(merged_gaps) > 0:
+                            merged_gaps[len(merged_gaps) - 1].is_last_to_fetch = True
+                        all_gaps += merged_gaps
+                logging.info(f'[Bybit Harvester] Found {len(all_gaps)} gaps. Took {"{:.2f}".format(elapsed())} seconds')
+                await exchange_connector.close()
+                return all_gaps
 
     def find_gaps(self, symbol: Type[Symbol], timeframe: Type[Timeframe], start_time: datetime, end_time: datetime,
                   timestamps: list[datetime]) -> list[DataToFetch]:
