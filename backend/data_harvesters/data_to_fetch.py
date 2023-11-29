@@ -18,4 +18,4 @@ class DataToFetch:
         return self.end - self.start
 
     def __repr__(self):
-        return f'{self.symbol.name} {self.timeframe.name} {self.start}  - {self.end} length: {self.length()}'
+        return f'{self.symbol.name} {self.timeframe.name} {self.start}\t-\t{self.end}\tlength: {self.length()}'

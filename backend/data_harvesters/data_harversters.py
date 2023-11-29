@@ -14,7 +14,7 @@ def bybit_connector_generator():
 async def harvest_bybit():
     while True:
         try:
-            logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
+            logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.DEBUG)
             harvester = BybitHarvester(client_generator=bybit_connector_generator)
             await harvester.configure()
             await harvester.start_loop()

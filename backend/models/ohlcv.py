@@ -16,3 +16,6 @@ class OHLCV(Base):
     low = Column(Numeric(scale=10, precision=30))
     close = Column(Numeric(scale=10, precision=30))
     volume = Column(Numeric(scale=10, precision=30))
+
+    def __repr__(self):
+        return f'Symbol: {self.symbol} TF:{self.timeframe} Timestamp{str(self.timestamp)}'

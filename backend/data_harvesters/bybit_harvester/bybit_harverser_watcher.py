@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Type, Callable
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -56,12 +56,10 @@ class BybitHarvesterWatcher:
                         candles: dict = await exchange_connector.watch_ohlcv(subscriptions)
                         ohlcv_candles_to_save = await self.handle_candles(db_session, candles)
                         if len(ohlcv_candles_to_save) > 0:
+                            logging.info(f'Will save {ohlcv_candles_to_save}')
                             await db_session.execute(
                                 insert(OHLCV).values(ohlcv_candles_to_save).on_conflict_do_nothing())
                             await db_session.commit()
-
-                        # if len(ohlcv_candles_to_save):
-                        #     logging.debug(f'[Bybit Harvester Watcher] Added {len(ohlcv_candles_to_save)} candles')
                     else:
                         await asyncio.sleep(1)  # empty subscriptions array
                 except Exception as e:
@@ -138,8 +136,6 @@ class BybitHarvesterWatcher:
                             await db_session.execute(insert(Funding).values(funding_to_save).on_conflict_do_nothing())
                             await db_session.execute(insert(OpenInterest).values(oi_to_save).on_conflict_do_nothing())
                             await db_session.commit()
-                            # logging.debug(
-                            #     f'[Bybit Harvester Watcher] Added funding and OI for {ticker["symbol"]}')
                     else:
                         await asyncio.sleep(1)  # empty subscriptions array
                 except Exception as e:
@@ -148,8 +144,9 @@ class BybitHarvesterWatcher:
     async def handle_tickers(self, db_session: AsyncSession, ticker):
         symbol = (await db_session.execute(select(Symbol).filter_by(name=ticker['symbol']))).scalar()
         timestamp = datetime.fromtimestamp(ticker['timestamp'] / 1000.0)
-        if len((await db_session.execute(select(Funding).filter_by(symbol=symbol.id).filter(
-                Funding.timestamp > timestamp - timedelta(seconds=30)))).all()) == 0:  # TODO---------------count?
+        count = (await db_session.execute(select(func.count(Funding.id)).filter_by(symbol=symbol.id).filter(
+            Funding.timestamp > timestamp - timedelta(seconds=30)))).scalar()
+        if count == 0:
             funding = {"exchange": self.exchange.id, "symbol": symbol.id,
                        "timestamp": timestamp,
                        "value": ticker['info']['fundingRate']}

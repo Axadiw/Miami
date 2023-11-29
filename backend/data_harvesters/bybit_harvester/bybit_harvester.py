@@ -1,16 +1,19 @@
 import asyncio
 import logging
-import time
 from datetime import datetime, timedelta
+from math import floor
 from typing import Type, Any, Callable
 
 from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import Insert
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from data_harvesters.bybit_harvester.bybit_harverser_watcher import BybitHarvesterWatcher
-from data_harvesters.consts import MAX_CONCURRENT_FETCHES, MAX_CANDLES_HISTORY_TO_FETCH
+from data_harvesters.consts import MAX_CONCURRENT_FETCHES, MAX_CANDLES_HISTORY_TO_FETCH, \
+    MAX_CONCURRENT_GAPS_CALCULATIONS
 from data_harvesters.data_to_fetch import DataToFetch
-from data_harvesters.database import get_session, pg_bulk_insert
+from data_harvesters.database import get_session, pg_bulk_insert, async_session_generator
+from data_harvesters.helpers.semaphore_gather import semaphore_gather
 from models.exchange import Exchange
 from models.ohlcv import OHLCV
 from models.symbol import Symbol
@@ -20,18 +23,12 @@ from timer import elapsed_timer
 EXCHANGE_NAME = 'bybit'
 
 
-def sort_data_to_fetch_by_start_key(e):
+def sort_data_to_fetch_by_start_key(e: DataToFetch):
     return e.start
 
 
-async def semaphore_gather(num, coros, return_exceptions=False):
-    semaphore = asyncio.Semaphore(num)
-
-    async def _wrap_coro(coro):
-        async with semaphore:
-            return await coro
-
-    return await asyncio.gather(*(_wrap_coro(coro) for coro in coros), return_exceptions=return_exceptions)
+def sort_ohlcv_by_timestamp_key(e: OHLCV):
+    return e.timestamp
 
 
 class BybitHarvester:
@@ -39,6 +36,8 @@ class BybitHarvester:
     symbol_start_dates: dict[Any, Any]
     exchange: Type[Exchange]
     timeframes: list[Type[Timeframe]]
+    temporary_gaps_finding_db_sessions: list[AsyncSession]
+    temporary_ohlcv_fetching_db_sessions: list[AsyncSession]
 
     def __init__(self, client_generator: Callable):
         logging.info('[Bybit Harvester] Initializing ')
@@ -59,7 +58,8 @@ class BybitHarvester:
     def get_open_interest_supported_timeframes(self) -> list[Type[Timeframe]]:
         return list(filter(lambda timeframe: timeframe.name in ['5m', '15m', '30m', '1h' '4h', '1d'], self.timeframes))
 
-    async def create_supported_timeframes(self) -> list[Type[Timeframe]]:
+    @staticmethod
+    async def create_supported_timeframes() -> list[Type[Timeframe]]:
         async with get_session() as db_session:
             supported_timeframes = [
                 {'name': '1m', 'seconds': 60},
@@ -86,7 +86,8 @@ class BybitHarvester:
 
             return list((await db_session.execute(select(Timeframe))).scalars())
 
-    async def create_exchange_entry(self) -> Type[Exchange]:
+    @staticmethod
+    async def create_exchange_entry() -> Type[Exchange]:
         async with get_session() as db_session:
             existing_entry = (await db_session.execute(select(Exchange).filter_by(name=EXCHANGE_NAME))).scalar()
 
@@ -100,6 +101,7 @@ class BybitHarvester:
 
     async def update_list_of_symbols(self) -> list[Type[Symbol]]:
         exchange_connector = self.exchange_connector_generator()
+        logging.info(f'[Bybit Harvester] Starting updating list of symbols')
         async with get_session() as db_session:
             while True:  # should finish after first round because of return at the end
                 try:
@@ -132,6 +134,9 @@ class BybitHarvester:
                     await asyncio.sleep(1)
 
     async def fetch_all_ohlcv(self, data_to_fetch: list[DataToFetch]) -> object:
+        self.temporary_ohlcv_fetching_db_sessions = [async_session_generator()() for i in
+                                                     range(0, MAX_CONCURRENT_FETCHES)]
+
         with elapsed_timer() as elapsed:
             new_candles_counts = await semaphore_gather(MAX_CONCURRENT_FETCHES,
                                                         [self.fetch_and_save_single_ohlcv(data=data,
@@ -143,40 +148,66 @@ class BybitHarvester:
             for count in new_candles_counts:
                 new_candles_for_all_symbols_count += count
 
+            for session in self.temporary_ohlcv_fetching_db_sessions:
+                await session.close()
+            self.temporary_ohlcv_fetching_db_sessions = []
             logging.info(
-                f'[Bybit Harvester] Finished updating fetch_and_save_single_ohlcv history for all symbols in all timeframes. '
+                f'[Bybit Harvester] Finished updating history for all symbols in all timeframes. '
                 f'Added {new_candles_for_all_symbols_count} new entries '
                 f'Took {"{:.2f}".format(elapsed())} seconds')
             return new_candles_for_all_symbols_count
 
     async def fetch_and_save_single_ohlcv(self, data: DataToFetch, current_fetch: int, all_fetches: int):
-        async with get_session() as db_session:
-            new_candles = await self.fetch_single_ohlcv(data=data, current_fetch=current_fetch, all_fetches=all_fetches)
-            if len(new_candles) > 0:
-                success = False
-                while not success:
-                    try:
-                        def conflict_passer(statement: Insert):
-                            return statement.on_conflict_do_nothing()
+        db_session = self.temporary_ohlcv_fetching_db_sessions.pop()
+        new_candles: list[OHLCV] = await self.fetch_single_ohlcv(data=data, current_fetch=current_fetch,
+                                                                 all_fetches=all_fetches)
 
-                        await pg_bulk_insert(session=db_session, table=OHLCV, data=[{"exchange": candle.exchange,
-                                                                                     "symbol": candle.symbol,
-                                                                                     "timeframe": candle.timeframe,
-                                                                                     "timestamp": candle.timestamp,
-                                                                                     "open": candle.open,
-                                                                                     "high": candle.high,
-                                                                                     "low": candle.low,
-                                                                                     "close": candle.close,
-                                                                                     "volume": candle.volume} for candle
-                                                                                    in
-                                                                                    new_candles],
-                                             statement_modifier=conflict_passer)
-                        await db_session.commit()
-                        success = True
-                    except Exception as e:
-                        logging.error(f'fetch_and_save_single_ohlcv error {data.symbol.name} {data.timeframe.name} {e}')
-                        await asyncio.sleep(1)
-            return len(new_candles)
+        if len(new_candles) > 0:
+            expected_candles_count = floor((data.end - data.start).total_seconds() / data.timeframe.seconds)
+            if expected_candles_count != len(new_candles):
+                new_candles += self.generate_missing_candles_in_front(candles=new_candles, start_time=data.start,
+                                                                      timeframe=data.timeframe)
+            success = False
+            while not success:
+                try:
+                    def conflict_passer(statement: Insert):
+                        return statement.on_conflict_do_nothing()
+
+                    await pg_bulk_insert(session=db_session, table=OHLCV, data=[{"exchange": candle.exchange,
+                                                                                 "symbol": candle.symbol,
+                                                                                 "timeframe": candle.timeframe,
+                                                                                 "timestamp": candle.timestamp,
+                                                                                 "open": candle.open,
+                                                                                 "high": candle.high,
+                                                                                 "low": candle.low,
+                                                                                 "close": candle.close,
+                                                                                 "volume": candle.volume} for candle
+                                                                                in
+                                                                                new_candles],
+                                         statement_modifier=conflict_passer)
+                    await db_session.commit()
+                    success = True
+                except Exception as e:
+                    logging.error(f'fetch_and_save_single_ohlcv error {data.symbol.name} {data.timeframe.name} {e}')
+                    await asyncio.sleep(1)
+        self.temporary_ohlcv_fetching_db_sessions.append(db_session)
+        return len(new_candles)
+
+    @staticmethod
+    def generate_missing_candles_in_front(candles: list[OHLCV], start_time: datetime, timeframe: Type[Timeframe]):
+        candles_to_add = []
+        candles.sort(key=sort_ohlcv_by_timestamp_key)
+        first_candle = candles[0]
+        candles_missing_in_front = floor(
+            (first_candle.timestamp - start_time).total_seconds() / timeframe.seconds)
+        if candles_missing_in_front > 0:
+            for i in range(1, candles_missing_in_front + 1):
+                candles_to_add.append(OHLCV(timestamp=first_candle.timestamp - timedelta(seconds=i * timeframe.seconds),
+                                            exchange=first_candle.exchange, symbol=first_candle.symbol,
+                                            timeframe=first_candle.timeframe, open=first_candle.open,
+                                            high=first_candle.open,
+                                            low=first_candle.open, close=first_candle.open, volume=0))
+        return candles_to_add
 
     async def fetch_single_ohlcv(self, data: DataToFetch, current_fetch: int, all_fetches: int):
         with elapsed_timer() as elapsed:
@@ -187,8 +218,7 @@ class BybitHarvester:
                 try:
                     new_candles = await exchange_connector.fetch_ohlcv(data=data, exchange=self.exchange)
                     logging.info(
-                        f'[Bybit Harvester] Finished fetching fetch_single_ohlcv history for {data} '
-                        f' ({current_fetch} / {all_fetches}). Fetched {len(new_candles)} new entries '
+                        f'Fetched {len(new_candles)} new entries for\t{data}\t({current_fetch} / {all_fetches}).\t'
                         f'Took {"{:.2f}".format(elapsed())} seconds')
                     success = True
                 except Exception as e:
@@ -206,75 +236,50 @@ class BybitHarvester:
         logging.info(f'[Bybit Harvester] Starting to look for gaps in OHLCV data')
         exchange_connector = self.exchange_connector_generator()
         with elapsed_timer() as elapsed:
-            async with get_session() as db_session:
-                all_gaps = []
-                end_time = await exchange_connector.get_server_time()
-                for timeframe in self.get_ohlcv_supported_timeframes():
-                    for symbol in current_symbols:
-                        start_time = self.get_earliest_possible_date_for_ohlcv(symbol, timeframe)
+            all_gaps = []
+            end_time = await exchange_connector.get_server_time()
+            find_gap_coroutines = []
+            self.temporary_gaps_finding_db_sessions = [async_session_generator()() for i in
+                                                       range(0, MAX_CONCURRENT_GAPS_CALCULATIONS)]
 
-                        # query = (
-                        #     await db_session.execute(select(OHLCV.timestamp).filter_by(exchange=self.exchange.id,
-                        #                                                                symbol=symbol.id,
-                        #                                                                timeframe=timeframe.id)
-                        #                              .filter(OHLCV.timestamp > start_time)
-                        #                              .filter(OHLCV.timestamp <= end_time)
-                        #                              .order_by(OHLCV.timestamp.asc())))
-                        # timestamps = list(query.scalars())
-                        # slows_to_merge = self.find_gaps(symbol, timeframe, start_time, end_time, timestamps)
-                        # slows_to_merge.sort(key=sort_data_to_fetch_by_start_key)
+            for timeframe in self.get_ohlcv_supported_timeframes():
+                for symbol in current_symbols:
+                    find_gap_coroutines.append(self.gap_finder(symbol=symbol, timeframe=timeframe, end_time=end_time))
 
-                        gaps_to_merge = await self.fast_gaps(symbol, timeframe, start_time, end_time, db_session)
-                        gaps_to_merge.sort(key=sort_data_to_fetch_by_start_key)
+            for gap in await semaphore_gather(MAX_CONCURRENT_GAPS_CALCULATIONS, find_gap_coroutines):
+                all_gaps += gap
+            logging.info(f'[Bybit Harvester] Found {len(all_gaps)} gaps. Took {"{:.2f}".format(elapsed())} seconds')
+            for session in self.temporary_gaps_finding_db_sessions:
+                await session.close()
+            self.temporary_gaps_finding_db_sessions = []
+            await exchange_connector.close()
+            return all_gaps
 
-                        # if len(slows_to_merge) != len(gaps_to_merge) or slows_to_merge != gaps_to_merge:
-                        #     pass
+    async def gap_finder(self, symbol: Type[Symbol], timeframe: Type[Timeframe], end_time: datetime):
+        start_time = self.get_earliest_possible_date_for_ohlcv(symbol, timeframe)
 
-                        merged_gaps: list[DataToFetch] = []
-                        while len(gaps_to_merge) > 0:
-                            current_gap = gaps_to_merge.pop(0)
-                            while len(gaps_to_merge) > 0:
-                                if (gaps_to_merge[
-                                        0].start - current_gap.end).total_seconds() - 5 * timeframe.seconds and \
-                                        gaps_to_merge[0].end >= current_gap.end:
-                                    current_gap.end = gaps_to_merge.pop(0).end
-                                else:
-                                    break
-                            if current_gap.length().total_seconds() > current_gap.timeframe.seconds:
-                                merged_gaps.append(current_gap)
+        gaps_to_merge = await self.find_gaps(symbol, timeframe, start_time, end_time)
+        gaps_to_merge.sort(key=sort_data_to_fetch_by_start_key)
 
-                        if len(merged_gaps) > 0:
-                            merged_gaps[len(merged_gaps) - 1].is_last_to_fetch = True
-                        all_gaps += merged_gaps
-                logging.info(f'[Bybit Harvester] Found {len(all_gaps)} gaps. Took {"{:.2f}".format(elapsed())} seconds')
-                await exchange_connector.close()
-                return all_gaps
+        merged_gaps: list[DataToFetch] = []
+        while len(gaps_to_merge) > 0:
+            current_gap = gaps_to_merge.pop(0)
+            while len(gaps_to_merge) > 0:
+                if (gaps_to_merge[
+                        0].start - current_gap.end).total_seconds() - 5 * timeframe.seconds and \
+                        gaps_to_merge[0].end >= current_gap.end:
+                    current_gap.end = gaps_to_merge.pop(0).end
+                else:
+                    break
+            if current_gap.length().total_seconds() > current_gap.timeframe.seconds:
+                merged_gaps.append(current_gap)
 
-    def find_gaps(self, symbol: Type[Symbol], timeframe: Type[Timeframe], start_time: datetime, end_time: datetime,
-                  timestamps: list[datetime]) -> list[DataToFetch]:
-        gaps = []
-        for index, timestamp in enumerate(timestamps):
-            if index > 0:
-                previous_timestamp = timestamps[index - 1]
-                current_timestamp = timestamp
-                if previous_timestamp + timedelta(seconds=timeframe.seconds) != current_timestamp:
-                    gaps.append(
-                        DataToFetch(symbol=symbol, timeframe=timeframe, start=previous_timestamp, end=current_timestamp,
-                                    is_last_to_fetch=False))
+        if len(merged_gaps) > 0:
+            merged_gaps[len(merged_gaps) - 1].is_last_to_fetch = True
+        return merged_gaps
 
-        if len(timestamps) > 0:
-            first_timestamp = timestamps[0]
-            last_timestamp = timestamps[len(timestamps) - 1]
-            if (first_timestamp - start_time).total_seconds() > timeframe.seconds:
-                gaps.append(DataToFetch(symbol=symbol, timeframe=timeframe, start=start_time, end=first_timestamp,
-                                        is_last_to_fetch=False))
-
-            if (end_time - last_timestamp).total_seconds() > timeframe.seconds:
-                gaps.append(DataToFetch(symbol=symbol, timeframe=timeframe, start=last_timestamp, end=end_time,
-                                        is_last_to_fetch=False))
-        return gaps
-
-    async def fast_gaps(self, symbol, timeframe, start_time, end_time, db_session):
+    async def find_gaps(self, symbol, timeframe, start_time, end_time):
+        db_session = self.temporary_gaps_finding_db_sessions.pop()
         query = text(f''
                      f'SELECT'
                      f'	*'
@@ -293,10 +298,9 @@ class BybitHarvester:
                      f'			"OHLCV"."timestamp" ASC) as raw'
                      f'	WHERE'
                      f'		raw.differ != {timeframe.seconds}*\'1 sec\'::interval')
-        gaps = list((await db_session.execute(query)).all())
-
+        results = (await db_session.execute(query)).all()
         gaps = list(map(lambda x: DataToFetch(symbol=symbol, timeframe=timeframe, start=x[0] - x[1], end=x[0],
-                                              is_last_to_fetch=False), gaps))
+                                              is_last_to_fetch=False), results))
 
         first_timestamp = (await db_session.execute(select(OHLCV.timestamp).filter_by(exchange=self.exchange.id,
                                                                                       symbol=symbol.id,
@@ -319,7 +323,7 @@ class BybitHarvester:
         if last_timestamp is not None and (end_time - last_timestamp).total_seconds() > timeframe.seconds:
             gaps.append(DataToFetch(symbol=symbol, timeframe=timeframe, start=last_timestamp, end=end_time,
                                     is_last_to_fetch=False))
-
+        self.temporary_gaps_finding_db_sessions.append(db_session)
         return gaps
 
     async def start_watching(self):
@@ -333,13 +337,8 @@ class BybitHarvester:
             self.watcher.update_symbols(current_symbols)
             self.watcher.refresh()
 
-            ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)  # move below
-            ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)  # move below
-            ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)  # move below
-            ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)  # move below
-            ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)  # move below
-
-            await self.fetch_all_ohlcv(ohlcv_data_to_fetch)
+            # ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)  # move below
+            # await self.fetch_all_ohlcv(ohlcv_data_to_fetch)
             await asyncio.sleep(3600)
 
     async def start_loop(self):
