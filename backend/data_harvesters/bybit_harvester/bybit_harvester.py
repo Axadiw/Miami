@@ -337,8 +337,8 @@ class BybitHarvester:
             self.watcher.update_symbols(current_symbols)
             self.watcher.refresh()
 
-            # ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)  # move below
-            # await self.fetch_all_ohlcv(ohlcv_data_to_fetch)
+            ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)  # move below
+            await self.fetch_all_ohlcv(ohlcv_data_to_fetch)
             await asyncio.sleep(3600)
 
     async def start_loop(self):
