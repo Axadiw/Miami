@@ -212,16 +212,23 @@ class BybitHarvester:
                 for timeframe in self.get_ohlcv_supported_timeframes():
                     for symbol in current_symbols:
                         start_time = self.get_earliest_possible_date_for_ohlcv(symbol, timeframe)
-                        query = (
-                            await db_session.execute(select(OHLCV.timestamp).filter_by(exchange=self.exchange.id,
-                                                                                       symbol=symbol.id,
-                                                                                       timeframe=timeframe.id)
-                                                     .filter(OHLCV.timestamp > start_time)
-                                                     .filter(OHLCV.timestamp <= end_time)
-                                                     .order_by(OHLCV.timestamp.asc())))
-                        timestamps = list(query.scalars())
-                        gaps_to_merge = self.find_gaps(symbol, timeframe, start_time, end_time, timestamps)
+
+                        # query = (
+                        #     await db_session.execute(select(OHLCV.timestamp).filter_by(exchange=self.exchange.id,
+                        #                                                                symbol=symbol.id,
+                        #                                                                timeframe=timeframe.id)
+                        #                              .filter(OHLCV.timestamp > start_time)
+                        #                              .filter(OHLCV.timestamp <= end_time)
+                        #                              .order_by(OHLCV.timestamp.asc())))
+                        # timestamps = list(query.scalars())
+                        # slows_to_merge = self.find_gaps(symbol, timeframe, start_time, end_time, timestamps)
+                        # slows_to_merge.sort(key=sort_data_to_fetch_by_start_key)
+
+                        gaps_to_merge = await self.fast_gaps(symbol, timeframe, start_time, end_time, db_session)
                         gaps_to_merge.sort(key=sort_data_to_fetch_by_start_key)
+
+                        # if len(slows_to_merge) != len(gaps_to_merge) or slows_to_merge != gaps_to_merge:
+                        #     pass
 
                         merged_gaps: list[DataToFetch] = []
                         while len(gaps_to_merge) > 0:
@@ -265,6 +272,53 @@ class BybitHarvester:
             if (end_time - last_timestamp).total_seconds() > timeframe.seconds:
                 gaps.append(DataToFetch(symbol=symbol, timeframe=timeframe, start=last_timestamp, end=end_time,
                                         is_last_to_fetch=False))
+        return gaps
+
+    async def fast_gaps(self, symbol, timeframe, start_time, end_time, db_session):
+        query = text(f''
+                     f'SELECT'
+                     f'	*'
+                     f'FROM ('
+                     f'	SELECT'
+                     f'		"OHLCV".timestamp AS START,'
+                     f'		"OHLCV".timestamp - lag("OHLCV".timestamp) OVER (ORDER BY "OHLCV"."timestamp" ASC) AS differ'
+                     f'	FROM'
+                     f'		"OHLCV"'
+                     f'	WHERE'
+                     f'		"OHLCV"."exchange" = {self.exchange.id}'
+                     f'		AND "OHLCV"."symbol" = {symbol.id}'
+                     f'		AND "OHLCV"."timeframe" = {timeframe.id}'
+                     f'		AND "OHLCV"."timestamp" > \'{str(start_time)}\''
+                     f'		AND "OHLCV"."timestamp" <= \'{str(end_time)}\' ORDER BY'
+                     f'			"OHLCV"."timestamp" ASC) as raw'
+                     f'	WHERE'
+                     f'		raw.differ != {timeframe.seconds}*\'1 sec\'::interval')
+        gaps = list((await db_session.execute(query)).all())
+
+        gaps = list(map(lambda x: DataToFetch(symbol=symbol, timeframe=timeframe, start=x[0] - x[1], end=x[0],
+                                              is_last_to_fetch=False), gaps))
+
+        first_timestamp = (await db_session.execute(select(OHLCV.timestamp).filter_by(exchange=self.exchange.id,
+                                                                                      symbol=symbol.id,
+                                                                                      timeframe=timeframe.id)
+                                                    .filter(OHLCV.timestamp > start_time)
+                                                    .filter(OHLCV.timestamp <= end_time)
+                                                    .order_by(OHLCV.timestamp.asc()).limit(1))).scalar()
+
+        last_timestamp = (await db_session.execute(select(OHLCV.timestamp).filter_by(exchange=self.exchange.id,
+                                                                                     symbol=symbol.id,
+                                                                                     timeframe=timeframe.id)
+                                                   .filter(OHLCV.timestamp > start_time)
+                                                   .filter(OHLCV.timestamp <= end_time)
+                                                   .order_by(OHLCV.timestamp.desc()).limit(1))).scalar()
+
+        if first_timestamp is not None and (first_timestamp - start_time).total_seconds() > timeframe.seconds:
+            gaps.append(DataToFetch(symbol=symbol, timeframe=timeframe, start=start_time, end=first_timestamp,
+                                    is_last_to_fetch=False))
+
+        if last_timestamp is not None and (end_time - last_timestamp).total_seconds() > timeframe.seconds:
+            gaps.append(DataToFetch(symbol=symbol, timeframe=timeframe, start=last_timestamp, end=end_time,
+                                    is_last_to_fetch=False))
 
         return gaps
 
@@ -279,6 +333,10 @@ class BybitHarvester:
             self.watcher.update_symbols(current_symbols)
             self.watcher.refresh()
 
+            ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)  # move below
+            ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)  # move below
+            ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)  # move below
+            ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)  # move below
             ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)  # move below
 
             await self.fetch_all_ohlcv(ohlcv_data_to_fetch)
