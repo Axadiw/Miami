@@ -1,8 +1,8 @@
 import asyncio
 import logging
+from queue import Queue
 from typing import Type, Callable
 
-import janus
 from sqlalchemy import select
 
 from data_harvesters.consts import GLOBAL_QUEUE_START_COMMAND, GLOBAL_QUEUE_REFRESH_COMMAND
@@ -14,12 +14,13 @@ from models.symbol import Symbol
 class MetadataHarvester:
     exchange: Type[Exchange]
 
-    def __init__(self, exchange_name: str, client_generator: Callable, queue: janus.AsyncQueue[str]):
+    def __init__(self, exchange_name: str, client_generator: Callable, historical_queue: Queue, realtime_queue: Queue):
         logging.info('[Metadata Harvester] Initializing ')
 
         self.exchange_name = exchange_name
         self.exchange_connector_generator = client_generator
-        self.queue = queue
+        self.historical_queue = historical_queue
+        self.realtime_queue = realtime_queue
 
     async def create_exchange_entry(self) -> Type[Exchange]:
         async with get_session() as db_session:
@@ -69,8 +70,10 @@ class MetadataHarvester:
     async def start(self):
         self.exchange = await self.create_exchange_entry()
         await self.update_list_of_symbols()
-        await self.queue.put(GLOBAL_QUEUE_START_COMMAND)
+        self.historical_queue.put(GLOBAL_QUEUE_START_COMMAND)
+        self.realtime_queue.put(GLOBAL_QUEUE_START_COMMAND)
         while True:
             await self.update_list_of_symbols()
-            await self.queue.put(GLOBAL_QUEUE_REFRESH_COMMAND)
+            self.historical_queue.put(GLOBAL_QUEUE_REFRESH_COMMAND)
+            self.realtime_queue.put(GLOBAL_QUEUE_REFRESH_COMMAND)
             await asyncio.sleep(3600)

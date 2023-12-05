@@ -2,9 +2,9 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 from math import floor
+from queue import Queue
 from typing import Type, Any, Callable
 
-import janus
 from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import Insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,7 +37,7 @@ class HistoricalHarvester:
     temporary_gaps_finding_db_sessions: list[AsyncSession]
     temporary_ohlcv_fetching_db_sessions: list[AsyncSession]
 
-    def __init__(self, exchange_name: str, client_generator: Callable, queue: janus.AsyncQueue[str],
+    def __init__(self, exchange_name: str, client_generator: Callable, queue: Queue,
                  ohlcv_timeframe_names: list[str]):
         logging.info('[Historical Harvester] Initializing ')
 
@@ -251,7 +251,7 @@ class HistoricalHarvester:
 
     async def start_queue_loop(self):
         while True:
-            command = await self.queue.get()
+            command = await asyncio.get_event_loop().run_in_executor(None, self.queue.get)
 
             if command == GLOBAL_QUEUE_START_COMMAND:
                 await self.configure()

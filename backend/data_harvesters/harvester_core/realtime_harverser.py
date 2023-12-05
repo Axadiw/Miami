@@ -1,9 +1,9 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta
+from queue import Queue
 from typing import Type, Callable
 
-import janus
 from sqlalchemy import select, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,7 +23,7 @@ from models.timeframe import Timeframe
 class RealtimeHarvester:
     exchange: Type[Exchange]
 
-    def __init__(self, exchange_name: str, client_generator: Callable, queue: janus.AsyncQueue[str],
+    def __init__(self, exchange_name: str, client_generator: Callable, queue: Queue,
                  ohlcv_timeframe_names: list[str]):
         logging.info('[Realtime Harvester Watcher] Initializing ')
         self.queue = queue
@@ -54,7 +54,6 @@ class RealtimeHarvester:
                         candles: dict = await exchange_connector.watch_ohlcv(subscriptions)
                         ohlcv_candles_to_save = await self.handle_candles(db_session, candles)
                         if len(ohlcv_candles_to_save) > 0:
-                            logging.info(f'Will save {ohlcv_candles_to_save}')
                             await db_session.execute(
                                 insert(OHLCV).values(ohlcv_candles_to_save).on_conflict_do_nothing())
                             await db_session.commit()
@@ -157,13 +156,12 @@ class RealtimeHarvester:
 
     async def start_queue_loop(self):
         while True:
-            command = await self.queue.get()
+            command = await asyncio.get_event_loop().run_in_executor(None, self.queue.get)
 
             if command == GLOBAL_QUEUE_START_COMMAND:
                 self.timeframes = await get_subset_of_timeframes(self.supported_ohlcv_timeframes_names)
                 self.exchange = await fetch_exchange_entry(self.exchange_name)
-
-            if command == GLOBAL_QUEUE_REFRESH_COMMAND:
+            elif command == GLOBAL_QUEUE_REFRESH_COMMAND:
                 self.symbols = await fetch_list_of_symbols(self.exchange)
                 self.should_refresh_candle_symbols = True
                 self.should_refresh_tickers_symbols = True

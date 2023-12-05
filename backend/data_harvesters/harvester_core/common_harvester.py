@@ -19,7 +19,7 @@ async def fetch_exchange_entry(exchange_name) -> Type[Exchange]:
             raise Exception(f'No {exchange_name} exchange object found')
 
 
-async def fetch_list_of_symbols(self, exchange: Type[Exchange]) -> list[Type[Symbol]]:
+async def fetch_list_of_symbols(exchange: Type[Exchange]) -> list[Type[Symbol]]:
     logging.info(f'[Historical Harvester] Starting updating list of symbols')
     async with get_session() as db_session:
         return list(
