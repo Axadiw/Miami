@@ -3,11 +3,15 @@ import logging
 from datetime import datetime, timedelta
 from typing import Type, Callable
 
+import janus
 from sqlalchemy import select, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from data_harvesters.consts import GLOBAL_QUEUE_START_COMMAND, GLOBAL_QUEUE_REFRESH_COMMAND
 from data_harvesters.database import get_session
+from data_harvesters.harvester_core.common_harvester import fetch_list_of_symbols, fetch_exchange_entry, \
+    get_subset_of_timeframes
 from models.exchange import Exchange
 from models.funding import Funding
 from models.ohlcv import OHLCV
@@ -16,30 +20,24 @@ from models.symbol import Symbol
 from models.timeframe import Timeframe
 
 
-class BybitHarvesterWatcher:
+class RealtimeHarvester:
+    exchange: Type[Exchange]
 
-    def __init__(self, exchange: Type[Exchange], client_generator: Callable):
-        logging.info('[Bybit Harvester Watcher] Initializing ')
+    def __init__(self, exchange_name: str, client_generator: Callable, queue: janus.AsyncQueue[str],
+                 ohlcv_timeframe_names: list[str]):
+        logging.info('[Realtime Harvester Watcher] Initializing ')
+        self.queue = queue
         self.exchange_connector_generator = client_generator
         self.should_refresh_candle_symbols = True
         self.should_refresh_tickers_symbols = True
-        self.exchange = exchange
+        self.exchange_name = exchange_name
         self.symbols: list[Type[Symbol]] = []
         self.timeframes: list[Type[Timeframe]] = []
         self.newest_candles: dict = {}
-
-    def refresh(self):
-        self.should_refresh_candle_symbols = True
-        self.should_refresh_tickers_symbols = True
-
-    def update_symbols(self, symbols: list[Type[Symbol]]):
-        self.symbols = symbols
-
-    def update_timeframes(self, timeframes: list[Type[Timeframe]]):
-        self.timeframes = timeframes
+        self.supported_ohlcv_timeframes_names = ohlcv_timeframe_names
 
     async def watch_candles(self):
-        logging.info(f'[Bybit Harvester Watcher] Will start watching for candles')
+        logging.info(f'[Realtime Harvester Watcher] Will start watching for candles')
         exchange_connector = self.exchange_connector_generator()
         async with get_session() as db_session:
             subscriptions = []
@@ -63,7 +61,7 @@ class BybitHarvesterWatcher:
                     else:
                         await asyncio.sleep(1)  # empty subscriptions array
                 except Exception as e:
-                    logging.critical(f'[Bybit Harvester Watcher] Error watch_candles {e}')
+                    logging.critical(f'[Realtime Harvester Watcher] Error watch_candles {e}')
 
     async def handle_candles(self, db_session: AsyncSession, candles):
         ohlcv_candles_to_save = []
@@ -112,13 +110,13 @@ class BybitHarvesterWatcher:
                         "close": candle_data[4],
                         "volume": candle_data[5]}
             except Exception as e:
-                logging.error(f'[Bybit HarvesterWatcher] convert_candle_data_to_ohlcv_object error {e}')
+                logging.error(f'[Realtime HarvesterWatcher] convert_candle_data_to_ohlcv_object error {e}')
                 await asyncio.sleep(1)
 
     async def watch_tickers(self):
         exchange_connector = self.exchange_connector_generator()
         async with get_session() as db_session:
-            logging.info(f'[Bybit Harvester Watcher] Will start watching for ticker')
+            logging.info(f'[Realtime Harvester Watcher] Will start watching for ticker')
             subscriptions = []
             while True:
                 try:
@@ -139,7 +137,7 @@ class BybitHarvesterWatcher:
                     else:
                         await asyncio.sleep(1)  # empty subscriptions array
                 except Exception as e:
-                    logging.critical(f'[Bybit Harvester Watcher] Error watch_tickers {e}')
+                    logging.critical(f'[Realtime Harvester Watcher] Error watch_tickers {e}')
 
     async def handle_tickers(self, db_session: AsyncSession, ticker):
         symbol = (await db_session.execute(select(Symbol).filter_by(name=ticker['symbol']))).scalar()
@@ -156,3 +154,19 @@ class BybitHarvesterWatcher:
             return funding, oi
         else:
             return None, None
+
+    async def start_queue_loop(self):
+        while True:
+            command = await self.queue.get()
+
+            if command == GLOBAL_QUEUE_START_COMMAND:
+                self.timeframes = await get_subset_of_timeframes(self.supported_ohlcv_timeframes_names)
+                self.exchange = await fetch_exchange_entry(self.exchange_name)
+
+            if command == GLOBAL_QUEUE_REFRESH_COMMAND:
+                self.symbols = await fetch_list_of_symbols(self.exchange)
+                self.should_refresh_candle_symbols = True
+                self.should_refresh_tickers_symbols = True
+
+    async def start(self):
+        await asyncio.gather(*[self.start_queue_loop(), self.watch_candles(), self.watch_tickers()])

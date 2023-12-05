@@ -20,10 +20,11 @@ flask-cors = "^4.0.0"
 cors = "^1.0.1"
 freezegun = "^1.2.2"
 mp = "^0.5.0"
-ccxt = "^4.1.47"
+ccxt = "^4.1.75"
 ccxtpro = "^1.0.1"
 asyncpg = "^0.29.0"
 greenlet = "^3.0.1"
+janus = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core"]

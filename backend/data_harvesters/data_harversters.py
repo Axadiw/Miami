@@ -1,36 +1,23 @@
 import asyncio
 import logging
-from multiprocessing import Process
-from time import sleep
 
-from data_harvesters.bybit_harvester.bybit_harvester import BybitHarvester
-from data_harvesters.exchange_connectors.bybit_exchange_connector import BybitConnectorCCXT
+from data_harvesters.exchanges.bybit.bybit_harvesters import launch_bybit
+from data_harvesters.harvester_core.common_harvester import create_all_timeframes
 
 
-def bybit_connector_generator():
-    return BybitConnectorCCXT()
+def run_prerequisites_for_all_harvesters():
+    asyncio.run(create_all_timeframes())
 
 
-async def harvest_bybit():
-    while True:
-        try:
-            logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
-            harvester = BybitHarvester(client_generator=bybit_connector_generator)
-            await harvester.configure()
-            await harvester.start_loop()
-        except Exception as e:
-            logging.error(f'Unhandled data harvesters error {e}')
-            sleep(30)
+def run_harvesters_for_all_exchanges():
+    asyncio.run(launch_bybit())
 
 
-def wrapper():
-    asyncio.run(harvest_bybit())
-
-
-def launch_data_harvesters():
-    p = Process(target=wrapper)
-    p.start()
+def launch_all_data_harvesters():
+    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
+    run_prerequisites_for_all_harvesters()
+    run_harvesters_for_all_exchanges()
 
 
 if __name__ == "__main__":
-    asyncio.run(harvest_bybit())
+    launch_all_data_harvesters()

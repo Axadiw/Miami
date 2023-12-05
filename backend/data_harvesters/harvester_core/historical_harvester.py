@@ -4,23 +4,23 @@ from datetime import datetime, timedelta
 from math import floor
 from typing import Type, Any, Callable
 
+import janus
 from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import Insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from data_harvesters.bybit_harvester.bybit_harverser_watcher import BybitHarvesterWatcher
 from data_harvesters.consts import MAX_CONCURRENT_FETCHES, MAX_CANDLES_HISTORY_TO_FETCH, \
-    MAX_CONCURRENT_GAPS_CALCULATIONS
+    MAX_CONCURRENT_GAPS_CALCULATIONS, GLOBAL_QUEUE_START_COMMAND, GLOBAL_QUEUE_REFRESH_COMMAND
 from data_harvesters.data_to_fetch import DataToFetch
-from data_harvesters.database import get_session, pg_bulk_insert, async_session_generator
+from data_harvesters.database import pg_bulk_insert, async_session_generator
+from data_harvesters.harvester_core.common_harvester import fetch_list_of_symbols, fetch_exchange_entry, \
+    get_subset_of_timeframes
 from data_harvesters.helpers.semaphore_gather import semaphore_gather
 from models.exchange import Exchange
 from models.ohlcv import OHLCV
 from models.symbol import Symbol
 from models.timeframe import Timeframe
 from timer import elapsed_timer
-
-EXCHANGE_NAME = 'bybit'
 
 
 def sort_data_to_fetch_by_start_key(e: DataToFetch):
@@ -31,107 +31,22 @@ def sort_ohlcv_by_timestamp_key(e: OHLCV):
     return e.timestamp
 
 
-class BybitHarvester:
-    watcher: BybitHarvesterWatcher
+class HistoricalHarvester:
     symbol_start_dates: dict[Any, Any]
     exchange: Type[Exchange]
-    timeframes: list[Type[Timeframe]]
     temporary_gaps_finding_db_sessions: list[AsyncSession]
     temporary_ohlcv_fetching_db_sessions: list[AsyncSession]
 
-    def __init__(self, client_generator: Callable):
-        logging.info('[Bybit Harvester] Initializing ')
+    def __init__(self, exchange_name: str, client_generator: Callable, queue: janus.AsyncQueue[str],
+                 ohlcv_timeframe_names: list[str]):
+        logging.info('[Historical Harvester] Initializing ')
 
+        self.exchange_name = exchange_name
         self.exchange_connector_generator = client_generator
-
-    async def configure(self):
-        self.exchange = await self.create_exchange_entry()
-        self.timeframes = await self.create_supported_timeframes()
-        self.watcher = BybitHarvesterWatcher(client_generator=self.exchange_connector_generator, exchange=self.exchange)
-        self.watcher.update_timeframes(self.get_ohlcv_supported_timeframes())
-        self.symbol_start_dates = {}
-
-    def get_ohlcv_supported_timeframes(self) -> list[Type[Timeframe]]:
-        return list(filter(lambda timeframe: timeframe.name in ['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1w'],
-                           self.timeframes))
-
-    def get_open_interest_supported_timeframes(self) -> list[Type[Timeframe]]:
-        return list(filter(lambda timeframe: timeframe.name in ['5m', '15m', '30m', '1h' '4h', '1d'], self.timeframes))
-
-    @staticmethod
-    async def create_supported_timeframes() -> list[Type[Timeframe]]:
-        async with get_session() as db_session:
-            supported_timeframes = [
-                {'name': '1m', 'seconds': 60},
-                {'name': '5m', 'seconds': 60 * 5},
-                {'name': '15m', 'seconds': 60 * 15},
-                {'name': '30m', 'seconds': 60 * 30},
-                {'name': '1h', 'seconds': 60 * 60},
-                {'name': '4h', 'seconds': 60 * 60 * 4},
-                {'name': '1d', 'seconds': 60 * 60 * 24},
-                {'name': '1w', 'seconds': 60 * 60 * 24 * 7},
-            ]
-
-            new_timeframes = []
-            for timeframe in supported_timeframes:
-                existing_timeframe = (
-                    await db_session.execute(select(Timeframe).filter_by(name=timeframe['name']))).scalar()
-                if existing_timeframe is None:
-                    new_timeframes.append(Timeframe(name=timeframe['name'], seconds=timeframe['seconds']))
-            if len(new_timeframes) > 0:
-                await db_session.add_all(new_timeframes)
-                await db_session.commit()
-            logging.info(
-                f'[Bybit Harvester] Updated list of supported timeframes ({len(new_timeframes)} new timeframes added)')
-
-            return list((await db_session.execute(select(Timeframe))).scalars())
-
-    @staticmethod
-    async def create_exchange_entry() -> Type[Exchange]:
-        async with get_session() as db_session:
-            existing_entry = (await db_session.execute(select(Exchange).filter_by(name=EXCHANGE_NAME))).scalar()
-
-            if existing_entry is not None:
-                return existing_entry
-            else:
-                new_entry = Exchange(name=EXCHANGE_NAME)
-                await db_session.add(new_entry)
-                await db_session.commit()
-                return (await db_session.execute(select(Exchange).filter_by(name=EXCHANGE_NAME))).scalar()
-
-    async def update_list_of_symbols(self) -> list[Type[Symbol]]:
-        exchange_connector = self.exchange_connector_generator()
-        logging.info(f'[Bybit Harvester] Starting updating list of symbols')
-        async with get_session() as db_session:
-            while True:  # should finish after first round because of return at the end
-                try:
-                    existing_symbols = list(
-                        (await db_session.execute(select(Symbol).filter_by(exchange=self.exchange.id))).scalars())
-                    fetched_symbols = await exchange_connector.fetch_tickers(self.exchange)
-                    fetched_symbols_names = list(map(lambda x: x.name, fetched_symbols))
-                    existing_symbols_names = list(map(lambda x: x.name, existing_symbols))
-
-                    for symbol in existing_symbols:
-                        if symbol.name not in fetched_symbols_names:
-                            await db_session.delete(symbol)
-
-                    new_symbols_to_add = []
-                    for symbol in fetched_symbols:
-                        if symbol.name not in existing_symbols_names:
-                            new_symbols_to_add.append(symbol)
-                    db_session.add_all(new_symbols_to_add)
-                    await db_session.commit()
-
-                    new_symbols_count = len(new_symbols_to_add)
-
-                    self.symbol_start_dates = await exchange_connector.fetch_start_dates()
-                    logging.info(f'[Bybit Harvester] Updated list of symbols ({new_symbols_count} new added)')
-                    await exchange_connector.close()
-                    return list(
-                        (await db_session.execute(select(Symbol).filter_by(exchange=self.exchange.id))).scalars())
-                except Exception as e:
-                    logging.error(f'[Bybit Harvester] Fetch list of symbols error {e}')
-                    await asyncio.sleep(1)
+        self.queue = queue
+        self.supported_ohlcv_timeframes_names = ohlcv_timeframe_names
+        self.requires_refetch = True
+        self.configured = False
 
     async def fetch_all_ohlcv(self, data_to_fetch: list[DataToFetch]) -> object:
         self.temporary_ohlcv_fetching_db_sessions = [async_session_generator()() for i in
@@ -152,7 +67,7 @@ class BybitHarvester:
                 await session.close()
             self.temporary_ohlcv_fetching_db_sessions = []
             logging.info(
-                f'[Bybit Harvester] Finished updating history for all symbols in all timeframes. '
+                f'[Historical Harvester] Finished updating history for all symbols in all timeframes. '
                 f'Added {new_candles_for_all_symbols_count} new entries '
                 f'Took {"{:.2f}".format(elapsed())} seconds')
             return new_candles_for_all_symbols_count
@@ -233,7 +148,7 @@ class BybitHarvester:
                        datetime.now() - timedelta(seconds=timeframe.seconds * MAX_CANDLES_HISTORY_TO_FETCH)))
 
     async def find_all_gaps(self, current_symbols) -> list[DataToFetch]:
-        logging.info(f'[Bybit Harvester] Starting to look for gaps in OHLCV data')
+        logging.info(f'[Historical Harvester] Starting to look for gaps in OHLCV data')
         exchange_connector = self.exchange_connector_generator()
         with elapsed_timer() as elapsed:
             all_gaps = []
@@ -242,13 +157,14 @@ class BybitHarvester:
             self.temporary_gaps_finding_db_sessions = [async_session_generator()() for i in
                                                        range(0, MAX_CONCURRENT_GAPS_CALCULATIONS)]
 
-            for timeframe in self.get_ohlcv_supported_timeframes():
+            for timeframe in await get_subset_of_timeframes(self.supported_ohlcv_timeframes_names):
                 for symbol in current_symbols:
                     find_gap_coroutines.append(self.gap_finder(symbol=symbol, timeframe=timeframe, end_time=end_time))
 
             for gap in await semaphore_gather(MAX_CONCURRENT_GAPS_CALCULATIONS, find_gap_coroutines):
                 all_gaps += gap
-            logging.info(f'[Bybit Harvester] Found {len(all_gaps)} gaps. Took {"{:.2f}".format(elapsed())} seconds')
+            logging.info(
+                f'[Historical Harvester] Found {len(all_gaps)} gaps. Took {"{:.2f}".format(elapsed())} seconds')
             for session in self.temporary_gaps_finding_db_sessions:
                 await session.close()
             self.temporary_gaps_finding_db_sessions = []
@@ -326,20 +242,30 @@ class BybitHarvester:
         self.temporary_gaps_finding_db_sessions.append(db_session)
         return gaps
 
-    async def start_watching(self):
-        return await asyncio.gather(*[self.watcher.watch_candles(), self.watcher.watch_tickers()])
+    async def configure(self):
+        exchange_connector = self.exchange_connector_generator()  # TODO: figure out how to use context there
+        self.exchange = await fetch_exchange_entry(self.exchange_name)
+        self.symbol_start_dates = await exchange_connector.fetch_start_dates()
+        await exchange_connector.close()
+        self.configured = True
+
+    async def start_queue_loop(self):
+        while True:
+            command = await self.queue.get()
+
+            if command == GLOBAL_QUEUE_START_COMMAND:
+                await self.configure()
+            elif command == GLOBAL_QUEUE_REFRESH_COMMAND:
+                self.requires_refetch = True
 
     async def fetch_candles(self):
-
         while True:
-            current_symbols = await self.update_list_of_symbols()
+            if self.configured and self.requires_refetch:
+                current_symbols = await fetch_list_of_symbols(self.exchange)
+                ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)
+                await self.fetch_all_ohlcv(ohlcv_data_to_fetch)
+                self.requires_refetch = False
+            await asyncio.sleep(1)
 
-            self.watcher.update_symbols(current_symbols)
-            self.watcher.refresh()
-
-            ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)  # move below
-            await self.fetch_all_ohlcv(ohlcv_data_to_fetch)
-            await asyncio.sleep(3600)
-
-    async def start_loop(self):
-        await asyncio.gather(*[self.start_watching(), self.fetch_candles()])
+    async def start(self):
+        await asyncio.gather(*[self.start_queue_loop(), self.fetch_candles()])
