@@ -164,7 +164,10 @@ class HistoricalHarvester:
 
         with elapsed_timer() as elapsed:
             all_gaps = []
-            end_time = await exchange_connector.get_server_time()
+
+            end_time: datetime = await exchange_connector.get_server_time()
+            end_time = datetime(year=end_time.year, month=end_time.month, day=end_time.day, hour=end_time.hour,
+                                minute=end_time.minute) - timedelta(seconds=1)
             find_gap_coroutines = []
             self.temporary_gaps_finding_db_sessions = [async_session_generator()() for i in
                                                        range(0, MAX_CONCURRENT_GAPS_CALCULATIONS)]
@@ -187,6 +190,10 @@ class HistoricalHarvester:
         start_time = self.get_earliest_possible_date_for_ohlcv(symbol, timeframe)
 
         gaps_to_merge = await self.find_gaps(symbol, timeframe, start_time, end_time)
+        # FILTERING OUT GAPS - START
+        gaps_to_merge = list(filter(lambda gap: gap.start > datetime(year=2023, month=12, day=1), gaps_to_merge))
+        # FILTERING OUT GAPS - END
+
         return gaps_to_merge
 
         # Gaps merging below - commented out in for conflicts debugging

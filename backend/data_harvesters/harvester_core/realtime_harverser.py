@@ -33,7 +33,6 @@ class RealtimeHarvester:
         self.exchange_name = exchange_name
         self.symbols: list[Type[Symbol]] = []
         self.timeframes: list[Type[Timeframe]] = []
-        self.newest_candles: dict = {}
         self.supported_ohlcv_timeframes_names = ohlcv_timeframe_names
 
     async def watch_candles(self):
@@ -66,33 +65,13 @@ class RealtimeHarvester:
                     candle_timeframe = received_timeframes_and_data[0]
                     candle_data = received_timeframes_and_data[1]
 
-                    # if candle_symbol == 'BTC/USDT:USDT':
-                    #     pass
-                    # if candle_symbol == '10000NFT/USDT:USDT':
-                    #     pass
-                    # print(f'Adding ohlcv for {candle_symbol}')
-                    # ohlcv_candles_to_save.append(
-                    #     await self.convert_candle_data_to_ohlcv_object(db_session, candle_symbol,
-                    #                                                    candle_timeframe,
-                    #                                                    candle_data[0]))
-                    if candle_symbol not in self.newest_candles:
-                        self.newest_candles[candle_symbol] = {}
-
-                    if candle_timeframe not in self.newest_candles[candle_symbol]:
-                        self.newest_candles[candle_symbol][candle_timeframe] = candle_data  # save first candle
-
-                    if self.newest_candles[candle_symbol][candle_timeframe] is not None:  # should be always True
-                        if len(candle_data) > 0 and len(self.newest_candles[candle_symbol][candle_timeframe]) > 0:
-                            new_candle = candle_data[0]
-                            old_candle = self.newest_candles[candle_symbol][candle_timeframe][0]
-                            if new_candle > old_candle:
-                                ohlcv_candles_to_save.append(
-                                    await self.convert_candle_data_to_ohlcv_object(db_session, candle_symbol,
-                                                                                   candle_timeframe,
-                                                                                   old_candle))
-                                print(
-                                    f'New Realtime candle for {candle_symbol} {candle_timeframe} {datetime.fromtimestamp(old_candle[0] / 1000.0)}')
-                    self.newest_candles[candle_symbol][candle_timeframe] = candle_data  # save new candle as current
+                    for candle in candle_data:
+                        if candle[6]:
+                            ohlcv_candles_to_save.append(
+                                await self.convert_candle_data_to_ohlcv_object(db_session, candle_symbol,
+                                                                               candle_timeframe, candle))
+                            # logging.warning(
+                            #     f'New Realtime candle for {candle_symbol} {candle_timeframe} {datetime.fromtimestamp(candle[0] / 1000.0)}')
             if len(ohlcv_candles_to_save) > 0:
                 await db_session.execute(
                     insert(OHLCV).values(ohlcv_candles_to_save).on_conflict_do_nothing())
@@ -112,7 +91,7 @@ class RealtimeHarvester:
                 return {"exchange": self.exchange.id,
                         "symbol": symbol.id,
                         "timeframe": timeframe.id,
-                        "timestamp": datetime.fromtimestamp(candle_data[0] / 1000.0),
+                        "timestamp": datetime.fromtimestamp(candle_data[0] / 1000.0 + timeframe.seconds),
                         "open": candle_data[1],
                         "high": candle_data[2],
                         "low": candle_data[3],

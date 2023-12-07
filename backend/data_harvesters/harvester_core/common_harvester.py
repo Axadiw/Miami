@@ -23,7 +23,10 @@ async def fetch_list_of_symbols(exchange: Type[Exchange]) -> list[Type[Symbol]]:
     logging.info(f'[Historical Harvester] Starting updating list of symbols')
     async with get_session() as db_session:
         return list(
-            (await db_session.execute(select(Symbol).filter_by(exchange=exchange.id))).scalars())
+            (await db_session.execute(
+                select(Symbol).filter_by(exchange=exchange.id)
+                # .filter(Symbol.id <= 10)
+            )).scalars())
 
 
 async def create_all_timeframes():

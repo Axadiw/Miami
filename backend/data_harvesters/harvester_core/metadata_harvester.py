@@ -65,7 +65,7 @@ class MetadataHarvester:
                         (await db_session.execute(select(Symbol).filter_by(exchange=self.exchange.id))).scalars())
                 except Exception as e:
                     logging.error(f'[Metadata Harvester] Fetch list of symbols error {e}')
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(30)
 
     async def start(self):
         self.exchange = await self.create_exchange_entry()
@@ -76,4 +76,4 @@ class MetadataHarvester:
             await self.update_list_of_symbols()
             self.historical_queue.put(GLOBAL_QUEUE_REFRESH_COMMAND)
             self.realtime_queue.put(GLOBAL_QUEUE_REFRESH_COMMAND)
-            await asyncio.sleep(5 * 60)
+            await asyncio.sleep(1)
