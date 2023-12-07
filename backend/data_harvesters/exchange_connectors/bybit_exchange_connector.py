@@ -1,4 +1,5 @@
 from datetime import datetime
+from math import floor, ceil
 from typing import List, Type
 
 import ccxt.pro as ccxtpro
@@ -22,15 +23,29 @@ class BybitConnectorCCXT(BaseExchangeConnector):
 
     async def fetch_ohlcv(self, exchange: Type[Exchange], data: DataToFetch) -> \
             List[OHLCV]:
+        # expected_candles_count = floor((data.end - data.start).total_seconds() / data.timeframe.seconds)
+        # limit = min(expected_candles_count, MAX_CANDLES_HISTORY_TO_FETCH)
+        limit = MAX_CANDLES_HISTORY_TO_FETCH
         response = await self.connector_pro.fetch_ohlcv(data.symbol.name, data.timeframe.name,
                                                         int(data.start.timestamp() * 1000),
-                                                        limit=MAX_CANDLES_HISTORY_TO_FETCH,
+                                                        limit=limit,
                                                         params={"paginate": True,
                                                                 "paginationCalls": int(
-                                                                    MAX_CANDLES_HISTORY_TO_FETCH / 1000),
+                                                                    ceil(limit / 1000)),
                                                                 'until': data.end.timestamp() * 1000,
                                                                 'maxRetries': 10})
-        new_items = list(
+        # new_items = list(
+        #     filter(lambda x: data.start <= x.timestamp <= data.end,
+        #            map(lambda x: OHLCV(timestamp=datetime.fromtimestamp(x[0] / 1000.0),
+        #                                exchange=exchange.id,
+        #                                symbol=data.symbol.id,
+        #                                timeframe=data.timeframe.id,
+        #                                open=x[1],
+        #                                high=x[2],
+        #                                low=x[3],
+        #                                close=x[4],
+        #                                volume=x[5]), response)))
+        raw_items = list(
             map(lambda x: OHLCV(timestamp=datetime.fromtimestamp(x[0] / 1000.0),
                                 exchange=exchange.id,
                                 symbol=data.symbol.id,
@@ -40,8 +55,14 @@ class BybitConnectorCCXT(BaseExchangeConnector):
                                 low=x[3],
                                 close=x[4],
                                 volume=x[5]), response))
+        new_items = list(filter(lambda x: data.start <= x.timestamp <= data.end, raw_items))
+
+        if len(new_items) == 0:
+            pass
+
         if data.is_last_to_fetch and len(new_items) > 0:
             new_items.pop()  # Remove last, not finished candle
+
         return new_items
 
     async def watch_ohlcv(self, symbols_and_time_frames: List[List[str]]):

@@ -12,7 +12,7 @@ def async_session_generator():
 
 
 def get_db_engine() -> AsyncEngine:
-    return create_async_engine(f'postgresql+asyncpg://{db_username}:{db_password}@db/{db_name}', future=True)
+    return create_async_engine(f'postgresql+asyncpg://{db_username}:{db_password}@db/{db_name}', pool_pre_ping=True)
 
 
 def get_db_session():
@@ -63,4 +63,5 @@ async def pg_bulk_insert(
             insert(table)
             .values(batch)
         )
-        await session.execute(statement)
+        resp = await session.execute(statement)
+        pass
