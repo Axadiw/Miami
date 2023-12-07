@@ -191,7 +191,7 @@ class HistoricalHarvester:
 
         gaps_to_merge = await self.find_gaps(symbol, timeframe, start_time, end_time)
         # FILTERING OUT GAPS - START
-        gaps_to_merge = list(filter(lambda gap: gap.start > datetime(year=2023, month=12, day=1), gaps_to_merge))
+        # gaps_to_merge = list(filter(lambda gap: gap.start > datetime(year=2023, month=12, day=1), gaps_to_merge))
         # FILTERING OUT GAPS - END
 
         return gaps_to_merge
