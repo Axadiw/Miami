@@ -2,8 +2,7 @@ from datetime import datetime
 from math import floor, ceil
 from typing import List, Type
 
-import ccxt.pro as ccxtpro
-
+from ccxt.pro import bybit
 from data_harvesters.consts import MAX_CANDLES_HISTORY_TO_FETCH
 from data_harvesters.data_to_fetch import DataToFetch
 from data_harvesters.exchange_connectors.base_exchange_connector import BaseExchangeConnector
@@ -15,7 +14,8 @@ from models.symbol import Symbol
 class BybitConnectorCCXT(BaseExchangeConnector):
 
     def __init__(self):
-        self.connector_pro = ccxtpro.bybit()
+
+        self.connector_pro = bybit()
 
     async def fetch_tickers(self, exchange: Type[Exchange]) -> List[Symbol]:
         response = await self.connector_pro.fetch_tickers()
