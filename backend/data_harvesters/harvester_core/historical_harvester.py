@@ -228,6 +228,7 @@ class HistoricalHarvester:
                      f'		AND "OHLCV"."timestamp" <= \'{str(end_time)}\' ORDER BY'
                      f'			"OHLCV"."timestamp" ASC) as raw'
                      f'	WHERE'
+                     f'		MOD(EXTRACT(EPOCH FROM raw.differ)::int,{timeframe.seconds}) = 0 and'  # filter out gaps that are probably because of the time change
                      f'		raw.differ != {timeframe.seconds}*\'1 sec\'::interval')
         results = (await db_session.execute(query)).all()
         gaps = list(map(lambda x: DataToFetch(symbol=symbol, timeframe=timeframe, start=x[0] - x[1], end=x[0],

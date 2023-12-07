@@ -90,6 +90,8 @@ class RealtimeHarvester:
                                     await self.convert_candle_data_to_ohlcv_object(db_session, candle_symbol,
                                                                                    candle_timeframe,
                                                                                    old_candle))
+                                print(
+                                    f'New Realtime candle for {candle_symbol} {candle_timeframe} {datetime.fromtimestamp(old_candle[0] / 1000.0)}')
                     self.newest_candles[candle_symbol][candle_timeframe] = candle_data  # save new candle as current
             if len(ohlcv_candles_to_save) > 0:
                 await db_session.execute(
