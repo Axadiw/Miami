@@ -49,7 +49,7 @@ async def create_all_timeframes():
             if existing_timeframe is None:
                 new_timeframes.append(Timeframe(name=timeframe['name'], seconds=timeframe['seconds']))
         if len(new_timeframes) > 0:
-            await db_session.add_all(new_timeframes)
+            db_session.add_all(new_timeframes)
             await db_session.commit()
         logging.info(
             f'Updated list of timeframes ({len(new_timeframes)} new timeframes added)')

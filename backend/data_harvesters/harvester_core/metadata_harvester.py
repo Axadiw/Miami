@@ -3,11 +3,14 @@ import logging
 from queue import Queue
 from typing import Type, Callable
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from data_harvesters.consts import GLOBAL_QUEUE_START_COMMAND, GLOBAL_QUEUE_REFRESH_COMMAND
 from data_harvesters.database import get_session
 from models.exchange import Exchange
+from models.funding import Funding
+from models.ohlcv import OHLCV
+from models.open_interests import OpenInterest
 from models.symbol import Symbol
 
 
@@ -48,6 +51,9 @@ class MetadataHarvester:
 
                     for symbol in existing_symbols:
                         if symbol.name not in fetched_symbols_names:
+                            await (db_session.execute(delete(OHLCV).where(OHLCV.symbol == symbol.id)))
+                            await (db_session.execute(delete(Funding).where(Funding.symbol == symbol.id)))
+                            await (db_session.execute(delete(OpenInterest).where(OpenInterest.symbol == symbol.id)))
                             await db_session.delete(symbol)
 
                     new_symbols_to_add = []
