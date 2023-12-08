@@ -194,27 +194,23 @@ class HistoricalHarvester:
         # gaps_to_merge = list(filter(lambda gap: gap.start > datetime(year=2023, month=12, day=1), gaps_to_merge))
         # FILTERING OUT GAPS - END
 
-        return gaps_to_merge
+        gaps_to_merge.sort(key=sort_data_to_fetch_by_start_key)
+        merged_gaps: list[DataToFetch] = []
+        while len(gaps_to_merge) > 0:
+            current_gap = gaps_to_merge.pop(0)
+            while len(gaps_to_merge) > 0:
+                if (gaps_to_merge[
+                        0].start - current_gap.end).total_seconds() < 5 * timeframe.seconds and \
+                        gaps_to_merge[0].end >= current_gap.end:
+                    current_gap.end = gaps_to_merge.pop(0).end
+                else:
+                    break
+            if current_gap.length().total_seconds() > current_gap.timeframe.seconds:
+                merged_gaps.append(current_gap)
 
-        # Gaps merging below - commented out in for conflicts debugging
-
-        # gaps_to_merge.sort(key=sort_data_to_fetch_by_start_key)
-        # merged_gaps: list[DataToFetch] = []
-        # while len(gaps_to_merge) > 0:
-        #     current_gap = gaps_to_merge.pop(0)
-        #     while len(gaps_to_merge) > 0:
-        #         if (gaps_to_merge[
-        #                 0].start - current_gap.end).total_seconds() < 5 * timeframe.seconds and \
-        #                 gaps_to_merge[0].end >= current_gap.end:
-        #             current_gap.end = gaps_to_merge.pop(0).end
-        #         else:
-        #             break
-        #     if current_gap.length().total_seconds() > current_gap.timeframe.seconds:
-        #         merged_gaps.append(current_gap)
-        #
-        # if len(merged_gaps) > 0:
-        #     merged_gaps[len(merged_gaps) - 1].is_last_to_fetch = True
-        # return merged_gaps
+        if len(merged_gaps) > 0:
+            merged_gaps[len(merged_gaps) - 1].is_last_to_fetch = True
+        return merged_gaps
 
     async def find_gaps(self, symbol, timeframe, start_time, end_time):
         db_session = self.temporary_gaps_finding_db_sessions.pop()
@@ -269,6 +265,11 @@ class HistoricalHarvester:
                                     end=end_time,
                                     is_last_to_fetch=False))
         self.temporary_gaps_finding_db_sessions.append(db_session)
+
+        if first_timestamp is None and last_timestamp is None:
+            gaps.append(DataToFetch(symbol=symbol, timeframe=timeframe, start=start_time,
+                                    end=end_time,
+                                    is_last_to_fetch=True))
         return gaps
 
     async def configure(self):

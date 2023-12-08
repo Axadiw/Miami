@@ -33,7 +33,7 @@ class MetadataHarvester:
                 return existing_entry
             else:
                 new_entry = Exchange(name=self.exchange_name)
-                await db_session.add(new_entry)
+                db_session.add(new_entry)
                 await db_session.commit()
                 return (await db_session.execute(select(Exchange).filter_by(name=self.exchange_name))).scalar()
 
