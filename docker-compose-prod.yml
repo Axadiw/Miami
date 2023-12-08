@@ -14,7 +14,7 @@ services:
       - MIAMI_POSTGRES_USER
       - MIAMI_POSTGRES_PASSWORD
     volumes:
-      - /home/miami/postgres:/var/lib/postgresql/data
+      - /mnt/postgres_db/postgres:/var/lib/postgresql/data
 
   frontend:
     image: ghcr.io/axadiw/miami-frontend:latest
