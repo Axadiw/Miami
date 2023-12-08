@@ -11,6 +11,7 @@ from models.exchange import Exchange
 from models.funding import Funding
 from models.ohlcv import OHLCV
 from models.open_interests import OpenInterest
+from models.skipped_gap import SkippedGap
 from models.symbol import Symbol
 
 
@@ -54,6 +55,7 @@ class MetadataHarvester:
                             await (db_session.execute(delete(OHLCV).where(OHLCV.symbol == symbol.id)))
                             await (db_session.execute(delete(Funding).where(Funding.symbol == symbol.id)))
                             await (db_session.execute(delete(OpenInterest).where(OpenInterest.symbol == symbol.id)))
+                            await (db_session.execute(delete(SkippedGap).where(SkippedGap.symbol == symbol.id)))
                             await db_session.delete(symbol)
 
                     new_symbols_to_add = []

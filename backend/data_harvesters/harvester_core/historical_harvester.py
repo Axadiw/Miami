@@ -19,6 +19,7 @@ from data_harvesters.harvester_core.common_harvester import fetch_list_of_symbol
 from data_harvesters.helpers.semaphore_gather import semaphore_gather
 from models.exchange import Exchange
 from models.ohlcv import OHLCV
+from models.skipped_gap import SkippedGap
 from models.symbol import Symbol
 from models.timeframe import Timeframe
 from timer import elapsed_timer
@@ -84,6 +85,10 @@ class HistoricalHarvester:
         new_candles: list[OHLCV] = await self.fetch_single_ohlcv(data=data, current_fetch=current_fetch,
                                                                  all_fetches=all_fetches)
 
+        def conflict_passer(statement: Insert):
+            # return statement
+            return statement.on_conflict_do_nothing()
+
         if len(new_candles) > 0:
             expected_candles_count = floor((data.end - data.start).total_seconds() / data.timeframe.seconds)
             if expected_candles_count != len(new_candles):
@@ -92,10 +97,6 @@ class HistoricalHarvester:
             success = False
             while not success:
                 try:
-                    def conflict_passer(statement: Insert):
-                        # return statement
-                        return statement.on_conflict_do_nothing()
-
                     await pg_bulk_insert(session=db_session, table=OHLCV, data=[{"exchange": candle.exchange,
                                                                                  "symbol": candle.symbol,
                                                                                  "timeframe": candle.timeframe,
@@ -113,11 +114,28 @@ class HistoricalHarvester:
                     success = True
                 except Exception as e:
                     await db_session.rollback()
-                    await db_session.connection()
-                    logging.error(f'fetch_and_save_single_ohlcv error {data.symbol.name} {data.timeframe.name} {e}')
+                    logging.error(
+                        f'fetch_and_save_single_ohlcv insert new error {data.symbol.name} {data.timeframe.name} {e}')
                     await asyncio.sleep(1)
+        else:
+            await self.create_skipped_gap(conflict_passer, data, db_session)
         self.temporary_ohlcv_fetching_db_sessions.append(db_session)
         return len(new_candles)
+
+    async def create_skipped_gap(self, conflict_passer, data, db_session):
+        try:
+            await pg_bulk_insert(session=db_session, table=SkippedGap, data=[{"exchange": self.exchange.id,
+                                                                              "symbol": data.symbol.id,
+                                                                              "timeframe": data.timeframe.id,
+                                                                              "start": data.start,
+                                                                              "end": data.end}],
+                                 statement_modifier=conflict_passer)
+            await db_session.commit()
+        except Exception as e:
+            await db_session.rollback()
+            logging.error(
+                f'fetch_and_save_single_ohlcv create gap error {data.symbol.name} {data.timeframe.name} {e}')
+            await asyncio.sleep(1)
 
     @staticmethod
     def generate_missing_candles_in_front(candles: list[OHLCV], start_time: datetime, timeframe: Type[Timeframe]):
@@ -178,6 +196,7 @@ class HistoricalHarvester:
 
             for gap in await semaphore_gather(MAX_CONCURRENT_GAPS_CALCULATIONS, find_gap_coroutines):
                 all_gaps += gap
+
             logging.info(
                 f'[Historical Harvester] Found {len(all_gaps)} gaps. Took {"{:.2f}".format(elapsed())} seconds')
             for session in self.temporary_gaps_finding_db_sessions:
@@ -188,19 +207,15 @@ class HistoricalHarvester:
 
     async def gap_finder(self, symbol: Type[Symbol], timeframe: Type[Timeframe], end_time: datetime):
         start_time = self.get_earliest_possible_date_for_ohlcv(symbol, timeframe)
-
-        gaps_to_merge = await self.find_gaps(symbol, timeframe, start_time, end_time)
-        # FILTERING OUT GAPS - START
-        # gaps_to_merge = list(filter(lambda gap: gap.start > datetime(year=2023, month=12, day=1), gaps_to_merge))
-        # FILTERING OUT GAPS - END
+        db_session = self.temporary_gaps_finding_db_sessions.pop()
+        gaps_to_merge = await self.find_gaps(symbol, timeframe, start_time, end_time, db_session)
 
         gaps_to_merge.sort(key=sort_data_to_fetch_by_start_key)
         merged_gaps: list[DataToFetch] = []
         while len(gaps_to_merge) > 0:
             current_gap = gaps_to_merge.pop(0)
             while len(gaps_to_merge) > 0:
-                if (gaps_to_merge[
-                        0].start - current_gap.end).total_seconds() < 5 * timeframe.seconds and \
+                if (gaps_to_merge[0].start - current_gap.end).total_seconds() < 5 * timeframe.seconds and \
                         gaps_to_merge[0].end >= current_gap.end:
                     current_gap.end = gaps_to_merge.pop(0).end
                 else:
@@ -208,12 +223,19 @@ class HistoricalHarvester:
             if current_gap.length().total_seconds() > current_gap.timeframe.seconds:
                 merged_gaps.append(current_gap)
 
-        if len(merged_gaps) > 0:
-            merged_gaps[len(merged_gaps) - 1].is_last_to_fetch = True
-        return merged_gaps
+        gaps_with_skipped_filtered_out = []
+        for gap_to_check in merged_gaps:
+            if (await db_session.execute(select(func.count(SkippedGap.id)).filter_by(exchange=self.exchange.id,
+                                                                                     symbol=gap_to_check.symbol.id,
+                                                                                     timeframe=gap_to_check.timeframe.id,
+                                                                                     start=gap_to_check.start,
+                                                                                     end=gap_to_check.end))).scalar() == 0:
+                gaps_with_skipped_filtered_out.append(gap_to_check)
 
-    async def find_gaps(self, symbol, timeframe, start_time, end_time):
-        db_session = self.temporary_gaps_finding_db_sessions.pop()
+        self.temporary_gaps_finding_db_sessions.append(db_session)
+        return gaps_with_skipped_filtered_out
+
+    async def find_gaps(self, symbol, timeframe, start_time, end_time, db_session: AsyncSession):
         query = text(f''
                      f'SELECT'
                      f'	*'
@@ -234,8 +256,8 @@ class HistoricalHarvester:
                      f'		MOD(EXTRACT(EPOCH FROM raw.differ)::int,{timeframe.seconds}) = 0 and'  # filter out gaps that are probably because of the time change
                      f'		raw.differ != {timeframe.seconds}*\'1 sec\'::interval')
         results = (await db_session.execute(query)).all()
-        gaps = list(map(lambda x: DataToFetch(symbol=symbol, timeframe=timeframe, start=x[0] - x[1], end=x[0],
-                                              is_last_to_fetch=False), results))
+        gaps = list(
+            map(lambda x: DataToFetch(symbol=symbol, timeframe=timeframe, start=x[0] - x[1], end=x[0]), results))
 
         for gap in gaps:
             gap.start += timedelta(seconds=1)
@@ -257,19 +279,15 @@ class HistoricalHarvester:
 
         if first_timestamp is not None and (first_timestamp - start_time).total_seconds() > timeframe.seconds:
             gaps.append(DataToFetch(symbol=symbol, timeframe=timeframe, start=start_time,
-                                    end=first_timestamp - timedelta(seconds=1),
-                                    is_last_to_fetch=False))
+                                    end=first_timestamp - timedelta(seconds=1)))
 
         if last_timestamp is not None and (end_time - last_timestamp).total_seconds() > timeframe.seconds:
             gaps.append(DataToFetch(symbol=symbol, timeframe=timeframe, start=last_timestamp + timedelta(seconds=1),
-                                    end=end_time,
-                                    is_last_to_fetch=False))
-        self.temporary_gaps_finding_db_sessions.append(db_session)
+                                    end=end_time))
 
         if first_timestamp is None and last_timestamp is None:
             gaps.append(DataToFetch(symbol=symbol, timeframe=timeframe, start=start_time,
-                                    end=end_time,
-                                    is_last_to_fetch=True))
+                                    end=end_time))
         return gaps
 
     async def configure(self):

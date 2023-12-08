@@ -12,7 +12,8 @@ class DataToFetch:
     timeframe: Type[Timeframe]
     start: datetime
     end: datetime
-    is_last_to_fetch: bool
+
+    # is_last_to_fetch: bool
 
     def length(self):
         return self.end - self.start

@@ -14,7 +14,6 @@ from models.symbol import Symbol
 class BybitConnectorCCXT(BaseExchangeConnector):
 
     def __init__(self):
-
         self.connector_pro = bybit()
 
     async def fetch_tickers(self, exchange: Type[Exchange]) -> List[Symbol]:
@@ -46,8 +45,8 @@ class BybitConnectorCCXT(BaseExchangeConnector):
         if len(new_items) == 0:
             pass
 
-        if data.is_last_to_fetch and len(new_items) > 0:
-            new_items.pop()  # Remove last, not finished candle
+        # if data.is_last_to_fetch and len(new_items) > 0:
+        #     new_items.pop()  # Remove last, not finished candle
 
         return new_items
 
