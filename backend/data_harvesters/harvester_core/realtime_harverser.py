@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, timedelta
 from queue import Queue
 from typing import Type, Callable
-
+import numbers
 from sqlalchemy import select, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -129,12 +129,12 @@ class RealtimeHarvester:
             count = (await db_session.execute(select(func.count(Funding.id)).filter_by(symbol=symbol.id).filter(
                 Funding.timestamp > timestamp - timedelta(seconds=30)))).scalar()
             if count == 0:
-                if 'fundingRate' in ticker['info']:
+                if 'fundingRate' in ticker['info'] and isinstance(ticker['info']['fundingRate'], numbers.Number):
                     funding = {"exchange": self.exchange.id, "symbol": symbol.id,
                                "timestamp": timestamp,
                                "value": ticker['info']['fundingRate']}
                     await db_session.execute(insert(Funding).values(funding).on_conflict_do_nothing())
-                if 'openInterest' in ticker['info']:
+                if 'openInterest' in ticker['info'] and isinstance(ticker['info']['openInterest'], numbers.Number):
                     oi = {"exchange": self.exchange.id, "symbol": symbol.id,
                           "timestamp": timestamp,
                           "value": ticker['info']['openInterest']}

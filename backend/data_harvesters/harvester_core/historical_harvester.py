@@ -56,10 +56,13 @@ class HistoricalHarvester:
                                                      range(0, MAX_CONCURRENT_FETCHES)]
         self.temporary_ohlcv_fetching_exchange_connectors = [self.exchange_connector_generator() for i in
                                                              range(0, MAX_CONCURRENT_FETCHES)]
-
+        connector = self.exchange_connector_generator()
+        time_before_fetch = await connector.get_server_time()
+        await connector.close()
         with elapsed_timer() as elapsed:
             new_candles_counts = await semaphore_gather(MAX_CONCURRENT_FETCHES,
                                                         [self.fetch_and_save_single_ohlcv(data=data,
+                                                                                          time_before_fetch=time_before_fetch,
                                                                                           current_fetch=index + 1,
                                                                                           all_fetches=len(
                                                                                               data_to_fetch))
@@ -80,9 +83,11 @@ class HistoricalHarvester:
                 f'Took {"{:.2f}".format(elapsed())} seconds')
             return new_candles_for_all_symbols_count
 
-    async def fetch_and_save_single_ohlcv(self, data: DataToFetch, current_fetch: int, all_fetches: int):
+    async def fetch_and_save_single_ohlcv(self, data: DataToFetch, time_before_fetch: datetime, current_fetch: int,
+                                          all_fetches: int):
         db_session = self.temporary_ohlcv_fetching_db_sessions.pop()
-        new_candles: list[OHLCV] = await self.fetch_single_ohlcv(data=data, current_fetch=current_fetch,
+        new_candles: list[OHLCV] = await self.fetch_single_ohlcv(data=data, time_before_fetch=time_before_fetch,
+                                                                 current_fetch=current_fetch,
                                                                  all_fetches=all_fetches)
 
         def conflict_passer(statement: Insert):
@@ -110,6 +115,7 @@ class HistoricalHarvester:
                                                                                 new_candles],
                                          statement_modifier=conflict_passer)
                     await db_session.commit()
+                    await db_session.flush()
 
                     success = True
                 except Exception as e:
@@ -153,14 +159,16 @@ class HistoricalHarvester:
                                             low=first_candle.open, close=first_candle.open, volume=0))
         return candles_to_add
 
-    async def fetch_single_ohlcv(self, data: DataToFetch, current_fetch: int, all_fetches: int):
+    async def fetch_single_ohlcv(self, data: DataToFetch, time_before_fetch: datetime, current_fetch: int,
+                                 all_fetches: int):
         with elapsed_timer() as elapsed:
             success = False
             new_candles = []
             exchange_connector = self.temporary_ohlcv_fetching_exchange_connectors.pop()
             while not success:
                 try:
-                    new_candles = await exchange_connector.fetch_ohlcv(data=data, exchange=self.exchange)
+                    new_candles = await exchange_connector.fetch_ohlcv(data=data, exchange=self.exchange,
+                                                                       time_before_fetch=time_before_fetch)
                     logging.info(
                         f'Fetched {len(new_candles)} new entries for\t{data}\t({current_fetch} / {all_fetches}).\t'
                         f'Took {"{:.2f}".format(elapsed())} seconds')

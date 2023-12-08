@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from math import floor, ceil
 from typing import List, Type
 
@@ -20,7 +20,7 @@ class BybitConnectorCCXT(BaseExchangeConnector):
         response = await self.connector_pro.fetch_tickers()
         return list(map(lambda x: Symbol(name=x[1]['symbol'], exchange=exchange.id), response.items()))
 
-    async def fetch_ohlcv(self, exchange: Type[Exchange], data: DataToFetch) -> \
+    async def fetch_ohlcv(self, exchange: Type[Exchange], data: DataToFetch, time_before_fetch: datetime) -> \
             List[OHLCV]:
         response = await self.connector_pro.fetch_ohlcv(data.symbol.name, data.timeframe.name,
                                                         int(data.start.timestamp() * 1000),
@@ -31,7 +31,8 @@ class BybitConnectorCCXT(BaseExchangeConnector):
                                                                 'until': data.end.timestamp() * 1000,
                                                                 'maxRetries': 10})
         new_items = list(
-            filter(lambda x: data.start <= x.timestamp <= data.end,
+            filter(lambda x: data.start <= x.timestamp <= data.end and (x.timestamp + timedelta(
+                seconds=data.timeframe.seconds)) < time_before_fetch,
                    map(lambda x: OHLCV(timestamp=datetime.fromtimestamp(x[0] / 1000.0),
                                        exchange=exchange.id,
                                        symbol=data.symbol.id,
@@ -41,12 +42,6 @@ class BybitConnectorCCXT(BaseExchangeConnector):
                                        low=x[3],
                                        close=x[4],
                                        volume=x[5]), response)))
-
-        if len(new_items) == 0:
-            pass
-
-        # if data.is_last_to_fetch and len(new_items) > 0:
-        #     new_items.pop()  # Remove last, not finished candle
 
         return new_items
 

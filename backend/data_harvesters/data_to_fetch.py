@@ -13,8 +13,6 @@ class DataToFetch:
     start: datetime
     end: datetime
 
-    # is_last_to_fetch: bool
-
     def length(self):
         return self.end - self.start
 
