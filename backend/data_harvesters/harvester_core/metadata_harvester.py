@@ -82,4 +82,4 @@ class MetadataHarvester:
             await self.update_list_of_symbols()
             self.historical_queue.put(GLOBAL_QUEUE_REFRESH_COMMAND)
             self.realtime_queue.put(GLOBAL_QUEUE_REFRESH_COMMAND)
-            await asyncio.sleep(1)
+            await asyncio.sleep(30 * 60)

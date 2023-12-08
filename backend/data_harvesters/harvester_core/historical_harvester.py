@@ -284,16 +284,13 @@ class HistoricalHarvester:
 
             if command == GLOBAL_QUEUE_START_COMMAND:
                 await self.configure()
-            elif command == GLOBAL_QUEUE_REFRESH_COMMAND:
-                self.requires_refetch = True
 
     async def fetch_candles(self):
         while True:
-            if self.configured and self.requires_refetch:
+            if self.configured:
                 current_symbols = await fetch_list_of_symbols(self.exchange)
                 ohlcv_data_to_fetch = await self.find_all_gaps(current_symbols)
                 await self.fetch_all_ohlcv(ohlcv_data_to_fetch)
-                self.requires_refetch = False
             await asyncio.sleep(1)
 
     async def start(self):
