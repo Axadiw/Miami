@@ -24,7 +24,8 @@ from ccxt.async_support.base.throttler import Throttler
 
 # -----------------------------------------------------------------------------
 
-from ccxt.base.errors import BaseError, BadSymbol, BadRequest, BadResponse, ExchangeError, ExchangeNotAvailable, RequestTimeout, NotSupported, NullResponse, InvalidAddress, RateLimitExceeded
+from ccxt.base.errors import BaseError, BadSymbol, BadRequest, BadResponse, ExchangeError, ExchangeNotAvailable, \
+    RequestTimeout, NotSupported, NullResponse, InvalidAddress, RateLimitExceeded
 from ccxt.base.types import OrderType, OrderSide, OrderRequest
 
 # -----------------------------------------------------------------------------
@@ -37,7 +38,6 @@ from ccxt.async_support.base.ws.functions import inflate, inflate64, gunzip
 from ccxt.async_support.base.ws.fast_client import FastClient
 from ccxt.async_support.base.ws.future import Future
 from ccxt.async_support.base.ws.order_book import OrderBook, IndexedOrderBook, CountedOrderBook
-
 
 # -----------------------------------------------------------------------------
 
@@ -52,6 +52,7 @@ __all__ = [
     'BaseExchange',
     'Exchange',
 ]
+
 
 # -----------------------------------------------------------------------------
 
@@ -90,7 +91,8 @@ class Exchange(BaseExchange):
 
     def __del__(self):
         if self.session is not None:
-            self.logger.warning(self.id + " requires to release all resources with an explicit call to the .close() coroutine. If you are using the exchange instance with async coroutines, add `await exchange.close()` to your code into a place when you're done with the exchange and don't need the exchange instance anymore (at the end of your async coroutine).")
+            self.logger.warning(
+                self.id + " requires to release all resources with an explicit call to the .close() coroutine. If you are using the exchange instance with async coroutines, add `await exchange.close()` to your code into a place when you're done with the exchange and don't need the exchange instance anymore (at the end of your async coroutine).")
 
     if sys.version_info >= (3, 5):
         async def __aenter__(self):
@@ -112,7 +114,8 @@ class Exchange(BaseExchange):
             context = ssl.create_default_context(cafile=self.cafile) if self.verify else self.verify
             # Pass this SSL context to aiohttp and create a TCPConnector
             connector = aiohttp.TCPConnector(ssl=context, loop=self.asyncio_loop, enable_cleanup_closed=True)
-            self.session = aiohttp.ClientSession(loop=self.asyncio_loop, connector=connector, trust_env=self.aiohttp_trust_env)
+            self.session = aiohttp.ClientSession(loop=self.asyncio_loop, connector=connector,
+                                                 trust_env=self.aiohttp_trust_env)
 
     async def close(self):
         await self.ws_close()
@@ -142,7 +145,8 @@ class Exchange(BaseExchange):
             final_proxy = httpsProxy
         elif socksProxy:
             if ProxyConnector is None:
-                raise NotSupported(self.id + ' - to use SOCKS proxy with ccxt, you need "aiohttp_socks" module that can be installed by "pip install aiohttp_socks"')
+                raise NotSupported(
+                    self.id + ' - to use SOCKS proxy with ccxt, you need "aiohttp_socks" module that can be installed by "pip install aiohttp_socks"')
             # Create our SSL context object with our CA cert file
             context = ssl.create_default_context(cafile=self.cafile) if self.verify else self.verify
             self.open()  # ensure `asyncio_loop` is set
@@ -154,7 +158,8 @@ class Exchange(BaseExchange):
                 enable_cleanup_closed=True
             )
             # override session
-            final_session = aiohttp.ClientSession(loop=self.asyncio_loop, connector=connector, trust_env=self.aiohttp_trust_env)
+            final_session = aiohttp.ClientSession(loop=self.asyncio_loop, connector=connector,
+                                                  trust_env=self.aiohttp_trust_env)
         # add aiohttp_proxy for python as exclusion
         elif self.aiohttp_proxy:
             final_proxy = self.aiohttp_proxy
@@ -163,7 +168,8 @@ class Exchange(BaseExchange):
         self.checkConflictingProxies(proxyAgentSet, proxyUrl)
 
         # avoid old proxies mixing
-        if (self.aiohttp_proxy is not None) and (proxyUrl is not None or httpProxy is not None or httpsProxy is not None or socksProxy is not None):
+        if (self.aiohttp_proxy is not None) and (
+                proxyUrl is not None or httpProxy is not None or httpsProxy is not None or socksProxy is not None):
             raise NotSupported(self.id + ' you have set multiple proxies, please use one or another')
 
         # log
@@ -198,7 +204,8 @@ class Exchange(BaseExchange):
                         headers[header] = raw_headers[header]
                 http_status_code = response.status
                 http_status_text = response.reason
-                http_response = self.on_rest_response(http_status_code, http_status_text, url, method, headers, http_response, request_headers, request_body)
+                http_response = self.on_rest_response(http_status_code, http_status_text, url, method, headers,
+                                                      http_response, request_headers, request_body)
                 json_response = self.parse_json(http_response)
                 if self.enableLastHttpResponse:
                     self.last_http_response = http_response
@@ -207,7 +214,8 @@ class Exchange(BaseExchange):
                 if self.enableLastJsonResponse:
                     self.last_json_response = json_response
                 if self.verbose:
-                    self.log("\nfetch Response:", self.id, method, url, http_status_code, "ResponseHeaders:", headers, "ResponseBody:", http_response)
+                    self.log("\nfetch Response:", self.id, method, url, http_status_code, "ResponseHeaders:", headers,
+                             "ResponseBody:", http_response)
                 self.logger.debug("%s %s, Response: %s %s %s", method, url, http_status_code, headers, http_response)
 
         except socket.gaierror as e:
@@ -226,7 +234,8 @@ class Exchange(BaseExchange):
             details = ' '.join([self.id, method, url])
             raise ExchangeError(details) from e
 
-        self.handle_errors(http_status_code, http_status_text, url, method, headers, http_response, json_response, request_headers, request_body)
+        self.handle_errors(http_status_code, http_status_text, url, method, headers, http_response, json_response,
+                           request_headers, request_body)
         self.handle_http_status_code(http_status_code, http_status_text, url, method, http_response)
         if json_response is not None:
             return json_response
@@ -319,6 +328,7 @@ class Exchange(BaseExchange):
                 future.resolve(asyncio_future.result())
             else:
                 future.reject(exception)
+
         future = Future()
         task = self.asyncio_loop.create_task(method(*args))
         task.add_done_callback(callback)
@@ -419,6 +429,7 @@ class Exchange(BaseExchange):
                     except ConnectionError as e:
                         del client.subscriptions[subscribe_hash]
                         future.reject(e)
+
                 asyncio.ensure_future(send_message())
 
         if not subscribed:
@@ -450,7 +461,8 @@ class Exchange(BaseExchange):
 
     async def ws_close(self):
         if self.clients:
-            await asyncio.wait([asyncio.create_task(client.close()) for client in self.clients.values()], return_when=asyncio.ALL_COMPLETED)
+            await asyncio.wait([asyncio.create_task(client.close()) for client in self.clients.values()],
+                               return_when=asyncio.ALL_COMPLETED)
             for url in self.clients.copy():
                 del self.clients[url]
 
@@ -473,7 +485,8 @@ class Exchange(BaseExchange):
                     client.resolve(stored, messageHash)
                     return
                 tries += 1
-            client.reject(ExchangeError(self.id + ' nonce is behind cache after ' + str(maxRetries) + ' tries.'), messageHash)
+            client.reject(ExchangeError(self.id + ' nonce is behind cache after ' + str(maxRetries) + ' tries.'),
+                          messageHash)
             del self.clients[client.url]
         except BaseError as e:
             client.reject(e, messageHash)
@@ -544,7 +557,8 @@ class Exchange(BaseExchange):
     async def watch_orders_for_symbols(self, symbols: List[str], since: Int = None, limit: Int = None, params={}):
         raise NotSupported(self.id + ' watchOrdersForSymbols() is not supported yet')
 
-    async def watch_ohlcv_for_symbols(self, symbolsAndTimeframes: List[List[str]], since: Int = None, limit: Int = None, params={}):
+    async def watch_ohlcv_for_symbols(self, symbolsAndTimeframes: List[List[str]], since: Int = None, limit: Int = None,
+                                      params={}):
         raise NotSupported(self.id + ' watchOHLCVForSymbols() is not supported yet')
 
     async def watch_order_book_for_symbols(self, symbols: List[str], limit: Int = None, params={}):
@@ -604,7 +618,8 @@ class Exchange(BaseExchange):
         raise NotSupported(self.id + ' setLeverage() is not supported yet')
 
     async def fetch_borrow_rate(self, code: str, amount, params={}):
-        raise NotSupported(self.id + ' fetchBorrowRate is deprecated, please use fetchCrossBorrowRate or fetchIsolatedBorrowRate instead')
+        raise NotSupported(
+            self.id + ' fetchBorrowRate is deprecated, please use fetchCrossBorrowRate or fetchIsolatedBorrowRate instead')
 
     async def repay_cross_margin(self, code: str, amount, params={}):
         raise NotSupported(self.id + ' repayCrossMargin is not support yet')
@@ -619,10 +634,12 @@ class Exchange(BaseExchange):
         raise NotSupported(self.id + ' borrowIsolatedMargin is not support yet')
 
     async def borrow_margin(self, code: str, amount, symbol: Str = None, params={}):
-        raise NotSupported(self.id + ' borrowMargin is deprecated, please use borrowCrossMargin or borrowIsolatedMargin instead')
+        raise NotSupported(
+            self.id + ' borrowMargin is deprecated, please use borrowCrossMargin or borrowIsolatedMargin instead')
 
     async def repay_margin(self, code: str, amount, symbol: Str = None, params={}):
-        raise NotSupported(self.id + ' repayMargin is deprecated, please use repayCrossMargin or repayIsolatedMargin instead')
+        raise NotSupported(
+            self.id + ' repayMargin is deprecated, please use repayCrossMargin or repayIsolatedMargin instead')
 
     async def fetch_ohlcv(self, symbol: str, timeframe='1m', since: Int = None, limit: Int = None, params={}):
         message = ''
@@ -644,7 +661,7 @@ class Exchange(BaseExchange):
             maxRetries = self.safe_value(options, 'webApiRetries', 10)
             response = None
             retry = 0
-            while(retry < maxRetries):
+            while (retry < maxRetries):
                 try:
                     response = await getattr(self, endpointMethod)({})
                     break
@@ -691,7 +708,8 @@ class Exchange(BaseExchange):
                 self.options['limitsLoaded'] = self.milliseconds()
         return self.markets
 
-    async def fetch2(self, path, api: Any = 'public', method='GET', params={}, headers: Any = None, body: Any = None, config={}):
+    async def fetch2(self, path, api: Any = 'public', method='GET', params={}, headers: Any = None, body: Any = None,
+                     config={}):
         if self.enableRateLimit:
             cost = self.calculate_rate_limiter_cost(api, method, path, params, config)
             await self.throttle(cost)
@@ -702,7 +720,8 @@ class Exchange(BaseExchange):
         self.last_request_url = request['url']
         return await self.fetch(request['url'], request['method'], request['headers'], request['body'])
 
-    async def request(self, path, api: Any = 'public', method='GET', params={}, headers: Any = None, body: Any = None, config={}):
+    async def request(self, path, api: Any = 'public', method='GET', params={}, headers: Any = None, body: Any = None,
+                      config={}):
         return await self.fetch2(path, api, method, params, headers, body, config)
 
     async def load_accounts(self, reload=False, params={}):
@@ -729,7 +748,8 @@ class Exchange(BaseExchange):
         await self.cancelOrder(id, symbol)
         return await self.create_order(symbol, type, side, amount, price, params)
 
-    async def edit_order_ws(self, id: str, symbol: str, type: OrderType, side: OrderSide, amount: float, price: float = None, params={}):
+    async def edit_order_ws(self, id: str, symbol: str, type: OrderType, side: OrderSide, amount: float,
+                            price: float = None, params={}):
         await self.cancelOrderWs(id, symbol)
         return await self.createOrderWs(symbol, type, side, amount, price, params)
 
@@ -745,7 +765,8 @@ class Exchange(BaseExchange):
     async def watch_positions(self, symbols: List[str] = None, since: Int = None, limit: Int = None, params={}):
         raise NotSupported(self.id + ' watchPositions() is not supported yet')
 
-    async def watch_position_for_symbols(self, symbols: List[str] = None, since: Int = None, limit: Int = None, params={}):
+    async def watch_position_for_symbols(self, symbols: List[str] = None, since: Int = None, limit: Int = None,
+                                         params={}):
         return await self.watchPositions(symbols, since, limit, params)
 
     async def fetch_positions_for_symbol(self, symbol: str, params={}):
@@ -794,13 +815,15 @@ class Exchange(BaseExchange):
     async def fetch_funding_fee(self, code: str, params={}):
         warnOnFetchFundingFee = self.safe_value(self.options, 'warnOnFetchFundingFee', True)
         if warnOnFetchFundingFee:
-            raise NotSupported(self.id + ' fetchFundingFee() method is deprecated, it will be removed in July 2022, please, use fetchTransactionFee() or set exchange.options["warnOnFetchFundingFee"] = False to suppress self warning')
+            raise NotSupported(
+                self.id + ' fetchFundingFee() method is deprecated, it will be removed in July 2022, please, use fetchTransactionFee() or set exchange.options["warnOnFetchFundingFee"] = False to suppress self warning')
         return await self.fetch_transaction_fee(code, params)
 
     async def fetch_funding_fees(self, codes: List[str] = None, params={}):
         warnOnFetchFundingFees = self.safe_value(self.options, 'warnOnFetchFundingFees', True)
         if warnOnFetchFundingFees:
-            raise NotSupported(self.id + ' fetchFundingFees() method is deprecated, it will be removed in July 2022. Please, use fetchTransactionFees() or set exchange.options["warnOnFetchFundingFees"] = False to suppress self warning')
+            raise NotSupported(
+                self.id + ' fetchFundingFees() method is deprecated, it will be removed in July 2022. Please, use fetchTransactionFees() or set exchange.options["warnOnFetchFundingFees"] = False to suppress self warning')
         return await self.fetch_transaction_fees(codes, params)
 
     async def fetch_transaction_fee(self, code: str, params={}):
@@ -827,7 +850,8 @@ class Exchange(BaseExchange):
         borrowRates = await self.fetchCrossBorrowRates(params)
         rate = self.safe_value(borrowRates, code)
         if rate is None:
-            raise ExchangeError(self.id + ' fetchCrossBorrowRate() could not find the borrow rate for currency code ' + code)
+            raise ExchangeError(
+                self.id + ' fetchCrossBorrowRate() could not find the borrow rate for currency code ' + code)
         return rate
 
     async def fetch_isolated_borrow_rate(self, symbol: str, params={}):
@@ -837,7 +861,8 @@ class Exchange(BaseExchange):
         borrowRates = await self.fetchIsolatedBorrowRates(params)
         rate = self.safe_value(borrowRates, symbol)
         if rate is None:
-            raise ExchangeError(self.id + ' fetchIsolatedBorrowRate() could not find the borrow rate for market symbol ' + symbol)
+            raise ExchangeError(
+                self.id + ' fetchIsolatedBorrowRate() could not find the borrow rate for market symbol ' + symbol)
         return rate
 
     async def fetch_ticker(self, symbol: str, params={}):
@@ -893,7 +918,8 @@ class Exchange(BaseExchange):
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict: an `order structure <https://docs.ccxt.com/#/?id=order-structure>`
         """
-        if self.options['createMarketOrderWithCost'] or (self.options['createMarketBuyOrderWithCost'] and self.options['createMarketSellOrderWithCost']):
+        if self.options['createMarketOrderWithCost'] or (
+                self.options['createMarketBuyOrderWithCost'] and self.options['createMarketSellOrderWithCost']):
             return await self.create_order(symbol, 'market', side, cost, 1, params)
         raise NotSupported(self.id + ' createMarketOrderWithCost() is not supported yet')
 
@@ -924,7 +950,8 @@ class Exchange(BaseExchange):
     async def create_orders(self, orders: List[OrderRequest], params={}):
         raise NotSupported(self.id + ' createOrders() is not supported yet')
 
-    async def create_order_ws(self, symbol: str, type: OrderType, side: OrderSide, amount: float, price: float = None, params={}):
+    async def create_order_ws(self, symbol: str, type: OrderType, side: OrderSide, amount: float, price: float = None,
+                              params={}):
         raise NotSupported(self.id + ' createOrderWs() is not supported yet')
 
     async def cancel_order(self, id: str, symbol: str = None, params={}):
@@ -1021,7 +1048,8 @@ class Exchange(BaseExchange):
             depositAddresses = await self.fetchDepositAddresses([code], params)
             depositAddress = self.safe_value(depositAddresses, code)
             if depositAddress is None:
-                raise InvalidAddress(self.id + ' fetchDepositAddress() could not find a deposit address for ' + code + ', make sure you have created a corresponding deposit address in your wallet on the exchange website')
+                raise InvalidAddress(
+                    self.id + ' fetchDepositAddress() could not find a deposit address for ' + code + ', make sure you have created a corresponding deposit address in your wallet on the exchange website')
             else:
                 return depositAddress
         else:
@@ -1073,7 +1101,8 @@ class Exchange(BaseExchange):
         query = self.extend(params, {'reduceOnly': True})
         return await self.create_order(symbol, type, side, amount, price, query)
 
-    async def create_stop_order(self, symbol: str, type: OrderType, side: OrderSide, amount, price=None, stopPrice=None, params={}):
+    async def create_stop_order(self, symbol: str, type: OrderType, side: OrderSide, amount, price=None, stopPrice=None,
+                                params={}):
         if not self.has['createStopOrder']:
             raise NotSupported(self.id + ' createStopOrder() is not supported yet')
         if stopPrice is None:
@@ -1156,7 +1185,8 @@ class Exchange(BaseExchange):
         else:
             raise NotSupported(self.id + ' fetchIndexOHLCV() is not supported yet')
 
-    async def fetch_premium_index_ohlcv(self, symbol: str, timeframe='1m', since: Int = None, limit: Int = None, params={}):
+    async def fetch_premium_index_ohlcv(self, symbol: str, timeframe='1m', since: Int = None, limit: Int = None,
+                                        params={}):
         """
         fetches historical premium index price candlestick data containing the open, high, low, and close price of a market
         :param str symbol: unified symbol of the market to fetch OHLCV data for
@@ -1189,7 +1219,8 @@ class Exchange(BaseExchange):
         else:
             raise NotSupported(self.id + ' fetchTransactions() is not supported yet')
 
-    async def fetch_paginated_call_dynamic(self, method: str, symbol: str = None, since: Int = None, limit: Int = None, params={}, maxEntriesPerRequest: Int = None):
+    async def fetch_paginated_call_dynamic(self, method: str, symbol: str = None, since: Int = None, limit: Int = None,
+                                           params={}, maxEntriesPerRequest: Int = None):
         maxCalls = None
         maxCalls, params = self.handle_option_and_params(params, method, 'paginationCalls', 10)
         maxRetries = None
@@ -1201,12 +1232,14 @@ class Exchange(BaseExchange):
         result = []
         errors = 0
         until = self.safe_integer_2(params, 'untill', 'till')  # do not omit it from params here
-        maxEntriesPerRequest, params = self.handle_max_entries_per_request_and_params(method, maxEntriesPerRequest, params)
+        maxEntriesPerRequest, params = self.handle_max_entries_per_request_and_params(method, maxEntriesPerRequest,
+                                                                                      params)
         if (paginationDirection == 'forward'):
             if since is None:
-                raise ArgumentsRequired(self.id + ' pagination requires a since argument when paginationDirection set to forward')
+                raise ArgumentsRequired(
+                    self.id + ' pagination requires a since argument when paginationDirection set to forward')
             paginationTimestamp = since
-        while((calls < maxCalls)):
+        while ((calls < maxCalls)):
             calls += 1
             try:
                 if paginationDirection == 'backward':
@@ -1217,7 +1250,8 @@ class Exchange(BaseExchange):
                     response = await getattr(self, method)(symbol, None, maxEntriesPerRequest, params)
                     responseLength = len(response)
                     if self.verbose:
-                        self.log('Dynamic pagination call', calls, 'method', method, 'response length', responseLength, 'timestamp', paginationTimestamp)
+                        self.log('Dynamic pagination call', calls, 'method', method, 'response length', responseLength,
+                                 'timestamp', paginationTimestamp)
                     if responseLength == 0:
                         break
                     errors = 0
@@ -1231,7 +1265,8 @@ class Exchange(BaseExchange):
                     response = await getattr(self, method)(symbol, paginationTimestamp, maxEntriesPerRequest, params)
                     responseLength = len(response)
                     if self.verbose:
-                        self.log('Dynamic pagination call', calls, 'method', method, 'response length', responseLength, 'timestamp', paginationTimestamp)
+                        self.log('Dynamic pagination call', calls, 'method', method, 'response length', responseLength,
+                                 'timestamp', paginationTimestamp)
                     if responseLength == 0:
                         break
                     errors = 0
@@ -1248,26 +1283,31 @@ class Exchange(BaseExchange):
         key = 0 if (method == 'fetchOHLCV') else 'timestamp'
         return self.filter_by_since_limit(uniqueResults, since, limit, key)
 
-    async def safe_deterministic_call(self, method: str, symbol: str = None, since: Int = None, limit: Int = None, timeframe: str = None, params={}):
+    async def safe_deterministic_call(self, method: str, symbol: str = None, since: Int = None, limit: Int = None,
+                                      timeframe: str = None, params={}):
         maxRetries = None
         maxRetries, params = self.handle_option_and_params(params, method, 'maxRetries', 3)
         errors = 0
-        try:
-            if timeframe and method != 'fetchFundingRateHistory':
-                return await getattr(self, method)(symbol, timeframe, since, limit, params)
-            else:
-                return await getattr(self, method)(symbol, since, limit, params)
-        except Exception as e:
-            if isinstance(e, RateLimitExceeded):
-                raise e  # if we are rate limited, we should not retry and fail fast
-            errors += 1
-            if errors > maxRetries:
-                raise e
+        while True:
+            try:
+                if timeframe and method != 'fetchFundingRateHistory':
+                    return await getattr(self, method)(symbol, timeframe, since, limit, params)
+                else:
+                    return await getattr(self, method)(symbol, since, limit, params)
+            except Exception as e:
+                if isinstance(e, RateLimitExceeded):
+                    raise e  # if we are rate limited, we should not retry and fail fast
+                errors += 1
+                if errors > maxRetries:
+                    raise e
 
-    async def fetch_paginated_call_deterministic(self, method: str, symbol: str = None, since: Int = None, limit: Int = None, timeframe: str = None, params={}, maxEntriesPerRequest=None):
+    async def fetch_paginated_call_deterministic(self, method: str, symbol: str = None, since: Int = None,
+                                                 limit: Int = None, timeframe: str = None, params={},
+                                                 maxEntriesPerRequest=None):
         maxCalls = None
         maxCalls, params = self.handle_option_and_params(params, method, 'paginationCalls', 10)
-        maxEntriesPerRequest, params = self.handle_max_entries_per_request_and_params(method, maxEntriesPerRequest, params)
+        maxEntriesPerRequest, params = self.handle_max_entries_per_request_and_params(method, maxEntriesPerRequest,
+                                                                                      params)
         current = self.milliseconds()
         tasks = []
         time = self.parse_timeframe(timeframe) * 1000
@@ -1279,31 +1319,41 @@ class Exchange(BaseExchange):
         if until is not None:
             requiredCalls = int(math.ceil((until - since)) / step)
             if requiredCalls > maxCalls:
-                raise BadRequest(self.id + ' the number of required calls is greater than the max number of calls allowed, either increase the paginationCalls or decrease the since-until gap. Current paginationCalls limit is ' + str(maxCalls) + ' required calls is ' + str(requiredCalls))
+                raise BadRequest(
+                    self.id + ' the number of required calls is greater than the max number of calls allowed, either increase the paginationCalls or decrease the since-until gap. Current paginationCalls limit is ' + str(
+                        maxCalls) + ' required calls is ' + str(requiredCalls))
         for i in range(0, maxCalls):
             if (until is not None) and (currentSince >= until):
                 break
-            tasks.append(self.safe_deterministic_call(method, symbol, currentSince, maxEntriesPerRequest, timeframe, params))
+            tasks.append(
+                self.safe_deterministic_call(method, symbol, currentSince, maxEntriesPerRequest, timeframe, params))
             currentSince = self.sum(currentSince, step) - 1
         results = await asyncio.gather(*tasks)
-        result = []
-        for i in range(0, len(results)):
-            result = self.array_concat(result, results[i])
-        uniqueResults = self.remove_repeated_elements_from_array(result)
-        key = 0 if (method == 'fetchOHLCV') else 'timestamp'
-        return self.filter_by_since_limit(uniqueResults, since, limit, key)
+        try:
+            result = []
+            for i in range(0, len(results)):
+                result = self.array_concat(result, results[i])
+            uniqueResults = self.remove_repeated_elements_from_array(result)
+            key = 0 if (method == 'fetchOHLCV') else 'timestamp'
+            return self.filter_by_since_limit(uniqueResults, since, limit, key)
+        except Exception as e:
+            pass
+            raise (e)
 
-    async def fetch_paginated_call_cursor(self, method: str, symbol: str = None, since=None, limit=None, params={}, cursorReceived=None, cursorSent=None, cursorIncrement=None, maxEntriesPerRequest=None):
+    async def fetch_paginated_call_cursor(self, method: str, symbol: str = None, since=None, limit=None, params={},
+                                          cursorReceived=None, cursorSent=None, cursorIncrement=None,
+                                          maxEntriesPerRequest=None):
         maxCalls = None
         maxCalls, params = self.handle_option_and_params(params, method, 'paginationCalls', 10)
         maxRetries = None
         maxRetries, params = self.handle_option_and_params(params, method, 'maxRetries', 3)
-        maxEntriesPerRequest, params = self.handle_max_entries_per_request_and_params(method, maxEntriesPerRequest, params)
+        maxEntriesPerRequest, params = self.handle_max_entries_per_request_and_params(method, maxEntriesPerRequest,
+                                                                                      params)
         cursorValue = None
         i = 0
         errors = 0
         result = []
-        while(i < maxCalls):
+        while (i < maxCalls):
             try:
                 if cursorValue is not None:
                     if cursorIncrement is not None:
@@ -1317,7 +1367,8 @@ class Exchange(BaseExchange):
                 errors = 0
                 responseLength = len(response)
                 if self.verbose:
-                    self.log('Cursor pagination call', i + 1, 'method', method, 'response length', responseLength, 'cursor', cursorValue)
+                    self.log('Cursor pagination call', i + 1, 'method', method, 'response length', responseLength,
+                             'cursor', cursorValue)
                 if responseLength == 0:
                     break
                 result = self.array_concat(result, response)
@@ -1337,16 +1388,18 @@ class Exchange(BaseExchange):
         key = 0 if (method == 'fetchOHLCV') else 'timestamp'
         return self.filter_by_since_limit(sorted, since, limit, key)
 
-    async def fetch_paginated_call_incremental(self, method: str, symbol: str = None, since=None, limit=None, params={}, pageKey=None, maxEntriesPerRequest=None):
+    async def fetch_paginated_call_incremental(self, method: str, symbol: str = None, since=None, limit=None, params={},
+                                               pageKey=None, maxEntriesPerRequest=None):
         maxCalls = None
         maxCalls, params = self.handle_option_and_params(params, method, 'paginationCalls', 10)
         maxRetries = None
         maxRetries, params = self.handle_option_and_params(params, method, 'maxRetries', 3)
-        maxEntriesPerRequest, params = self.handle_max_entries_per_request_and_params(method, maxEntriesPerRequest, params)
+        maxEntriesPerRequest, params = self.handle_max_entries_per_request_and_params(method, maxEntriesPerRequest,
+                                                                                      params)
         i = 0
         errors = 0
         result = []
-        while(i < maxCalls):
+        while (i < maxCalls):
             try:
                 params[pageKey] = i + 1
                 response = await getattr(self, method)(symbol, since, maxEntriesPerRequest, params)
