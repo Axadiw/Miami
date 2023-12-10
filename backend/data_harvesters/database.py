@@ -63,5 +63,4 @@ async def pg_bulk_insert(
             insert(table)
             .values(batch)
         )
-        resp = await session.execute(statement)
-        pass
+        await session.execute(statement)

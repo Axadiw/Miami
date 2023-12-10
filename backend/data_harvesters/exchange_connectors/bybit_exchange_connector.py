@@ -20,30 +20,29 @@ class BybitConnectorCCXT(BaseExchangeConnector):
         response = await self.connector_pro.fetch_tickers()
         return list(map(lambda x: Symbol(name=x[1]['symbol'], exchange=exchange.id), response.items()))
 
-    async def fetch_ohlcv(self, exchange: Type[Exchange], data: DataToFetch, time_before_fetch: datetime) -> \
-            List[OHLCV]:
+    async def fetch_ohlcv(self, exchange: Type[Exchange], data: DataToFetch) -> \
+            List[dict]:
         response = await self.connector_pro.fetch_ohlcv(data.symbol.name, data.timeframe.name,
                                                         int(data.start.timestamp() * 1000),
-                                                        limit=(MAX_CANDLES_HISTORY_TO_FETCH),
+                                                        limit=MAX_CANDLES_HISTORY_TO_FETCH,
                                                         params={"paginate": True,
                                                                 "paginationCalls": int(
                                                                     ceil(MAX_CANDLES_HISTORY_TO_FETCH / 1000)),
                                                                 'until': data.end.timestamp() * 1000,
                                                                 'maxRetries': 10})
-        new_items = list(
-            filter(lambda x: data.start <= x.timestamp <= data.end and (x.timestamp + timedelta(
-                seconds=data.timeframe.seconds)) < time_before_fetch,
-                   map(lambda x: OHLCV(timestamp=datetime.fromtimestamp(x[0] / 1000.0),
-                                       exchange=exchange.id,
-                                       symbol=data.symbol.id,
-                                       timeframe=data.timeframe.id,
-                                       open=x[1],
-                                       high=x[2],
-                                       low=x[3],
-                                       close=x[4],
-                                       volume=x[5]), response)))
 
-        return new_items
+        max_permitted_date_ms = data.end.timestamp() * 1000.0
+        timeframe_length_ms = data.timeframe.seconds * 1000.0
+        return list(map(lambda x: {"timestamp": datetime.fromtimestamp(x[0] / 1000.0),
+                                   "exchange": exchange.id,
+                                   "symbol": data.symbol.id,
+                                   "timeframe": data.timeframe.id,
+                                   "open": x[1],
+                                   "high": x[2],
+                                   "low": x[3],
+                                   "close": x[4],
+                                   "volume": x[5]},
+                        filter(lambda x: x[0] + timeframe_length_ms < max_permitted_date_ms, response)))
 
     async def watch_ohlcv(self, symbols_and_time_frames: List[List[str]]):
         return await self.connector_pro.watch_ohlcv_for_symbols(symbols_and_time_frames)

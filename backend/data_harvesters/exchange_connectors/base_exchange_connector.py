@@ -15,8 +15,8 @@ class BaseExchangeConnector(ABC):
         pass
 
     @abstractmethod
-    async def fetch_ohlcv(self, exchange: Type[Exchange], data: DataToFetch, time_before_fetch: datetime) -> List[
-        OHLCV]:
+    async def fetch_ohlcv(self, exchange: Type[Exchange], data: DataToFetch) -> List[
+        dict]:
         pass
 
     @abstractmethod

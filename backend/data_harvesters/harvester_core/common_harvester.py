@@ -25,7 +25,6 @@ async def fetch_list_of_symbols(exchange: Type[Exchange]) -> list[Type[Symbol]]:
         return list(
             (await db_session.execute(
                 select(Symbol).filter_by(exchange=exchange.id)
-                # .filter(Symbol.id <= 10)
             )).scalars())
 
 
