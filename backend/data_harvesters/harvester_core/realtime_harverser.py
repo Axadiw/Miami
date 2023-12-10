@@ -1,4 +1,5 @@
 import asyncio
+import decimal
 import logging
 from datetime import datetime, timedelta
 from queue import Queue
@@ -129,15 +130,15 @@ class RealtimeHarvester:
             count = (await db_session.execute(select(func.count(Funding.id)).filter_by(symbol=symbol.id).filter(
                 Funding.timestamp > timestamp - timedelta(seconds=30)))).scalar()
             if count == 0:
-                if 'fundingRate' in ticker['info'] and isinstance(ticker['info']['fundingRate'], numbers.Number):
+                if 'fundingRate' in ticker['info']:
                     funding = {"exchange": self.exchange.id, "symbol": symbol.id,
                                "timestamp": timestamp,
-                               "value": ticker['info']['fundingRate']}
+                               "value": decimal.Decimal(ticker['info']['fundingRate'])}
                     await db_session.execute(insert(Funding).values(funding).on_conflict_do_nothing())
-                if 'openInterest' in ticker['info'] and isinstance(ticker['info']['openInterest'], numbers.Number):
+                if 'openInterest' in ticker['info']:
                     oi = {"exchange": self.exchange.id, "symbol": symbol.id,
                           "timestamp": timestamp,
-                          "value": ticker['info']['openInterest']}
+                          "value": decimal.Decimal(ticker['info']['openInterest'])}
                     await db_session.execute(insert(OpenInterest).values(oi).on_conflict_do_nothing())
                 await db_session.commit()
 
