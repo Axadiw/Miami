@@ -30,7 +30,6 @@ def upgrade() -> None:
                     sa.Column('name', sa.String(length=255), nullable=False),
                     sa.Column('exchange', sa.Integer(), nullable=False),
                     sa.UniqueConstraint('name'),
-                    sa.ForeignKeyConstraint(['exchange'], ['Exchanges.id'], ),
                     sa.PrimaryKeyConstraint('id'),
                     )
 
@@ -54,9 +53,6 @@ def upgrade() -> None:
                     sa.Column('low', sa.Numeric(scale=10, precision=30), nullable=False),
                     sa.Column('close', sa.Numeric(scale=10, precision=30), nullable=False),
                     sa.Column('volume', sa.Numeric(scale=10, precision=30), nullable=False),
-                    sa.ForeignKeyConstraint(['symbol'], ['Symbols.id'], ),
-                    sa.ForeignKeyConstraint(['exchange'], ['Exchanges.id'], ),
-                    sa.ForeignKeyConstraint(['timeframe'], ['Timeframes.id'], ),
                     sa.PrimaryKeyConstraint('id'),
                     )
 

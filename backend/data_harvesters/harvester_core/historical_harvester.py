@@ -4,14 +4,16 @@ from datetime import datetime, timedelta
 from queue import Queue
 from typing import Type, Any, Callable
 
-from sqlalchemy import select
+import asyncpg
+from sqlalchemy import select, create_engine
 from sqlalchemy.dialects.postgresql import Insert
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine, create_async_engine
 
+from consts_secrets import db_username, db_password, db_name
 from data_harvesters.consts import MAX_CONCURRENT_FETCHES, MAX_CANDLES_HISTORY_TO_FETCH, \
     GLOBAL_QUEUE_START_COMMAND
 from data_harvesters.data_to_fetch import DataToFetch
-from data_harvesters.database import pg_bulk_insert, async_session_generator, get_session
+from data_harvesters.database import pg_bulk_insert, async_session_generator, get_session, get_db_engine
 from data_harvesters.exchange_connectors.base_exchange_connector import BaseExchangeConnector
 from data_harvesters.harvester_core.common_harvester import fetch_list_of_symbols, fetch_exchange_entry, \
     get_subset_of_timeframes
@@ -84,25 +86,32 @@ class HistoricalHarvester:
                                                                      all_fetches=all_fetches)
             fetch_length = elapsed()
             await self.save_candles(data, new_candles)
-            logging.info(
-                f'Handled {len(new_candles)} new entries for\t{data}\t({current_fetch} / {all_fetches}).\t'
-                f'Fetch {"{:.2f}".format(fetch_length)} s, save {"{:.2f}".format(elapsed() - fetch_length)} s. Total {"{:.2f}".format(elapsed())} s')
+            # logging.info(
+            #     f'Handled {len(new_candles)} new entries for\t{data}\t({current_fetch} / {all_fetches}).\t'
+            #     f'Fetch {"{:.2f}".format(fetch_length)} s, save {"{:.2f}".format(elapsed() - fetch_length)} s. Total {"{:.2f}".format(elapsed())} s')
             return len(new_candles)
 
     async def save_candles(self, data, new_candles):
         db_session = self.temporary_ohlcv_fetching_db_sessions.pop()
-
-        def conflict_passer(statement: Insert):
-            return statement.on_conflict_do_nothing()
-
         if len(new_candles) > 0:
             success = False
+            temp_table_name = f'ohlcv_{data.symbol.id}_{data.timeframe.id}'
             while not success:
                 try:
-                    await pg_bulk_insert(session=db_session, table=OHLCV, data=new_candles,
-                                         statement_modifier=conflict_passer)
-                    await db_session.commit()
-                    await db_session.flush()
+                    raw_connection = (await (await db_session.connection()).get_raw_connection()).driver_connection
+                    await raw_connection.execute(
+                        f'CREATE TEMP TABLE IF NOT EXISTS {temp_table_name}(symbol int4, exchange int4, '
+                        f'timeframe int4, timestamp timestamp, open numeric(30,10), high numeric(30,10), '
+                        f'low numeric(30,10), close numeric(30,10), volume numeric(30,10))')
+                    await raw_connection.copy_records_to_table(temp_table_name, records=new_candles,
+                                                               columns=["timestamp", "exchange", "symbol", "timeframe",
+                                                                        "open",
+                                                                        "high", "low", "close", "volume"])
+                    await raw_connection.execute(
+                        f'INSERT INTO "OHLCV" (symbol,exchange,timeframe,timestamp,open,high,low,close,volume) '
+                        f'SELECT symbol,exchange,timeframe,timestamp,open,high,low,close,volume '
+                        f'FROM {temp_table_name} ON CONFLICT DO NOTHING')
+                    await raw_connection.execute(f'DROP TABLE IF EXISTS {temp_table_name}')
                     await self.update_last_fetched_date(data=data, db_session=db_session)
                     success = True
                 except Exception as e:

@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta
-from math import floor, ceil
+from datetime import datetime
+from math import ceil
 from typing import List, Type
 
 from ccxt.pro import bybit
@@ -7,7 +7,6 @@ from data_harvesters.consts import MAX_CANDLES_HISTORY_TO_FETCH
 from data_harvesters.data_to_fetch import DataToFetch
 from data_harvesters.exchange_connectors.base_exchange_connector import BaseExchangeConnector
 from models.exchange import Exchange
-from models.ohlcv import OHLCV
 from models.symbol import Symbol
 
 
@@ -22,7 +21,7 @@ class BybitConnectorCCXT(BaseExchangeConnector):
         return list(map(lambda x: Symbol(name=x[1]['symbol'], exchange=exchange.id), response.items()))
 
     async def fetch_ohlcv(self, exchange: Type[Exchange], data: DataToFetch) -> \
-            List[dict]:
+            List[tuple]:
         response = await self.connector_pro.fetch_ohlcv(data.symbol.name, data.timeframe.name,
                                                         int(data.start.timestamp() * 1000),
                                                         limit=MAX_CANDLES_HISTORY_TO_FETCH,
@@ -34,15 +33,9 @@ class BybitConnectorCCXT(BaseExchangeConnector):
 
         max_permitted_date_ms = data.end.timestamp() * 1000.0
         timeframe_length_ms = data.timeframe.seconds * 1000.0
-        return list(map(lambda x: {"timestamp": datetime.fromtimestamp(x[0] / 1000.0),
-                                   "exchange": exchange.id,
-                                   "symbol": data.symbol.id,
-                                   "timeframe": data.timeframe.id,
-                                   "open": x[1],
-                                   "high": x[2],
-                                   "low": x[3],
-                                   "close": x[4],
-                                   "volume": x[5]},
+
+        return list(map(lambda x: (datetime.fromtimestamp(x[0] / 1000.0), exchange.id, data.symbol.id,
+                                   data.timeframe.id, x[1], x[2], x[3], x[4], x[5]),
                         filter(lambda x: x[0] + timeframe_length_ms < max_permitted_date_ms, response)))
 
     async def watch_ohlcv(self, symbols_and_time_frames: List[List[str]]):

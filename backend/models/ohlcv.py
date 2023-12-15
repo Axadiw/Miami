@@ -7,9 +7,9 @@ class OHLCV(Base):
     __tablename__ = 'OHLCV'
 
     id = Column(Integer, primary_key=True)
-    exchange = Column(Integer, ForeignKey('Exchanges.id'), nullable=False)
-    symbol = Column(Integer, ForeignKey('Symbols.id'), nullable=False)
-    timeframe = Column(Integer, ForeignKey('Timeframes.id'), nullable=False)
+    exchange = Column(Integer, nullable=False)
+    symbol = Column(Integer, nullable=False)
+    timeframe = Column(Integer, nullable=False)
     timestamp = Column(DateTime(), nullable=False)
     open = Column(Numeric(scale=10, precision=30))
     high = Column(Numeric(scale=10, precision=30))

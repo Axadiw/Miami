@@ -27,9 +27,6 @@ def upgrade() -> None:
                     sa.Column('exchange', sa.Integer(), nullable=False),
                     sa.Column('timeframe', sa.Integer(), nullable=False),
                     sa.Column('last_fetched', sa.DateTime(), nullable=False),
-                    sa.ForeignKeyConstraint(['symbol'], ['Symbols.id'], ),
-                    sa.ForeignKeyConstraint(['exchange'], ['Exchanges.id'], ),
-                    sa.ForeignKeyConstraint(['timeframe'], ['Timeframes.id'], ),
                     sa.PrimaryKeyConstraint('id'),
                     )
     with op.batch_alter_table("LastFetchedDates") as batch_op:

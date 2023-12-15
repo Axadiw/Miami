@@ -7,7 +7,7 @@ class LastFetchedDate(Base):
     __tablename__ = 'LastFetchedDates'
 
     id = Column(Integer, primary_key=True)
-    exchange = Column(Integer, ForeignKey('Exchanges.id'), nullable=False)
-    symbol = Column(Integer, ForeignKey('Symbols.id'), nullable=False)
-    timeframe = Column(Integer, ForeignKey('Timeframes.id'), nullable=False)
+    exchange = Column(Integer, nullable=False)
+    symbol = Column(Integer, nullable=False)
+    timeframe = Column(Integer, nullable=False)
     last_fetched = Column(DateTime(), nullable=False)

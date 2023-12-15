@@ -8,6 +8,7 @@ __version__ = '4.1.79'
 
 import asyncio
 import concurrent.futures
+import random
 import socket
 import certifi
 import aiohttp
@@ -1296,6 +1297,7 @@ class Exchange(BaseExchange):
                     return await getattr(self, method)(symbol, since, limit, params)
             except Exception as e:
                 if isinstance(e, RateLimitExceeded):
+                    await asyncio.sleep(random.randint(0, 9))
                     raise e  # if we are rate limited, we should not retry and fail fast
                 errors += 1
                 if errors > maxRetries:

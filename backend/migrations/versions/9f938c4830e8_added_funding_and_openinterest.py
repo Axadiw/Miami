@@ -25,8 +25,6 @@ def upgrade() -> None:
                     sa.Column('exchange', sa.Integer(), nullable=False),
                     sa.Column('timestamp', sa.DateTime(), nullable=False),
                     sa.Column('value', sa.Numeric(scale=6, precision=9), nullable=False),
-                    sa.ForeignKeyConstraint(['symbol'], ['Symbols.id'], ),
-                    sa.ForeignKeyConstraint(['exchange'], ['Exchanges.id'], ),
                     sa.PrimaryKeyConstraint('id'),
                     )
     with op.batch_alter_table("Funding") as batch_op:
@@ -38,8 +36,6 @@ def upgrade() -> None:
                     sa.Column('exchange', sa.Integer(), nullable=False),
                     sa.Column('timestamp', sa.DateTime(), nullable=False),
                     sa.Column('value', sa.Numeric(scale=6, precision=20), nullable=False),
-                    sa.ForeignKeyConstraint(['symbol'], ['Symbols.id'], ),
-                    sa.ForeignKeyConstraint(['exchange'], ['Exchanges.id'], ),
                     sa.PrimaryKeyConstraint('id'),
                     )
     with op.batch_alter_table("OpenInterest") as batch_op:

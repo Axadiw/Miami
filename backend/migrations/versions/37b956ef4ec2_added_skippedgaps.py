@@ -26,9 +26,6 @@ def upgrade() -> None:
                     sa.Column('timeframe', sa.Integer(), nullable=False),
                     sa.Column('start', sa.DateTime(), nullable=False),
                     sa.Column('end', sa.DateTime(), nullable=False),
-                    sa.ForeignKeyConstraint(['symbol'], ['Symbols.id'], ),
-                    sa.ForeignKeyConstraint(['exchange'], ['Exchanges.id'], ),
-                    sa.ForeignKeyConstraint(['timeframe'], ['Timeframes.id'], ),
                     sa.PrimaryKeyConstraint('id'),
                     )
     with op.batch_alter_table("SkippedGaps") as batch_op:

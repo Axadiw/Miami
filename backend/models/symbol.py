@@ -8,4 +8,4 @@ class Symbol(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False, index=True, unique=True)
-    exchange = Column(Integer, ForeignKey('Exchanges.id'), nullable=False)
+    exchange = Column(Integer, nullable=False)
