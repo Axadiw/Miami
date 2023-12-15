@@ -79,11 +79,15 @@ class HistoricalHarvester:
 
     async def fetch_and_save_single_ohlcv(self, data: DataToFetch, current_fetch: int,
                                           all_fetches: int):
-        new_candles: list[OHLCV] = await self.fetch_single_ohlcv(data=data, current_fetch=current_fetch,
-                                                                 all_fetches=all_fetches)
-
-        await self.save_candles(data, new_candles)
-        return len(new_candles)
+        with elapsed_timer() as elapsed:
+            new_candles: list[OHLCV] = await self.fetch_single_ohlcv(data=data, current_fetch=current_fetch,
+                                                                     all_fetches=all_fetches)
+            fetch_length = elapsed()
+            await self.save_candles(data, new_candles)
+            logging.info(
+                f'Handled {len(new_candles)} new entries for\t{data}\t({current_fetch} / {all_fetches}).\t'
+                f'Fetch {"{:.2f}".format(fetch_length)} s, save {"{:.2f}".format(elapsed() - fetch_length)} s. Total {"{:.2f}".format(elapsed())} s')
+            return len(new_candles)
 
     async def save_candles(self, data, new_candles):
         db_session = self.temporary_ohlcv_fetching_db_sessions.pop()
@@ -122,22 +126,18 @@ class HistoricalHarvester:
 
     async def fetch_single_ohlcv(self, data: DataToFetch, current_fetch: int,
                                  all_fetches: int):
-        with elapsed_timer() as elapsed:
-            success = False
-            new_candles = []
-            exchange_connector = self.temporary_ohlcv_fetching_exchange_connectors.pop()
-            while not success:
-                try:
-                    new_candles = await exchange_connector.fetch_ohlcv(data=data, exchange=self.exchange)
-                    logging.info(
-                        f'Fetched {len(new_candles)} new entries for\t{data}\t({current_fetch} / {all_fetches}).\t'
-                        f'Took {"{:.2f}".format(elapsed())} seconds')
-                    success = True
-                except Exception as e:
-                    logging.error(f'Update Single fetch_single_ohlcv {data.symbol.name} {data.timeframe.name} {e}')
-                    await asyncio.sleep(1)
-            self.temporary_ohlcv_fetching_exchange_connectors.append(exchange_connector)
-            return new_candles
+        success = False
+        new_candles = []
+        exchange_connector = self.temporary_ohlcv_fetching_exchange_connectors.pop()
+        while not success:
+            try:
+                new_candles = await exchange_connector.fetch_ohlcv(data=data, exchange=self.exchange)
+                success = True
+            except Exception as e:
+                logging.error(f'Update Single fetch_single_ohlcv {data.symbol.name} {data.timeframe.name} {e}')
+                await asyncio.sleep(1)
+        self.temporary_ohlcv_fetching_exchange_connectors.append(exchange_connector)
+        return new_candles
 
     def get_earliest_possible_date_for_ohlcv(self, symbol: Type[Symbol], timeframe: Type[Timeframe]) -> datetime:
         return max(self.symbol_start_dates[symbol.name],

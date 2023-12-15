@@ -17,6 +17,7 @@ class BybitConnectorCCXT(BaseExchangeConnector):
         self.connector_pro = bybit()
 
     async def fetch_tickers(self, exchange: Type[Exchange]) -> List[Symbol]:
+        await self.connector_pro.load_markets(reload=True)
         response = await self.connector_pro.fetch_tickers()
         return list(map(lambda x: Symbol(name=x[1]['symbol'], exchange=exchange.id), response.items()))
 

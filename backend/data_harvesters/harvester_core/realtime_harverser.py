@@ -56,6 +56,7 @@ class RealtimeHarvester:
                     await asyncio.sleep(1)  # empty subscriptions array
             except Exception as e:
                 logging.critical(f'[Realtime Harvester Watcher] Error watch_candles {e}')
+                await asyncio.sleep(1)
 
     async def handle_candles(self, candles):
         async with get_session() as db_session:
@@ -122,6 +123,7 @@ class RealtimeHarvester:
                     await asyncio.sleep(1)  # empty subscriptions array
             except Exception as e:
                 logging.critical(f'[Realtime Harvester Watcher] Error watch_tickers {e}')
+                await asyncio.sleep(1)
 
     async def handle_tickers(self, ticker):
         async with get_session() as db_session:

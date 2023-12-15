@@ -9,6 +9,7 @@ from data_harvesters.consts import GLOBAL_QUEUE_START_COMMAND, GLOBAL_QUEUE_REFR
 from data_harvesters.database import get_session
 from models.exchange import Exchange
 from models.funding import Funding
+from models.last_fetched_date import LastFetchedDate
 from models.ohlcv import OHLCV
 from models.open_interests import OpenInterest
 from models.symbol import Symbol
@@ -54,6 +55,8 @@ class MetadataHarvester:
                             await (db_session.execute(delete(OHLCV).where(OHLCV.symbol == symbol.id)))
                             await (db_session.execute(delete(Funding).where(Funding.symbol == symbol.id)))
                             await (db_session.execute(delete(OpenInterest).where(OpenInterest.symbol == symbol.id)))
+                            await (
+                                db_session.execute(delete(LastFetchedDate).where(LastFetchedDate.symbol == symbol.id)))
                             await db_session.delete(symbol)
 
                     new_symbols_to_add = []
