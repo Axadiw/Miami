@@ -27,7 +27,7 @@ class MetadataHarvester:
         self.realtime_queue = realtime_queue
 
     async def create_exchange_entry(self) -> Type[Exchange]:
-        async with get_session() as db_session:
+        async with get_session(app_name='create_exchange_entry_metadata') as db_session:
             existing_entry = (await db_session.execute(select(Exchange).filter_by(name=self.exchange_name))).scalar()
 
             if existing_entry is not None:
@@ -41,7 +41,7 @@ class MetadataHarvester:
     async def update_list_of_symbols(self) -> list[Type[Symbol]]:
         exchange_connector = self.exchange_connector_generator()
         logging.info(f'[Metadata Harvester] Starting updating list of symbols')
-        async with get_session() as db_session:
+        async with get_session(app_name='update_list_of_symbols_metadata') as db_session:
             while True:  # should finish after first round because of return at the end
                 try:
                     existing_symbols = list(

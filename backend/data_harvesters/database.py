@@ -7,12 +7,14 @@ from contextlib import asynccontextmanager
 PSQL_QUERY_ALLOWED_MAX_ARGS = 32767
 
 
-def async_session_generator():
-    return async_sessionmaker(bind=get_db_engine(), sync_session_class=sessionmaker())
+def async_session_generator(app_name: str):
+    return async_sessionmaker(bind=get_db_engine(app_name=app_name), sync_session_class=sessionmaker(),
+                              )
 
 
-def get_db_engine() -> AsyncEngine:
-    return create_async_engine(f'postgresql+asyncpg://{db_username}:{db_password}@db/{db_name}', pool_pre_ping=True)
+def get_db_engine(app_name: str) -> AsyncEngine:
+    return create_async_engine(f'postgresql+asyncpg://{db_username}:{db_password}@db/{db_name}',
+                               pool_pre_ping=True, connect_args={"server_settings": {"application_name": app_name}})
 
 
 def get_db_session():
@@ -20,9 +22,9 @@ def get_db_session():
 
 
 @asynccontextmanager
-async def get_session() -> AsyncSession:
+async def get_session(app_name: str) -> AsyncSession:
     try:
-        async_session = async_session_generator()
+        async_session = async_session_generator(app_name=app_name)
 
         async with async_session() as session:
             yield session

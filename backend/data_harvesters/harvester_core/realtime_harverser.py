@@ -40,44 +40,45 @@ class RealtimeHarvester:
         logging.info(f'[Realtime Harvester Watcher] Will start watching for candles')
         exchange_connector = self.exchange_connector_generator()
         subscriptions = []
-        while True:
-            try:
-                if self.should_refresh_candle_symbols:
-                    subscriptions = []
-                    for timeframe in self.timeframes:
-                        for symbol in self.symbols:
-                            subscriptions.append([symbol.name, timeframe.name])
-                    self.should_refresh_candle_symbols = False
+        async with get_session(app_name='watch_candles') as db_session:
+            while True:
+                try:
+                    if self.should_refresh_candle_symbols:
+                        subscriptions = []
+                        for timeframe in self.timeframes:
+                            for symbol in self.symbols:
+                                subscriptions.append([symbol.name, timeframe.name])
+                        self.should_refresh_candle_symbols = False
 
-                if len(subscriptions) > 0:
-                    candles: dict = await exchange_connector.watch_ohlcv(subscriptions)
-                    await asyncio.create_task(self.handle_candles(candles))
-                else:
-                    await asyncio.sleep(1)  # empty subscriptions array
-            except Exception as e:
-                logging.critical(f'[Realtime Harvester Watcher] Error watch_candles {e}')
-                await asyncio.sleep(1)
+                    if len(subscriptions) > 0:
+                        candles: dict = await exchange_connector.watch_ohlcv(subscriptions)
+                        await asyncio.create_task(self.handle_candles(candles, db_session=db_session))
+                    else:
+                        await asyncio.sleep(1)  # empty subscriptions array
+                except Exception as e:
+                    logging.critical(f'[Realtime Harvester Watcher] Error watch_candles {e}')
+                    await asyncio.sleep(1)
 
-    async def handle_candles(self, candles):
-        async with get_session() as db_session:
-            ohlcv_candles_to_save = []
-            for received_symbol in candles.items():
-                for received_timeframes_and_data in received_symbol[1].items():
-                    candle_symbol = received_symbol[0]
-                    candle_timeframe = received_timeframes_and_data[0]
-                    candle_data = received_timeframes_and_data[1]
+    async def handle_candles(self, candles, db_session: AsyncSession):
+        # async with get_session(app_name='handle_candles_realtime') as db_session:
+        ohlcv_candles_to_save = []
+        for received_symbol in candles.items():
+            for received_timeframes_and_data in received_symbol[1].items():
+                candle_symbol = received_symbol[0]
+                candle_timeframe = received_timeframes_and_data[0]
+                candle_data = received_timeframes_and_data[1]
 
-                    for candle in candle_data:
-                        if candle[6]:
-                            ohlcv_candles_to_save.append(
-                                await self.convert_candle_data_to_ohlcv_object(db_session, candle_symbol,
-                                                                               candle_timeframe, candle))
-                            # logging.warning(
-                            #     f'New Realtime candle for {candle_symbol} {candle_timeframe} {datetime.fromtimestamp(candle[0] / 1000.0)}')
-            if len(ohlcv_candles_to_save) > 0:
-                await db_session.execute(
-                    insert(OHLCV).values(ohlcv_candles_to_save).on_conflict_do_nothing())
-                await db_session.commit()
+                for candle in candle_data:
+                    if candle[6]:
+                        ohlcv_candles_to_save.append(
+                            await self.convert_candle_data_to_ohlcv_object(db_session, candle_symbol,
+                                                                           candle_timeframe, candle))
+                        # logging.warning(
+                        #     f'New Realtime candle for {candle_symbol} {candle_timeframe} {datetime.fromtimestamp(candle[0] / 1000.0)}')
+        if len(ohlcv_candles_to_save) > 0:
+            await db_session.execute(
+                insert(OHLCV).values(ohlcv_candles_to_save).on_conflict_do_nothing())
+            await db_session.commit()
 
     async def convert_candle_data_to_ohlcv_object(self, db_session: AsyncSession, symbol_name: str,
                                                   timeframe_name: str,
@@ -108,41 +109,42 @@ class RealtimeHarvester:
         exchange_connector = self.exchange_connector_generator()
         logging.info(f'[Realtime Harvester Watcher] Will start watching for ticker')
         subscriptions = []
-        while True:
-            try:
-                if self.should_refresh_tickers_symbols:
-                    subscriptions = []
-                    for symbol in self.symbols:
-                        subscriptions.append(symbol.name)
-                    self.should_refresh_tickers_symbols = False
+        async with get_session(app_name='watch_tickers') as db_session:
+            while True:
+                try:
+                    if self.should_refresh_tickers_symbols:
+                        subscriptions = []
+                        for symbol in self.symbols:
+                            subscriptions.append(symbol.name)
+                        self.should_refresh_tickers_symbols = False
 
-                if len(subscriptions) > 0:
-                    ticker: dict = await exchange_connector.watch_tickers(subscriptions)
-                    await asyncio.create_task(self.handle_tickers(ticker))
-                else:
-                    await asyncio.sleep(1)  # empty subscriptions array
-            except Exception as e:
-                logging.critical(f'[Realtime Harvester Watcher] Error watch_tickers {e}')
-                await asyncio.sleep(1)
+                    if len(subscriptions) > 0:
+                        ticker: dict = await exchange_connector.watch_tickers(subscriptions)
+                        await asyncio.create_task(self.handle_tickers(ticker, db_session=db_session))
+                    else:
+                        await asyncio.sleep(1)  # empty subscriptions array
+                except Exception as e:
+                    logging.critical(f'[Realtime Harvester Watcher] Error watch_tickers {e}')
+                    await asyncio.sleep(1)
 
-    async def handle_tickers(self, ticker):
-        async with get_session() as db_session:
-            symbol = (await db_session.execute(select(Symbol).filter_by(name=ticker['symbol']))).scalar()
-            timestamp = datetime.fromtimestamp(ticker['timestamp'] / 1000.0)
-            count = (await db_session.execute(select(func.count(Funding.id)).filter_by(symbol=symbol.id).filter(
-                Funding.timestamp > timestamp - timedelta(seconds=30)))).scalar()
-            if count == 0:
-                if 'fundingRate' in ticker['info']:
-                    funding = {"exchange": self.exchange.id, "symbol": symbol.id,
-                               "timestamp": timestamp,
-                               "value": decimal.Decimal(ticker['info']['fundingRate'])}
-                    await db_session.execute(insert(Funding).values(funding).on_conflict_do_nothing())
-                if 'openInterest' in ticker['info']:
-                    oi = {"exchange": self.exchange.id, "symbol": symbol.id,
-                          "timestamp": timestamp,
-                          "value": decimal.Decimal(ticker['info']['openInterest'])}
-                    await db_session.execute(insert(OpenInterest).values(oi).on_conflict_do_nothing())
-                await db_session.commit()
+    async def handle_tickers(self, ticker, db_session: AsyncSession):
+        # async with get_session(app_name='handle_tickers_realtime') as db_session:
+        symbol = (await db_session.execute(select(Symbol).filter_by(name=ticker['symbol']))).scalar()
+        timestamp = datetime.fromtimestamp(ticker['timestamp'] / 1000.0)
+        count = (await db_session.execute(select(func.count(Funding.id)).filter_by(symbol=symbol.id).filter(
+            Funding.timestamp > timestamp - timedelta(seconds=30)))).scalar()
+        if count == 0:
+            if 'fundingRate' in ticker['info']:
+                funding = {"exchange": self.exchange.id, "symbol": symbol.id,
+                           "timestamp": timestamp,
+                           "value": decimal.Decimal(ticker['info']['fundingRate'])}
+                await db_session.execute(insert(Funding).values(funding).on_conflict_do_nothing())
+            if 'openInterest' in ticker['info']:
+                oi = {"exchange": self.exchange.id, "symbol": symbol.id,
+                      "timestamp": timestamp,
+                      "value": decimal.Decimal(ticker['info']['openInterest'])}
+                await db_session.execute(insert(OpenInterest).values(oi).on_conflict_do_nothing())
+            await db_session.commit()
 
     async def start_queue_loop(self):
         while True:

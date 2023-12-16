@@ -10,7 +10,7 @@ from models.timeframe import Timeframe
 
 
 async def fetch_exchange_entry(exchange_name) -> Type[Exchange]:
-    async with get_session() as db_session:
+    async with get_session(app_name='fetch_exchange_entry') as db_session:
         existing_entry = (await db_session.execute(select(Exchange).filter_by(name=exchange_name))).scalar()
 
         if existing_entry is not None:
@@ -21,7 +21,7 @@ async def fetch_exchange_entry(exchange_name) -> Type[Exchange]:
 
 async def fetch_list_of_symbols(exchange: Type[Exchange]) -> list[Type[Symbol]]:
     logging.info(f'[Historical Harvester] Starting updating list of symbols')
-    async with get_session() as db_session:
+    async with get_session(app_name='fetch_list_of_symbols') as db_session:
         return list(
             (await db_session.execute(
                 select(Symbol).filter_by(exchange=exchange.id)
@@ -29,7 +29,7 @@ async def fetch_list_of_symbols(exchange: Type[Exchange]) -> list[Type[Symbol]]:
 
 
 async def create_all_timeframes():
-    async with get_session() as db_session:
+    async with get_session(app_name='create_all_timeframes') as db_session:
         supported_timeframes = [
             {'name': '1m', 'seconds': 60},
             {'name': '5m', 'seconds': 60 * 5},
@@ -55,7 +55,7 @@ async def create_all_timeframes():
 
 
 async def get_subset_of_timeframes(timeframe_names) -> list[Type[Timeframe]]:
-    async with get_session() as db_session:
+    async with get_session(app_name='get_subset_of_timeframes') as db_session:
         all_timeframes = list((await db_session.execute(select(Timeframe))).scalars())
         return list(
             filter(lambda timeframe: timeframe.name in timeframe_names, all_timeframes))

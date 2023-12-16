@@ -52,7 +52,8 @@ class HistoricalHarvester:
         self.configured = False
 
     async def fetch_all_ohlcv(self, data_to_fetch: list[DataToFetch]) -> object:
-        self.temporary_ohlcv_fetching_db_sessions = [async_session_generator()() for _ in
+        logging.info(f'[Historical Harvester] Starting to fetch candles for {len(data_to_fetch)} gaps')
+        self.temporary_ohlcv_fetching_db_sessions = [async_session_generator(app_name='ohlcv_fetcher')() for _ in
                                                      range(0, MAX_CONCURRENT_FETCHES)]
         self.temporary_ohlcv_fetching_exchange_connectors = [self.exchange_connector_generator() for _ in
                                                              range(0, MAX_CONCURRENT_FETCHES)]
@@ -159,7 +160,7 @@ class HistoricalHarvester:
             exchange_connector = self.exchange_connector_generator()  # TODO: figure out how to use context there
             end_time: datetime = await exchange_connector.get_server_time()
             await exchange_connector.close()
-            async with get_session() as db_session:
+            async with get_session(app_name='find_data_to_fetch') as db_session:
                 last_fetched_dates = {}
                 for entry in list((await db_session.execute(
                         select(LastFetchedDate).filter_by(exchange=self.exchange.id))).scalars()):
