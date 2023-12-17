@@ -5,6 +5,7 @@ from queue import Queue
 from typing import Type, Any, Callable
 
 import asyncpg
+from asyncpg import Connection
 from sqlalchemy import select, create_engine
 from sqlalchemy.dialects.postgresql import Insert
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine, create_async_engine
@@ -86,14 +87,15 @@ class HistoricalHarvester:
             new_candles: list[OHLCV] = await self.fetch_single_ohlcv(data=data, current_fetch=current_fetch,
                                                                      all_fetches=all_fetches)
             fetch_length = elapsed()
-            await self.save_candles(data, new_candles)
+            updated_candles_count = await self.save_candles(data, new_candles)
             # logging.info(
-            #     f'Handled {len(new_candles)} new entries for\t{data}\t({current_fetch} / {all_fetches}).\t'
+            #     f'Fetched {len(new_candles)} new entries,  saved {updated_candles_count} for\t{data}\t({current_fetch} / {all_fetches}).\t'
             #     f'Fetch {"{:.2f}".format(fetch_length)} s, save {"{:.2f}".format(elapsed() - fetch_length)} s. Total {"{:.2f}".format(elapsed())} s')
-            return len(new_candles)
+            return updated_candles_count
 
     async def save_candles(self, data, new_candles):
         db_session = self.temporary_ohlcv_fetching_db_sessions.pop()
+        updated_rows_count = 0
         if len(new_candles) > 0:
             success = False
             temp_table_name = f'ohlcv_{data.symbol.id}_{data.timeframe.id}'
@@ -102,16 +104,18 @@ class HistoricalHarvester:
                     raw_connection = (await (await db_session.connection()).get_raw_connection()).driver_connection
                     await raw_connection.execute(
                         f'CREATE TEMP TABLE IF NOT EXISTS {temp_table_name}(symbol int4, exchange int4, '
+                        # f'CREATE TABLE IF NOT EXISTS {temp_table_name}(symbol int4, exchange int4, '
                         f'timeframe int4, timestamp timestamp, open numeric(30,10), high numeric(30,10), '
                         f'low numeric(30,10), close numeric(30,10), volume numeric(30,10))')
                     await raw_connection.copy_records_to_table(temp_table_name, records=new_candles,
                                                                columns=["timestamp", "exchange", "symbol", "timeframe",
                                                                         "open",
                                                                         "high", "low", "close", "volume"])
-                    await raw_connection.execute(
+                    resp = await raw_connection.execute(
                         f'INSERT INTO "OHLCV" (symbol,exchange,timeframe,timestamp,open,high,low,close,volume) '
                         f'SELECT symbol,exchange,timeframe,timestamp,open,high,low,close,volume '
-                        f'FROM {temp_table_name} ON CONFLICT DO NOTHING')
+                        f'FROM {temp_table_name} ON CONFLICT DO NOTHING ')
+                    updated_rows_count = int(resp.split(' ')[2])
                     await raw_connection.execute(f'DROP TABLE IF EXISTS {temp_table_name}')
                     await self.update_last_fetched_date(data=data, db_session=db_session)
                     success = True
@@ -121,6 +125,7 @@ class HistoricalHarvester:
                         f'fetch_and_save_single_ohlcv insert new error {data.symbol.name} {data.timeframe.name} {e}')
                     await asyncio.sleep(1)
         self.temporary_ohlcv_fetching_db_sessions.append(db_session)
+        return updated_rows_count
 
     async def update_last_fetched_date(self, data: DataToFetch, db_session: AsyncSession):
         existing_date_entry = (await db_session.execute(
@@ -172,6 +177,13 @@ class HistoricalHarvester:
                         start_time = last_fetched_dates[
                             pair_id] if pair_id in last_fetched_dates else self.get_earliest_possible_date_for_ohlcv(
                             symbol, timeframe)
+
+                        if pair_id in last_fetched_dates and end_time.minute == last_fetched_dates[
+                            pair_id].minute and (
+                                end_time - last_fetched_dates[pair_id]).total_seconds() < timeframe.seconds:
+                            en = end_time
+                            lt = last_fetched_dates[pair_id]
+                            continue
 
                         data_to_fetch.append(
                             DataToFetch(symbol=symbol, timeframe=timeframe, start=start_time, end=end_time))

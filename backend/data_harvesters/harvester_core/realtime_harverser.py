@@ -35,11 +35,16 @@ class RealtimeHarvester:
         self.symbols: list[Type[Symbol]] = []
         self.timeframes: list[Type[Timeframe]] = []
         self.supported_ohlcv_timeframes_names = ohlcv_timeframe_names
+        self.added_tickers_count = 0
+        self.tickers_counter_timer = datetime.now()
+        self.added_candles_count = 0
+        self.candles_counter_timer = datetime.now()
 
     async def watch_candles(self):
         logging.info(f'[Realtime Harvester Watcher] Will start watching for candles')
         exchange_connector = self.exchange_connector_generator()
         subscriptions = []
+
         async with get_session(app_name='watch_candles') as db_session:
             while True:
                 try:
@@ -49,6 +54,12 @@ class RealtimeHarvester:
                             for symbol in self.symbols:
                                 subscriptions.append([symbol.name, timeframe.name])
                         self.should_refresh_candle_symbols = False
+
+                    if (datetime.now() - self.candles_counter_timer).total_seconds() > 60:
+                        logging.info(
+                            f'[Realtime Harvester Watcher]: In the last minute processed {self.added_candles_count} new candles')
+                        self.candles_counter_timer = datetime.now()
+                        self.added_candles_count = 0
 
                     if len(subscriptions) > 0:
                         candles: dict = await exchange_connector.watch_ohlcv(subscriptions)
@@ -76,6 +87,7 @@ class RealtimeHarvester:
                         # logging.warning(
                         #     f'New Realtime candle for {candle_symbol} {candle_timeframe} {datetime.fromtimestamp(candle[0] / 1000.0)}')
         if len(ohlcv_candles_to_save) > 0:
+            self.added_candles_count += len(ohlcv_candles_to_save)
             await db_session.execute(
                 insert(OHLCV).values(ohlcv_candles_to_save).on_conflict_do_nothing())
             await db_session.commit()
@@ -109,6 +121,7 @@ class RealtimeHarvester:
         exchange_connector = self.exchange_connector_generator()
         logging.info(f'[Realtime Harvester Watcher] Will start watching for ticker')
         subscriptions = []
+
         async with get_session(app_name='watch_tickers') as db_session:
             while True:
                 try:
@@ -117,6 +130,12 @@ class RealtimeHarvester:
                         for symbol in self.symbols:
                             subscriptions.append(symbol.name)
                         self.should_refresh_tickers_symbols = False
+
+                    if (datetime.now() - self.tickers_counter_timer).total_seconds() > 60:
+                        logging.info(
+                            f'[Realtime Harvester Watcher]: In the last minute processed {self.added_tickers_count} new tickers')
+                        self.tickers_counter_timer = datetime.now()
+                        self.added_tickers_count = 0
 
                     if len(subscriptions) > 0:
                         ticker: dict = await exchange_connector.watch_tickers(subscriptions)
@@ -138,6 +157,7 @@ class RealtimeHarvester:
                 funding = {"exchange": self.exchange.id, "symbol": symbol.id,
                            "timestamp": timestamp,
                            "value": decimal.Decimal(ticker['info']['fundingRate'])}
+                self.added_tickers_count += 1
                 await db_session.execute(insert(Funding).values(funding).on_conflict_do_nothing())
             if 'openInterest' in ticker['info']:
                 oi = {"exchange": self.exchange.id, "symbol": symbol.id,
