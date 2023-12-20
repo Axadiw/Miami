@@ -41,7 +41,7 @@ jobs:
       - run: poetry run python -m pytest
 
   frontend_test:
-    runs-on: ubuntu-latest
+    runs-on: buildjet-8vcpu-ubuntu-2204
     defaults:
       run:
         working-directory: ./frontend
@@ -55,7 +55,7 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
-    runs-on: buildjet-8vcpu-ubuntu-2204-arm
+    runs-on: buildjet-4vcpu-ubuntu-2204
     needs: [ backend_test ]
     steps:
       - uses: actions/checkout@v3
@@ -93,7 +93,7 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
-    runs-on: buildjet-8vcpu-ubuntu-2204-arm
+    runs-on: buildjet-4vcpu-ubuntu-2204
     needs: [ backend_test ]
     steps:
       - uses: actions/checkout@v3
@@ -131,7 +131,7 @@ jobs:
     defaults:
       run:
         working-directory: ./frontend
-    runs-on: buildjet-8vcpu-ubuntu-2204-arm
+    runs-on: buildjet-4vcpu-ubuntu-2204
     needs: [ frontend_test ]
     steps:
       - uses: actions/checkout@v3
