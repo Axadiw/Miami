@@ -6,7 +6,7 @@ on:
       - '*'
 jobs:
   backend_test:
-    runs-on: buildjet-32vcpu-ubuntu-2204-arm
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./backend
@@ -16,8 +16,8 @@ jobs:
         run: python -c "import sys; print(sys.version)"
       - name: Set up Python
         uses: actions/setup-python@v4
-      #        with:
-      #          python-version: '3.11'
+        with:
+          python-version: '3.11'
       - name: cache poetry install
         uses: actions/cache@v3
         with:
@@ -41,7 +41,7 @@ jobs:
       - run: poetry run python -m pytest
 
   frontend_test:
-    runs-on: buildjet-32vcpu-ubuntu-2204-arm
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./frontend
@@ -55,10 +55,12 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
-    runs-on: buildjet-32vcpu-ubuntu-2204-arm
+    runs-on: ubuntu-latest
     needs: [ backend_test ]
     steps:
       - uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Login to GitHub Container Registry
@@ -93,10 +95,12 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
-    runs-on: buildjet-32vcpu-ubuntu-2204-arm
+    runs-on: ubuntu-latest
     needs: [ backend_test ]
     steps:
       - uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Login to GitHub Container Registry
@@ -162,7 +166,7 @@ jobs:
     defaults:
       run:
         working-directory: ./frontend
-    runs-on: buildjet-32vcpu-ubuntu-2204-arm
+    runs-on: ubuntu-latest
     needs: [ frontend_build_and_publish, api_build_and_publish, data_harvester_build_and_publish ]
     steps:
       - uses: actions/checkout@v3
