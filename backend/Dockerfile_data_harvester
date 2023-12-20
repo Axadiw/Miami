@@ -1,4 +1,4 @@
-FROM miami_common
+FROM miami-common
 COPY harvesting  /app/harvesting
 COPY ccxt /app/ccxt
 COPY shared /app/shared

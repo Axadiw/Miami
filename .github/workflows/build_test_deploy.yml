@@ -66,6 +66,16 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build the common image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile_common
+          platforms: linux/aarch64
+          build-args: |
+            VERSION=${{ github.ref_name }}
+          push: true
+          tags: ghcr.io/axadiw/miami-common:latest
       - name: Build the Docker image (latest)
         uses: docker/build-push-action@v4
         with:
@@ -106,6 +116,16 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build the common image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile_common
+          platforms: linux/aarch64
+          build-args: |
+            VERSION=${{ github.ref_name }}
+          push: true
+          tags: ghcr.io/axadiw/miami-common:latest
       - name: Build the Docker image (latest)
         uses: docker/build-push-action@v4
         with:

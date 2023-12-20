@@ -1,4 +1,4 @@
-FROM miami_common
+FROM miami-common
 COPY api  /app/api
 COPY shared /app/shared
 COPY ./shared/consts_tpl.py /app/shared/consts_secrets.py
