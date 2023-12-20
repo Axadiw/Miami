@@ -6,7 +6,7 @@ on:
       - '*'
 jobs:
   backend_test:
-    runs-on: self-hosted
+    runs-on: buildjet-2vcpu-ubuntu-2204-arm
     defaults:
       run:
         working-directory: ./backend
