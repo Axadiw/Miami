@@ -131,7 +131,7 @@ jobs:
     defaults:
       run:
         working-directory: ./frontend
-    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    runs-on: buildjet-8vcpu-ubuntu-2204-arm
     needs: [ frontend_test ]
     steps:
       - uses: actions/checkout@v3
