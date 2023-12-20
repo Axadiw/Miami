@@ -6,7 +6,7 @@ on:
       - '*'
 jobs:
   backend_test:
-    runs-on: self-hosted
+    runs-on: buildjet-2vcpu-ubuntu-2204-arm
     defaults:
       run:
         working-directory: ./backend
@@ -38,7 +38,7 @@ jobs:
       - run: poetry run python -m pytest
 
   frontend_test:
-    runs-on: self-hosted
+    runs-on: buildjet-2vcpu-ubuntu-2204-arm
     defaults:
       run:
         working-directory: ./frontend
@@ -52,12 +52,10 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
-    runs-on: self-hosted
+    runs-on: buildjet-2vcpu-ubuntu-2204-arm
     needs: [ backend_test ]
     steps:
       - uses: actions/checkout@v3
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Login to GitHub Container Registry
@@ -92,12 +90,10 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
-    runs-on: self-hosted
+    runs-on: buildjet-2vcpu-ubuntu-2204-arm
     needs: [ backend_test ]
     steps:
       - uses: actions/checkout@v3
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Login to GitHub Container Registry
@@ -132,12 +128,10 @@ jobs:
     defaults:
       run:
         working-directory: ./frontend
-    runs-on: self-hosted
+    runs-on: buildjet-2vcpu-ubuntu-2204-arm
     needs: [ frontend_test ]
     steps:
       - uses: actions/checkout@v3
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Login to GitHub Container Registry
@@ -150,48 +144,48 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: ./frontend
-          #          platforms: linux/aarch64
+          platforms: linux/aarch64
           push: true
           tags: ghcr.io/axadiw/miami-frontend:latest
       - name: Build the Docker image (tag version)
         uses: docker/build-push-action@v4
         with:
           context: ./frontend
-          #          platforms: linux/aarch64
+          platforms: linux/aarch64
           push: true
           tags: ghcr.io/axadiw/miami-frontend:${{  github.ref_name }}
 
-#  deploy:
-#    defaults:
-#      run:
-#        working-directory: ./frontend
-#    runs-on: self-hosted
-#    needs: [ frontend_build_and_publish, api_build_and_publish, data_harvester_build_and_publish ]
-#    steps:
-#      - uses: actions/checkout@v3
-#      - name: Login to GitHub Container Registry
-#        uses: docker/login-action@v2
-#        with:
-#          registry: ghcr.io
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Deploy to remote server
-#        uses: kitconcept/docker-stack-deploy@v1.0.1
-#        with:
-#          registry: "ghcr.io"
-#          username: ${{ secrets.GHCR_USERNAME }}
-#          password: ${{ secrets.GHCR_TOKEN }}
-#          remote_host: ${{ secrets.REMOTE_HOST }}
-#          remote_user: ${{ secrets.REMOTE_USERNAME }}
-#          remote_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
-#          stack_file: "docker-compose-prod.yml"
-#          stack_name: ${{ secrets.REMOTE_STACK_NAME }}
-#      - name: pushover-actions
-#        uses: umahmood/pushover-actions@main
-#        env:
-#          PUSHOVER_TOKEN: ${{ secrets.PUSHOVER_TOKEN }}
-#          PUSHOVER_USER: ${{ secrets.PUSHOVER_USER }}
-#        with:
-#          status: ${{ job.status }}
-#          title: 'Miami Deployment'
-#          message: 'Deploy ${{  github.ref_name }} successful'
+  deploy:
+    defaults:
+      run:
+        working-directory: ./frontend
+    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    needs: [ frontend_build_and_publish, api_build_and_publish, data_harvester_build_and_publish ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Deploy to remote server
+        uses: kitconcept/docker-stack-deploy@v1.0.1
+        with:
+          registry: "ghcr.io"
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+          remote_host: ${{ secrets.REMOTE_HOST }}
+          remote_user: ${{ secrets.REMOTE_USERNAME }}
+          remote_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
+          stack_file: "docker-compose-prod.yml"
+          stack_name: ${{ secrets.REMOTE_STACK_NAME }}
+      - name: pushover-actions
+        uses: umahmood/pushover-actions@main
+        env:
+          PUSHOVER_TOKEN: ${{ secrets.PUSHOVER_TOKEN }}
+          PUSHOVER_USER: ${{ secrets.PUSHOVER_USER }}
+        with:
+          status: ${{ job.status }}
+          title: 'Miami Deployment'
+          message: 'Deploy ${{  github.ref_name }} successful'
