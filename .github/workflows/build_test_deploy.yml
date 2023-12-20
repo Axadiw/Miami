@@ -55,12 +55,10 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
-    runs-on: ubuntu-latest
+    runs-on: buildjet-8vcpu-ubuntu-2204-arm
     needs: [ backend_test ]
     steps:
       - uses: actions/checkout@v3
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Login to GitHub Container Registry
@@ -95,12 +93,10 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
-    runs-on: ubuntu-latest
+    runs-on: buildjet-8vcpu-ubuntu-2204-arm
     needs: [ backend_test ]
     steps:
       - uses: actions/checkout@v3
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Login to GitHub Container Registry
