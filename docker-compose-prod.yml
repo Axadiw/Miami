@@ -66,6 +66,10 @@ services:
       - HARVESTER=bybit
     networks:
       - miami-internal
+    secrets:
+      - MIAMI_POSTGRES_DB
+      - MIAMI_POSTGRES_USER
+      - MIAMI_POSTGRES_PASSWORD
 
 networks:
   traefik-public:
