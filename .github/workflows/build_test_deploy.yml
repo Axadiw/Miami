@@ -6,15 +6,17 @@ on:
       - '*'
 jobs:
   backend_test:
-    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    runs-on: self-hosted
     defaults:
       run:
         working-directory: ./backend
     steps:
       - uses: actions/checkout@v3
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
       - uses: actions/setup-python@v3
         with:
-          python-version: 3.10.12
+          python-version: 3.11.0rc1
       - name: cache poetry install
         uses: actions/cache@v3
         with:
@@ -38,7 +40,7 @@ jobs:
       - run: poetry run python -m pytest
 
   frontend_test:
-    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    runs-on: self-hosted
     defaults:
       run:
         working-directory: ./frontend
@@ -52,7 +54,7 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
-    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    runs-on: self-hosted
     needs: [ backend_test ]
     steps:
       - uses: actions/checkout@v3
@@ -90,7 +92,7 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
-    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    runs-on: self-hosted
     needs: [ backend_test ]
     steps:
       - uses: actions/checkout@v3
@@ -128,7 +130,7 @@ jobs:
     defaults:
       run:
         working-directory: ./frontend
-    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    runs-on: self-hosted
     needs: [ frontend_test ]
     steps:
       - uses: actions/checkout@v3
@@ -159,7 +161,7 @@ jobs:
     defaults:
       run:
         working-directory: ./frontend
-    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    runs-on: self-hosted
     needs: [ frontend_build_and_publish, api_build_and_publish, data_harvester_build_and_publish ]
     steps:
       - uses: actions/checkout@v3
