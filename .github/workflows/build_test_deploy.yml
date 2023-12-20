@@ -34,7 +34,7 @@ jobs:
       - run: poetry install --no-interaction --no-root
         if: steps.cache-deps.outputs.cache-hit != 'true'
       - run: poetry install --no-interaction
-      - run: cp consts_tpl.py consts_secrets.py
+      - run: cp shared/consts_tpl.py shared/consts_secrets.py
       - run: poetry run python -m pytest
 
   frontend_test:
@@ -47,7 +47,7 @@ jobs:
       - run: npm install
       - run: npm test
 
-  backend_build_and_publish:
+  api_build_and_publish:
     if: github.event_name == 'push' && contains(github.event.ref, '/tags/')
     defaults:
       run:
@@ -70,20 +70,62 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: ./backend
+          file: Dockerfile_api
           platforms: linux/aarch64
           build-args: |
             VERSION=${{ github.ref_name }}
           push: true
-          tags: ghcr.io/axadiw/miami-backend:latest
+          tags: ghcr.io/axadiw/miami-api:latest
       - name: Build the Docker image (tag version)
         uses: docker/build-push-action@v4
         with:
           context: ./backend
+          file: Dockerfile_api
           platforms: linux/aarch64
           build-args: |
             VERSION=${{ github.ref_name }}
           push: true
-          tags: ghcr.io/axadiw/miami-backend:${{  github.ref_name }}
+          tags: ghcr.io/axadiw/miami-api:${{  github.ref_name }}
+
+  data_harvester_build_and_publish:
+    if: github.event_name == 'push' && contains(github.event.ref, '/tags/')
+    defaults:
+      run:
+        working-directory: ./backend
+    runs-on: self-hosted
+    needs: [ backend_test ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build the Docker image (latest)
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          file: Dockerfile_data_harvester
+          platforms: linux/aarch64
+          build-args: |
+            VERSION=${{ github.ref_name }}
+          push: true
+          tags: ghcr.io/axadiw/miami-data-harvester:latest
+      - name: Build the Docker image (tag version)
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          file: Dockerfile_data_harvester
+          platforms: linux/aarch64
+          build-args: |
+            VERSION=${{ github.ref_name }}
+          push: true
+          tags: ghcr.io/axadiw/miami-data-harvester:${{  github.ref_name }}
 
   frontend_build_and_publish:
     if: github.event_name == 'push' && contains(github.event.ref, '/tags/')
@@ -124,7 +166,7 @@ jobs:
       run:
         working-directory: ./frontend
     runs-on: self-hosted
-    needs: [ frontend_build_and_publish, backend_build_and_publish ]
+    needs: [ frontend_build_and_publish, api_build_and_publish, data_harvester_build_and_publish ]
     steps:
       - uses: actions/checkout@v3
       - name: Login to GitHub Container Registry

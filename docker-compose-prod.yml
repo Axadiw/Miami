@@ -35,8 +35,8 @@ services:
         - "traefik.constraint-label=traefik-public"
         - "traefik.http.services.miami-frontend-https.loadbalancer.server.port=3000"
 
-  backend:
-    image: ghcr.io/axadiw/miami-backend:latest
+  api:
+    image: ghcr.io/axadiw/miami-api:latest
     secrets:
       - MIAMI_POSTGRES_DB
       - MIAMI_POSTGRES_USER
@@ -59,6 +59,13 @@ services:
         - "traefik.docker.network=traefik-public"
         - "traefik.constraint-label=traefik-public"
         - "traefik.http.services.miami-backend-https.loadbalancer.server.port=5000"
+
+  bybit-harvester:
+    image: ghcr.io/axadiw/miami-data-harvester:latest
+    environment:
+      - HARVESTER=bybit
+    networks:
+      - miami-internal
 
 networks:
   traefik-public:

@@ -1,0 +1,7 @@
+FROM miami_common
+COPY api  /app/api
+COPY shared /app/shared
+COPY ./shared/consts_tpl.py /app/shared/consts_secrets.py
+COPY entrypoint_api.sh /app
+EXPOSE 5000
+CMD [ "/bin/sh", "entrypoint_api.sh"]

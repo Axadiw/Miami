@@ -1,0 +1,7 @@
+FROM miami_common
+COPY harvesting  /app/harvesting
+COPY ccxt /app/ccxt
+COPY shared /app/shared
+COPY ./shared/consts_tpl.py /app/shared/consts_secrets.py
+COPY entrypoint_data_harvester.sh /app
+CMD [ "/bin/sh", "entrypoint_data_harvester.sh"]

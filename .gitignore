@@ -6,3 +6,4 @@ frontend/.next
 postgres
 __pycache__
 frontend/.yarn
+backend/api/endpoints/.pytest_cache
