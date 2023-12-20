@@ -16,7 +16,7 @@ jobs:
         run: python -c "import sys; print(sys.version)"
       - uses: actions/setup-python@v3
         with:
-          python-version: 3.11.0rc1
+          python-version: 3.x
       - name: cache poetry install
         uses: actions/cache@v3
         with:
