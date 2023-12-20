@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Type
 
@@ -29,29 +30,36 @@ async def fetch_list_of_symbols(exchange: Type[Exchange]) -> list[Type[Symbol]]:
 
 
 async def create_all_timeframes():
-    async with get_session(app_name='create_all_timeframes') as db_session:
-        supported_timeframes = [
-            {'name': '1m', 'seconds': 60},
-            {'name': '5m', 'seconds': 60 * 5},
-            {'name': '15m', 'seconds': 60 * 15},
-            {'name': '30m', 'seconds': 60 * 30},
-            {'name': '1h', 'seconds': 60 * 60},
-            {'name': '4h', 'seconds': 60 * 60 * 4},
-            {'name': '1d', 'seconds': 60 * 60 * 24},
-            {'name': '1w', 'seconds': 60 * 60 * 24 * 7},
-        ]
+    success = False
+    while not success:
+        try:
+            async with get_session(app_name='create_all_timeframes') as db_session:
+                supported_timeframes = [
+                    {'name': '1m', 'seconds': 60},
+                    {'name': '5m', 'seconds': 60 * 5},
+                    {'name': '15m', 'seconds': 60 * 15},
+                    {'name': '30m', 'seconds': 60 * 30},
+                    {'name': '1h', 'seconds': 60 * 60},
+                    {'name': '4h', 'seconds': 60 * 60 * 4},
+                    {'name': '1d', 'seconds': 60 * 60 * 24},
+                    {'name': '1w', 'seconds': 60 * 60 * 24 * 7},
+                ]
 
-        new_timeframes = []
-        for timeframe in supported_timeframes:
-            existing_timeframe = (
-                await db_session.execute(select(Timeframe).filter_by(name=timeframe['name']))).scalar()
-            if existing_timeframe is None:
-                new_timeframes.append(Timeframe(name=timeframe['name'], seconds=timeframe['seconds']))
-        if len(new_timeframes) > 0:
-            db_session.add_all(new_timeframes)
-            await db_session.commit()
-        logging.info(
-            f'Updated list of timeframes ({len(new_timeframes)} new timeframes added)')
+                new_timeframes = []
+                for timeframe in supported_timeframes:
+                    existing_timeframe = (
+                        await db_session.execute(select(Timeframe).filter_by(name=timeframe['name']))).scalar()
+                    if existing_timeframe is None:
+                        new_timeframes.append(Timeframe(name=timeframe['name'], seconds=timeframe['seconds']))
+                if len(new_timeframes) > 0:
+                    db_session.add_all(new_timeframes)
+                    await db_session.commit()
+                logging.info(
+                    f'Updated list of timeframes ({len(new_timeframes)} new timeframes added)')
+                success = True
+        except Exception as e:
+            logging.error(f'[create_all_timeframes] error {e}')
+            await asyncio.sleep(30)
 
 
 async def get_subset_of_timeframes(timeframe_names) -> list[Type[Timeframe]]:
