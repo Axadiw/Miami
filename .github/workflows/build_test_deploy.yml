@@ -66,16 +66,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build the Docker image (latest)
-        uses: docker/build-push-action@v4
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile_api
-          platforms: linux/aarch64
-          build-args: |
-            VERSION=${{ github.ref_name }}
-          push: true
-          tags: ghcr.io/axadiw/miami-api:latest
       - name: Build the Docker image (tag version)
         uses: docker/build-push-action@v4
         with:
@@ -103,16 +93,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build the Docker image (latest)
-        uses: docker/build-push-action@v4
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile_data_harvester
-          platforms: linux/aarch64
-          build-args: |
-            VERSION=${{ github.ref_name }}
-          push: true
-          tags: ghcr.io/axadiw/miami-data-harvester:latest
       - name: Build the Docker image (tag version)
         uses: docker/build-push-action@v4
         with:
@@ -140,13 +120,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build the Docker image (latest)
-        uses: docker/build-push-action@v4
-        with:
-          context: ./frontend
-          platforms: linux/aarch64
-          push: true
-          tags: ghcr.io/axadiw/miami-frontend:latest
       - name: Build the Docker image (tag version)
         uses: docker/build-push-action@v4
         with:
@@ -180,6 +153,7 @@ jobs:
           remote_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
           stack_file: "docker-compose-prod.yml"
           stack_name: ${{ secrets.REMOTE_STACK_NAME }}
+          stack_param: MIAMI_VERSION=${{ github.ref_name }}
       - name: pushover-actions
         uses: umahmood/pushover-actions@main
         env:

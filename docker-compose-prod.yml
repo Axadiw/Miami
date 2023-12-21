@@ -17,7 +17,7 @@ services:
       - /mnt/postgres_db/postgres:/var/lib/postgresql/data
 
   frontend:
-    image: ghcr.io/axadiw/miami-frontend:latest
+    image: ghcr.io/axadiw/miami-frontend:${MIAMI_VERSION}
     networks:
       - traefik-public
     deploy:
@@ -36,7 +36,7 @@ services:
         - "traefik.http.services.miami-frontend-https.loadbalancer.server.port=3000"
 
   api:
-    image: ghcr.io/axadiw/miami-api:latest
+    image: ghcr.io/axadiw/miami-api:${MIAMI_VERSION}
     secrets:
       - MIAMI_POSTGRES_DB
       - MIAMI_POSTGRES_USER
@@ -61,7 +61,7 @@ services:
         - "traefik.http.services.miami-backend-https.loadbalancer.server.port=5000"
 
   bybit-harvester:
-    image: ghcr.io/axadiw/miami-data-harvester:latest
+    image: ghcr.io/axadiw/miami-data-harvester:${MIAMI_VERSION}
     environment:
       - HARVESTER=bybit
     networks:
