@@ -19,14 +19,12 @@ waitress = "^2.1.2"
 flask-cors = "^4.0.0"
 cors = "^1.0.1"
 freezegun = "^1.2.2"
-mp = "^0.5.0"
 asyncpg = "^0.29.0"
 greenlet = "^3.0.1"
-janus = "^1.0.0"
 coloredlogs = "^15.0.1"
 aiohttp = "^3.9.1"
-
-[tool.poetry.group.dev.dependencies]
+cryptography = "^41.0.7"
+pybit = "^5.6.2"
 
 [build-system]
 requires = ["poetry-core"]
