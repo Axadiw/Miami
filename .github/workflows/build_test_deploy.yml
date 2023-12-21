@@ -142,7 +142,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: "finnp/create-file-action@master"
+      - name: Create env file
+        uses: "finnp/create-file-action@master"
         env:
           FILE_NAME: "/miami_env"
           FILE_DATA: "MIAMI_VERSION="${{ github.ref_name }}
