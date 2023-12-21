@@ -18,7 +18,7 @@ WORKDIR /app
 COPY README.md poetry.lock pyproject.toml ./
 COPY README.md  ./
 RUN poetry check
-RUN poetry install --no-interaction --no-cache --without dev
+RUN poetry install --no-interaction --no-cache
 
 COPY api  /app/api
 COPY shared /app/shared
