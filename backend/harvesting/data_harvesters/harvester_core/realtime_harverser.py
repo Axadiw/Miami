@@ -4,6 +4,8 @@ import logging
 from datetime import datetime, timedelta
 from queue import Queue
 from typing import Type, Callable
+
+from pybit.unified_trading import WebSocket
 from sqlalchemy import select, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +20,29 @@ from shared.models.ohlcv import OHLCV
 from shared.models.open_interests import OpenInterest
 from shared.models.symbol import Symbol
 from shared.models.timeframe import Timeframe
+
+ws = WebSocket(
+    testnet=False,
+    channel_type="linear",
+)
+
+
+def handle_klines(message):
+    # I will be called every time there is new orderbook data!
+    print(message)
+    orderbook_data = message["data"]
+
+
+ws.kline_stream(60, ['1000000VINUUSDT',
+                     '10000LADYSUSDT',
+                     '10000NFTUSDT',
+                     '10000SATSUSDT',
+                     '10000STARLUSDT',
+                     '1000BONKUSDT',
+                     '1000BTTUSDT',
+                     '1000FLOKIUSDT',
+                     '1000LUNCUSDT',
+                     '1000PEPEUSDT'], handle_klines)
 
 
 class RealtimeHarvester:
