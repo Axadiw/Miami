@@ -66,7 +66,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build the Docker image (tag version)
+      - name: Build the Docker image
         uses: docker/build-push-action@v4
         with:
           context: ./backend
@@ -93,7 +93,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build the Docker image (tag version)
+      - name: Build the Docker image
         uses: docker/build-push-action@v4
         with:
           context: ./backend
@@ -120,7 +120,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build the Docker image (tag version)
+      - name: Build the Docker image
         uses: docker/build-push-action@v4
         with:
           context: ./frontend
@@ -142,8 +142,12 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create env file
-        run: echo "MIAMI_VERSION="${{ github.ref_name }}"" > miami_env
+      - name: Update version name in docker compose
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          find: _MIAMI_VERSION_
+          replace: ${{  github.ref_name }}
+          include: "docker-compose-prod.yml"
       - name: Deploy to remote server
         uses: kitconcept/docker-stack-deploy@v1.2.0
         with:
@@ -155,7 +159,6 @@ jobs:
           remote_private_key: ${{ secrets.REMOTE_PRIVATE_KEY }}
           stack_file: "docker-compose-prod.yml"
           stack_name: ${{ secrets.REMOTE_STACK_NAME }}
-          env_file: miami_env
       - name: pushover-actions
         uses: umahmood/pushover-actions@main
         env:
