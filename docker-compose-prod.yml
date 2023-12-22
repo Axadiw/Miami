@@ -61,7 +61,7 @@ services:
         - "traefik.http.services.miami-backend-https.loadbalancer.server.port=5000"
 
   bybit-harvester:
-    image: ghcr.io/axadiw/miami-data-harvester:_MIAMI_VERSION_s
+    image: ghcr.io/axadiw/miami-data-harvester:_MIAMI_VERSION_
     environment:
       - HARVESTER=bybit
     networks:
