@@ -24,7 +24,6 @@ greenlet = "^3.0.1"
 coloredlogs = "^15.0.1"
 aiohttp = "^3.9.1"
 cryptography = "^41.0.7"
-pybit = "^5.6.2"
 
 [build-system]
 requires = ["poetry-core"]

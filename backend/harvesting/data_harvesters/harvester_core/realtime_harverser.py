@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from queue import Queue
 from typing import Type, Callable
 
-from pybit.unified_trading import WebSocket
 from sqlalchemy import select, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,29 +20,6 @@ from shared.models.open_interests import OpenInterest
 from shared.models.symbol import Symbol
 from shared.models.timeframe import Timeframe
 
-ws = WebSocket(
-    testnet=False,
-    channel_type="linear",
-)
-
-
-def handle_klines(message):
-    # I will be called every time there is new orderbook data!
-    print(message)
-    orderbook_data = message["data"]
-
-
-ws.kline_stream(60, ['1000000VINUUSDT',
-                     '10000LADYSUSDT',
-                     '10000NFTUSDT',
-                     '10000SATSUSDT',
-                     '10000STARLUSDT',
-                     '1000BONKUSDT',
-                     '1000BTTUSDT',
-                     '1000FLOKIUSDT',
-                     '1000LUNCUSDT',
-                     '1000PEPEUSDT'], handle_klines)
-
 
 class RealtimeHarvester:
     exchange: Type[Exchange]
@@ -55,6 +31,7 @@ class RealtimeHarvester:
         self.exchange_connector_generator = client_generator
         self.should_refresh_candle_symbols = True
         self.should_refresh_tickers_symbols = True
+        self.is_initialized = False
         self.exchange_name = exchange_name
         self.symbols: list[Type[Symbol]] = []
         self.timeframes: list[Type[Timeframe]] = []
@@ -64,7 +41,15 @@ class RealtimeHarvester:
         self.added_candles_count = 0
         self.candles_counter_timer = datetime.now()
 
-    async def watch_candles(self):
+    async def watch_candles_all_timeframes(self):
+        logging.info(f'[Realtime Harvester Watcher] Will start watching for candles')
+
+        while not self.is_initialized:
+            await asyncio.sleep(1)
+
+        await asyncio.gather(*[self.watch_candles(timeframe) for timeframe in self.timeframes])
+
+    async def watch_candles(self, timeframe: Type[Timeframe]):
         logging.info(f'[Realtime Harvester Watcher] Will start watching for candles')
         exchange_connector = self.exchange_connector_generator()
         subscriptions = []
@@ -74,9 +59,8 @@ class RealtimeHarvester:
                 try:
                     if self.should_refresh_candle_symbols:
                         subscriptions = []
-                        for timeframe in self.timeframes:
-                            for symbol in self.symbols:
-                                subscriptions.append([symbol.name, timeframe.name])
+                        for symbol in self.symbols:
+                            subscriptions.append([symbol.name, timeframe.name])
                         self.should_refresh_candle_symbols = False
 
                     if (datetime.now() - self.candles_counter_timer).total_seconds() > 60:
@@ -197,10 +181,11 @@ class RealtimeHarvester:
             if command == GLOBAL_QUEUE_START_COMMAND:
                 self.timeframes = await get_subset_of_timeframes(self.supported_ohlcv_timeframes_names)
                 self.exchange = await fetch_exchange_entry(self.exchange_name)
+                self.is_initialized = True
             elif command == GLOBAL_QUEUE_REFRESH_COMMAND:
                 self.symbols = await fetch_list_of_symbols(self.exchange)
                 self.should_refresh_candle_symbols = True
                 self.should_refresh_tickers_symbols = True
 
     async def start(self):
-        await asyncio.gather(*[self.start_queue_loop(), self.watch_candles(), self.watch_tickers()])
+        await asyncio.gather(*[self.start_queue_loop(), self.watch_candles_all_timeframes(), self.watch_tickers()])
