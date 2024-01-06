@@ -1,7 +1,7 @@
 from flask import jsonify, request, Blueprint
 
 from api.database import db
-from api.endpoints.consts import USER_CONFIG_SAVED_RESPONSE
+from api.endpoints.consts import USER_CONFIG_SAVED_RESPONSE, DEFAULT_ADMIN_EMAIL
 from api.endpoints.session.token_required import token_required
 from shared.models.user_configs import UserConfig
 from shared.models.user import User
@@ -38,4 +38,5 @@ def account_info(user):
         return {'key': config.key, 'value': config.value}
 
     configs = list(map(convert_to_json, configs))
-    return jsonify({'email': user.email, 'config_keys': configs})
+    is_admin = user.admin or user.email == DEFAULT_ADMIN_EMAIL
+    return jsonify({'email': user.email, 'is_admin': is_admin, 'config_keys': configs})

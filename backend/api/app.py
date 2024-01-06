@@ -5,6 +5,7 @@ from flask_cors import CORS
 
 from api.database import db
 from api.endpoints.general.general import general_routes
+from api.endpoints.market_data.market import market_routes
 from shared.consts_secrets import db_username, db_password, db_name
 from shared.consts_tpl import flask_api_secret
 from api.endpoints.account.account import account_routes
@@ -23,6 +24,7 @@ def register_extensions(app):
     app.register_blueprint(session_routes)
     app.register_blueprint(general_routes)
     app.register_blueprint(token_required_test_routes)
+    app.register_blueprint(market_routes)
 
 
 def prepare_app():
