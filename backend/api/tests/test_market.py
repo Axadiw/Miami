@@ -95,38 +95,70 @@ def test_get_list_of_ohlcv_timeframes_incorrect_data(client):
 
 def test_get_ohlcv(client):
     populate_objects()
-    response = client.get("/ohlcv?exchange=bybit&tf=1m&symbol=A")
+    response = client.get("/ohlcv?exchange=bybit&tf=1m&symbol=A&limit=1000")
     assert response.status_code == 200
     assert response.json == {'ohlcvs': [{"open": 0, "high": 1, "low": 0, "close": 1, "volume": 0, "time": 0},
                                         {"open": 2, "high": 4, "low": 2, "close": 4, "volume": 60, "time": 60}]}
 
-    response = client.get("/ohlcv?exchange=bybit&tf=1m&symbol=B")
+    response = client.get("/ohlcv?exchange=bybit&tf=1m&symbol=A&limit=1")
+    assert response.status_code == 200
+    assert response.json == {'ohlcvs': [{"open": 0, "high": 1, "low": 0, "close": 1, "volume": 0, "time": 0}]}
+
+    response = client.get("/ohlcv?exchange=bybit&tf=1m&symbol=B&limit=1000")
     assert response.status_code == 200
     assert response.json == {'ohlcvs': [{"open": 10, "high": 10, "low": 0, "close": 10, "volume": 10, "time": 0}]}
 
-    response = client.get("/ohlcv?exchange=bybit&tf=5m&symbol=C")
+    response = client.get("/ohlcv?exchange=bybit&tf=5m&symbol=C&limit=1000")
     assert response.status_code == 200
     assert response.json == {'ohlcvs': [{"open": 0, "high": 1, "low": 0, "close": 1, "volume": 10, "time": 0}]}
 
-    response = client.get("/ohlcv?exchange=mexc&tf=15m&symbol=D")
+    response = client.get("/ohlcv?exchange=mexc&tf=15m&symbol=D&limit=1000")
     assert response.status_code == 200
     assert response.json == {'ohlcvs': [{"open": 0, "high": 1, "low": 0, "close": 1, "volume": 10, "time": 0}]}
 
-    response = client.get("/ohlcv?exchange=mexc&tf=5m&symbol=A")
+    response = client.get("/ohlcv?exchange=mexc&tf=5m&symbol=A&limit=1000")
     assert response.status_code == 200
     assert response.json == {'ohlcvs': []}
 
 
 def test_get_ohlcv_incorrect_data(client):
     populate_objects()
-    response = client.get("/ohlcv?exchange=wat&tf=1m&symbol=A")
+    response = client.get("/ohlcv?exchange=wat&tf=1m&symbol=A&limit=1000")
     assert response.status_code == 400
     assert response.json == PARAMS_INVALID_RESPONSE
 
-    response = client.get("/ohlcv?exchange=bybit&tf=11m&symbol=A")
+    response = client.get("/ohlcv?exchange=bybit&tf=11m&symbol=A&limit=1000")
     assert response.status_code == 400
     assert response.json == PARAMS_INVALID_RESPONSE
 
-    response = client.get("/ohlcv?exchange=bybit&tf=1m&symbol=WAT")
+    response = client.get("/ohlcv?exchange=bybit&tf=1m&symbol=WAT&limit=1000")
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.get("/ohlcv?exchange=bybit&tf=1m&symbol=A&limit=WAT")
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.get("/ohlcv?exchange=bybit&tf=1m&symbol=A&limit=-1")
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.get("/ohlcv?exchange=bybit&tf=1m&symbol=A&limit=0")
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.get("/ohlcv?tf=1m&symbol=A&limit=1000")
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.get("/ohlcv?exchange=bybit&symbol=A&limit=1000")
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.get("/ohlcv?exchange=bybit&tf=1m&limit=1000")
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.get("/ohlcv?exchange=bybit&tf=1m&symbol=A")
     assert response.status_code == 400
     assert response.json == PARAMS_INVALID_RESPONSE

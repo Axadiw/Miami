@@ -57,7 +57,15 @@ def get_ohlcv_timeframes():
 
 @market_routes.route('/ohlcv', methods=['GET'])
 def get_ohlcv():
-    if 'exchange' not in request.args or 'tf' not in request.args or 'symbol' not in request.args:
+    if 'exchange' not in request.args or 'tf' not in request.args or 'symbol' not in request.args or 'limit' not in request.args:
+        return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
+
+    if not request.args['limit'].isnumeric():
+        return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
+
+    limit = int(request.args['limit'])
+
+    if limit <= 0:
         return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
 
     exchange = db.session.query(Exchange).filter_by(name=request.args['exchange']).first()
@@ -69,5 +77,5 @@ def get_ohlcv():
     ohlcvs = list(map(lambda x: {"open": x.open, "high": x.high, "low": x.low, "close": x.close, "volume": x.volume,
                                  "time": x.timestamp.timestamp()},
                       db.session.query(OHLCV).filter_by(exchange=exchange.id, timeframe=timeframe.id,
-                                                        symbol=symbol.id).all()))
+                                                        symbol=symbol.id).limit(limit).all()))
     return jsonify({'ohlcvs': ohlcvs})
