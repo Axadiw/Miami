@@ -69,7 +69,7 @@ const ChartComponent = (props: {
         lineWidth: 1 as LineWidth,
         lineStyle: 2, // LineStyle.Dashed
         axisLabelVisible: true,
-        title: 'min price',
+        title: 'SL',
       };
       priceSeries.createPriceLine(slLine);
     }
@@ -81,7 +81,7 @@ const ChartComponent = (props: {
         lineWidth: 1 as LineWidth,
         lineStyle: 2, // LineStyle.Dashed
         axisLabelVisible: true,
-        title: 'max price',
+        title: 'TP',
       };
 
       priceSeries.createPriceLine(tpLine);
@@ -153,13 +153,16 @@ export default function MarketPage() {
             },
             grid: {
               vertLines: {
-                color: isDarkTheme ? '#2B2B43' : '#E4FFE9',
+                visible: false,
+              },
+              horzLines: {
+                visible: false,
               },
             },
           }}
           data={ohlcvs.ohlcvs}
-          tp={tp as number}
-          sl={sl as number}
+          tp={Number(tp)}
+          sl={Number(sl)}
         />
       )}
       {timeframes &&
