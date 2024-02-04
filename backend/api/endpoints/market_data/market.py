@@ -1,9 +1,11 @@
 import datetime
 import uuid
+from operator import attrgetter
 
 import jwt
 from flask import jsonify, make_response, request, Blueprint
 from jwt import ExpiredSignatureError
+from sqlalchemy import desc, asc
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from harvesting.data_harvesters.exchanges.bybit.bybit_harvesters import bybit_ohlcv_timeframes
@@ -74,8 +76,13 @@ def get_ohlcv():
     if exchange is None or timeframe is None or symbol is None:
         return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
 
-    ohlcvs = list(map(lambda x: {"open": x.open, "high": x.high, "low": x.low, "close": x.close, "volume": x.volume,
-                                 "time": x.timestamp.timestamp()},
-                      db.session.query(OHLCV).filter_by(exchange=exchange.id, timeframe=timeframe.id,
-                                                        symbol=symbol.id).limit(limit).all()))
+    ohlcvs = list(
+        map(lambda x: {"open": float(x.open), "high": float(x.high), "low": float(x.low), "close": float(x.close),
+                       "volume": float(x.volume),
+                       "time": x.timestamp.timestamp()},
+            sorted(db.session.query(OHLCV).filter_by(exchange=exchange.id, timeframe=timeframe.id,
+                                                     symbol=symbol.id).order_by(desc(OHLCV.timestamp))
+                   .limit(limit)
+                   .all(), key=attrgetter('timestamp'))
+            ))
     return jsonify({'ohlcvs': ohlcvs})

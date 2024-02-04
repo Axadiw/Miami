@@ -1,3 +1,4 @@
+import { UseQueryResult } from '@tanstack/react-query';
 import { UseLoginUserResult } from '@/api/useLoginUser';
 import { UseRegisterUserResult } from '@/api/useRegisterUser';
 import { UseGetAppVersionResult } from '@/api/useAppGetVersion';
@@ -8,6 +9,9 @@ import { MockedMutationResult } from '@/contexts/DataLayerContext/__testing__/Mo
 import { MockedQueryResult } from '@/contexts/DataLayerContext/__testing__/MockedQueryResult';
 import { DataLayer } from '@/contexts/DataLayerContext/DataLayerContext';
 import { UseChangePasswordResult } from '@/api/useChangePassword';
+import { GetOHLCVsResponse } from '@/api/useGetOHLCVs';
+import { GetSymbolsResponse } from '@/api/useGetSymbols';
+import { GetTimeframesResponse } from '@/api/useGetTimeframes';
 
 export class MockedDataLayerBuilder {
   private useAppGetVersion = jest.fn<UseGetAppVersionResult, []>();
@@ -17,6 +21,9 @@ export class MockedDataLayerBuilder {
   private useRegisterUser = jest.fn<UseRegisterUserResult, []>();
   private useSaveAccountInfo = jest.fn<UseSaveAccountInfoResult, []>();
   private useChangePassword = jest.fn<UseChangePasswordResult, []>();
+  private useGetOHLCVs = jest.fn<UseQueryResult<GetOHLCVsResponse, Error>, []>();
+  private useGetSymbols = jest.fn<UseQueryResult<GetSymbolsResponse, Error>, []>();
+  private useGetTimeframes = jest.fn<UseQueryResult<GetTimeframesResponse, Error>, []>();
 
   loginUserReturn(
     result: UseLoginUserResult = MockedMutationResult(
@@ -47,6 +54,9 @@ export class MockedDataLayerBuilder {
       useRegisterUser: this.useRegisterUser,
       useSaveAccountInfo: this.useSaveAccountInfo,
       useChangePassword: this.useChangePassword,
+      useGetOHLCVs: this.useGetOHLCVs,
+      useGetSymbols: this.useGetSymbols,
+      useGetTimeframes: this.useGetTimeframes,
     };
   }
 }

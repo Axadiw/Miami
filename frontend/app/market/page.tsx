@@ -1,7 +1,3 @@
-'use client';
+import MarketPage from '@/app/market/marketPage';
 
-import { Text } from '@mantine/core';
-
-export default function MarketPage() {
-  return <Text>MARKET</Text>;
-}
+export default MarketPage;

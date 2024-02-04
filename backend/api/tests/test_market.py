@@ -102,7 +102,7 @@ def test_get_ohlcv(client):
 
     response = client.get("/ohlcv?exchange=bybit&tf=1m&symbol=A&limit=1")
     assert response.status_code == 200
-    assert response.json == {'ohlcvs': [{"open": 0, "high": 1, "low": 0, "close": 1, "volume": 0, "time": 0}]}
+    assert response.json == {'ohlcvs': [{"open": 2, "high": 4, "low": 2, "close": 4, "volume": 60, "time": 60}]}
 
     response = client.get("/ohlcv?exchange=bybit&tf=1m&symbol=B&limit=1000")
     assert response.status_code == 200

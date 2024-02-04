@@ -8464,6 +8464,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fancy-canvas@npm:2.1.0":
+  version: 2.1.0
+  resolution: "fancy-canvas@npm:2.1.0"
+  checksum: 2b863b1548214ac793a5104154be389dbca6847c53c8bda88e4309f14bcdb498f4da21e368b573f3ab5f458d3b47c3f0ef731a7b90c8264b23c1cf0bfc9d1da3
+  languageName: node
+  linkType: hard
+
 "fast-deep-equal@npm:^3.1.1, fast-deep-equal@npm:^3.1.3":
   version: 3.1.3
   resolution: "fast-deep-equal@npm:3.1.3"
@@ -10884,6 +10891,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lightweight-charts@npm:^4.1.2":
+  version: 4.1.2
+  resolution: "lightweight-charts@npm:4.1.2"
+  dependencies:
+    fancy-canvas: "npm:2.1.0"
+  checksum: 950cfd697bab0ecaa66772c82b55f5e6770f677ade1e97f865e034c158d4fbe5be9604ed3311b7fca5050552794f370c19b06429bb0f2787b0299e1db9405abb
+  languageName: node
+  linkType: hard
+
 "lines-and-columns@npm:^1.1.6":
   version: 1.2.4
   resolution: "lines-and-columns@npm:1.2.4"
@@ -11252,6 +11268,7 @@ __metadata:
     husky: "npm:^8.0.0"
     jest: "npm:^29.5.0"
     jest-environment-jsdom: "npm:^29.5.0"
+    lightweight-charts: "npm:^4.1.2"
     moxios: "npm:^0.4.0"
     next: "npm:13.4.4"
     nock: "npm:^13.3.8"
