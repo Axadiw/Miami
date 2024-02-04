@@ -1,27 +1,15 @@
-import datetime
-import uuid
 from operator import attrgetter
 
-import jwt
 from flask import jsonify, make_response, request, Blueprint
-from jwt import ExpiredSignatureError
-from sqlalchemy import desc, asc
-from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import desc
 
-from harvesting.data_harvesters.exchanges.bybit.bybit_harvesters import bybit_ohlcv_timeframes
-from shared.consts_tpl import flask_api_secret
 from api.database import db
-from api.endpoints.consts import PARAMS_INVALID_RESPONSE, USER_EXISTS_RESPONSE, INCORRECT_CREDENTIALS_RESPONSE, \
-    TOKEN_MISSING_RESPONSE, TOKEN_VALID_RESPONSE, TOKEN_EXPIRED_RESPONSE, TOKEN_INVALID_RESPONSE, \
-    TOKEN_VALIDITY_IN_DAYS, REGISTRATION_SUCCESS_RESPONSE, EMAIL_IN_USE_RESPONSE, MINIMUM_USERNAME_LENGTH, \
-    MINIMUM_PASSWORD_LENGTH, PASSWORD_CHANGED_RESPONSE
-from api.endpoints.session.token_required import token_required
+from api.endpoints.consts import PARAMS_INVALID_RESPONSE
+from shared.consts import bybit_ohlcv_timeframes
 from shared.models.exchange import Exchange
 from shared.models.ohlcv import OHLCV
 from shared.models.symbol import Symbol
 from shared.models.timeframe import Timeframe
-from shared.models.user import User
-import re
 
 market_routes = Blueprint('market_routes', __name__)
 

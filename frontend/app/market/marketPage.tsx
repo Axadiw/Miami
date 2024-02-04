@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Select, useMantineColorScheme } from '@mantine/core';
+import { Button, NumberInput, Select, useMantineColorScheme } from '@mantine/core';
 import { useEffect, useRef, useState } from 'react';
 import {
   CandlestickData,
@@ -9,12 +9,18 @@ import {
   createChart,
   CrosshairMode,
   DeepPartial,
+  LineWidth,
 } from 'lightweight-charts';
 import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 import { OHLCV } from '@/api/useGetOHLCVs';
 
-const ChartComponent = (props: { data: OHLCV[]; options: DeepPartial<ChartOptions> }) => {
-  const { data, options } = props;
+const ChartComponent = (props: {
+  data: OHLCV[];
+  tp: number | undefined;
+  sl: number | undefined;
+  options: DeepPartial<ChartOptions>;
+}) => {
+  const { data, options, sl, tp } = props;
 
   const chartContainerRef = useRef();
   useEffect(() => {
@@ -56,6 +62,31 @@ const ChartComponent = (props: { data: OHLCV[]; options: DeepPartial<ChartOption
       }))
     );
 
+    if (sl) {
+      const slLine = {
+        price: sl,
+        color: '#ef5350',
+        lineWidth: 1 as LineWidth,
+        lineStyle: 2, // LineStyle.Dashed
+        axisLabelVisible: true,
+        title: 'min price',
+      };
+      priceSeries.createPriceLine(slLine);
+    }
+
+    if (tp) {
+      const tpLine = {
+        price: tp,
+        color: '#26a69a',
+        lineWidth: 1 as LineWidth,
+        lineStyle: 2, // LineStyle.Dashed
+        axisLabelVisible: true,
+        title: 'max price',
+      };
+
+      priceSeries.createPriceLine(tpLine);
+    }
+
     window.addEventListener('resize', handleResize);
 
     return () => {
@@ -63,7 +94,7 @@ const ChartComponent = (props: { data: OHLCV[]; options: DeepPartial<ChartOption
 
       chart.remove();
     };
-  }, [data, options]);
+  }, [data, options, sl, tp]);
 
   // @ts-ignore
   return <div ref={chartContainerRef} />;
@@ -74,6 +105,8 @@ export default function MarketPage() {
   const limit = 1000;
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState<string | null>(null);
+  const [sl, setSL] = useState<number | string | undefined>(undefined);
+  const [tp, setTP] = useState<number | string | undefined>(undefined);
 
   const { colorScheme } = useMantineColorScheme();
   const isDarkTheme = colorScheme === 'dark';
@@ -106,6 +139,8 @@ export default function MarketPage() {
           searchable
         />
       )}
+      <NumberInput size="xs" placeholder="TP" value={tp} onChange={setTP} />
+      <NumberInput size="xs" placeholder="SL" value={sl} onChange={setSL} />
       {ohlcvs && (
         <ChartComponent
           options={{
@@ -123,6 +158,8 @@ export default function MarketPage() {
             },
           }}
           data={ohlcvs.ohlcvs}
+          tp={tp as number}
+          sl={sl as number}
         />
       )}
       {timeframes &&
