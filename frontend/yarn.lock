@@ -2203,36 +2203,36 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mantine/code-highlight@npm:^7.1.7":
-  version: 7.1.7
-  resolution: "@mantine/code-highlight@npm:7.1.7"
+"@mantine/code-highlight@npm:^7.5.1":
+  version: 7.5.1
+  resolution: "@mantine/code-highlight@npm:7.5.1"
   dependencies:
     clsx: "npm:2.0.0"
-    highlight.js: "npm:^11.7.0"
+    highlight.js: "npm:^11.9.0"
   peerDependencies:
-    "@mantine/core": 7.1.7
-    "@mantine/hooks": 7.1.7
+    "@mantine/core": 7.5.1
+    "@mantine/hooks": 7.5.1
     react: ^18.2.0
     react-dom: ^18.2.0
-  checksum: 926887e5abde6a59883f77aaf99ce2cc503b66701521410726878281c5c269ba6df0218df9b4beac31d99949fd1597b80742be74c74bae30686503f3aa7633d2
+  checksum: ff2109674bc10c4d1c1351054c7f288c7a9e83e05dd28cad59092f5739678ce7a1dd5cbb41aad87ab94b0e834f76a66c1d1e8c531a298303e0a23483a36fa295
   languageName: node
   linkType: hard
 
-"@mantine/core@npm:^7.1.7":
-  version: 7.1.7
-  resolution: "@mantine/core@npm:7.1.7"
+"@mantine/core@npm:^7.5.1":
+  version: 7.5.1
+  resolution: "@mantine/core@npm:7.5.1"
   dependencies:
     "@floating-ui/react": "npm:^0.24.8"
     clsx: "npm:2.0.0"
-    react-number-format: "npm:^5.2.2"
-    react-remove-scroll: "npm:^2.5.6"
+    react-number-format: "npm:^5.3.1"
+    react-remove-scroll: "npm:^2.5.7"
     react-textarea-autosize: "npm:8.5.3"
     type-fest: "npm:^3.13.1"
   peerDependencies:
-    "@mantine/hooks": 7.1.7
+    "@mantine/hooks": 7.5.1
     react: ^18.2.0
     react-dom: ^18.2.0
-  checksum: 8b04e5934500543005687103cc81689a254868f01be5a09243b43e1e7c89d1d68ee5530b43f7d7f139539bb0fb6ccd528d6fa09146446e11adfd83781d65adef
+  checksum: 37afdb551f19a96fb0b07dbd142db260daccffcb225bfd2ca0d9072e1097c3d44a18a6de2c3f32ce55aa4d526a5dc127dc573ef2be3f00f26b461154d4f02e0d
   languageName: node
   linkType: hard
 
@@ -2252,15 +2252,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mantine/form@npm:7.1.1":
-  version: 7.1.1
-  resolution: "@mantine/form@npm:7.1.1"
+"@mantine/form@npm:7.5.1":
+  version: 7.5.1
+  resolution: "@mantine/form@npm:7.5.1"
   dependencies:
     fast-deep-equal: "npm:^3.1.3"
-    klona: "npm:^2.0.5"
+    klona: "npm:^2.0.6"
   peerDependencies:
     react: ^18.2.0
-  checksum: f4df22e2de52d69ce7f5990c6dcc8babb5a4119bfac26051006665b65563dac633cb9b1f029dd80e664370d7afdfaa398469803cf74535f35e276a787e9a7c9b
+  checksum: 74d2922d261a4e22c95249bda4ad93b005b53d7129c93b2801b54f324d7ef449337dd4610f4b8958b3e53fa36bf3b1e75f07997a86710a5edbf2596d99298798
   languageName: node
   linkType: hard
 
@@ -4265,22 +4265,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tabler/icons-react@npm:^2.20.0":
-  version: 2.40.0
-  resolution: "@tabler/icons-react@npm:2.40.0"
+"@tabler/icons-react@npm:^2.47.0":
+  version: 2.47.0
+  resolution: "@tabler/icons-react@npm:2.47.0"
   dependencies:
-    "@tabler/icons": "npm:2.40.0"
+    "@tabler/icons": "npm:2.47.0"
     prop-types: "npm:^15.7.2"
   peerDependencies:
     react: ^16.5.1 || ^17.0.0 || ^18.0.0
-  checksum: 3deb43e6d474ff2d09ff941d3d8b66c8898b08c25b5cd7c3b3cb693fc88ede9404e06950647083db3287f7ae361495bbb99b828466f458d57ef4f16cbbb89d27
+  checksum: 09a78a1b88aab69a11cd783c7d1bb75aeabe2ed03e3f957d00113dfde974ec73ee850551c430664634469ebcf32db749497a81bd30c01f2fb3425884cba7429c
   languageName: node
   linkType: hard
 
-"@tabler/icons@npm:2.40.0":
-  version: 2.40.0
-  resolution: "@tabler/icons@npm:2.40.0"
-  checksum: a59adf9b071fb3b54f507c3a7c8adaeb74ccb5af5834c92d312829f7564f1e4255086091fe43dbfeae256510d073bce8476f2171655b337050b08b7521786400
+"@tabler/icons@npm:2.47.0":
+  version: 2.47.0
+  resolution: "@tabler/icons@npm:2.47.0"
+  checksum: ffdffa1289ca958f7d7c06c19e35c51a664d916df510fb44fb673abc2031747f2b3c47e21ba4c1ca07a6872b793f2063179bbbfb6afd1c68b522ca333460a7f3
   languageName: node
   linkType: hard
 
@@ -4302,23 +4302,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/query-devtools@npm:5.4.2":
-  version: 5.4.2
-  resolution: "@tanstack/query-devtools@npm:5.4.2"
-  checksum: e92774b9c0621f59ce0679894d7793955c1faa6bf6750122820f661de46520d69d09d2630852c5472e6711495e53277f052fa1f1e9f5eb0db4b3ca783e917b63
+"@tanstack/query-devtools@npm:5.18.1":
+  version: 5.18.1
+  resolution: "@tanstack/query-devtools@npm:5.18.1"
+  checksum: ba2103b4ce56221ab57ccf026bb127cb58aba490cff9755074422ab4c657d0ef8e4bd22b1d292a027ac68b53f7c74084a9dcaf79c3c3d18f5724a8455225cb10
   languageName: node
   linkType: hard
 
-"@tanstack/react-query-devtools@npm:^5.4.3":
-  version: 5.4.3
-  resolution: "@tanstack/react-query-devtools@npm:5.4.3"
+"@tanstack/react-query-devtools@npm:^5.18.1":
+  version: 5.18.1
+  resolution: "@tanstack/react-query-devtools@npm:5.18.1"
   dependencies:
-    "@tanstack/query-devtools": "npm:5.4.2"
+    "@tanstack/query-devtools": "npm:5.18.1"
   peerDependencies:
-    "@tanstack/react-query": ^5.4.3
+    "@tanstack/react-query": ^5.18.1
     react: ^18.0.0
-    react-dom: ^18.0.0
-  checksum: ec703904c341aeb59b9b6ddcf311f0d3b710895dca08e350a9249f95ae9b0fb1c1709605db69321f654cec69ee19b54aa4b51a8cb60d64012304316a9fc7dde5
+  checksum: ccd77c27516764c73374b4917f9a6b203acbbf5e844d5796f2469eef16ffd73168e88745af291bc16d9bbc169336888c435c258fae396f7f39b3d648e315f276
   languageName: node
   linkType: hard
 
@@ -9275,7 +9274,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"highlight.js@npm:^11.7.0":
+"highlight.js@npm:^11.9.0":
   version: 11.9.0
   resolution: "highlight.js@npm:11.9.0"
   checksum: 27cfa8717dc9d200aecbdb383eb122d5f45ce715d2f468583785d36fbfe5076ce033abb02486dc13b407171721cda6f474ed3f3a5a8e8c3d91367fa5f51ee374
@@ -10830,7 +10829,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"klona@npm:^2.0.4, klona@npm:^2.0.5":
+"klona@npm:^2.0.4, klona@npm:^2.0.6":
   version: 2.0.6
   resolution: "klona@npm:2.0.6"
   checksum: 94eed2c6c2ce99f409df9186a96340558897b3e62a85afdc1ee39103954d2ebe1c1c4e9fe2b0952771771fa96d70055ede8b27962a7021406374fdb695fd4d01
@@ -11225,10 +11224,10 @@ __metadata:
   resolution: "miami-trade@workspace:."
   dependencies:
     "@babel/core": "npm:^7.22.1"
-    "@mantine/code-highlight": "npm:^7.1.7"
-    "@mantine/core": "npm:^7.1.7"
+    "@mantine/code-highlight": "npm:^7.5.1"
+    "@mantine/core": "npm:^7.5.1"
     "@mantine/ds": "npm:^7.1.5"
-    "@mantine/form": "npm:7.1.1"
+    "@mantine/form": "npm:7.5.1"
     "@mantine/hooks": "npm:^7.1.7"
     "@next/bundle-analyzer": "npm:^13.4.4"
     "@next/eslint-plugin-next": "npm:^13.4.4"
@@ -11238,10 +11237,10 @@ __metadata:
     "@storybook/nextjs": "npm:^7.0.18"
     "@storybook/react": "npm:^7.0.18"
     "@storybook/testing-library": "npm:^0.1.0"
-    "@tabler/icons-react": "npm:^2.20.0"
+    "@tabler/icons-react": "npm:^2.47.0"
     "@tanstack/eslint-plugin-query": "npm:^5.0.5"
     "@tanstack/react-query": "npm:^5.4.3"
-    "@tanstack/react-query-devtools": "npm:^5.4.3"
+    "@tanstack/react-query-devtools": "npm:^5.18.1"
     "@testing-library/dom": "npm:^9.3.0"
     "@testing-library/jest-dom": "npm:^5.16.5"
     "@testing-library/react": "npm:^14.0.0"
@@ -13043,7 +13042,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-number-format@npm:^5.2.2":
+"react-number-format@npm:^5.3.1":
   version: 5.3.1
   resolution: "react-number-format@npm:5.3.1"
   dependencies:
@@ -13097,7 +13096,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-remove-scroll@npm:^2.5.6":
+"react-remove-scroll@npm:^2.5.7":
   version: 2.5.7
   resolution: "react-remove-scroll@npm:2.5.7"
   dependencies:
