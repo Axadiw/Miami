@@ -2236,19 +2236,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mantine/ds@npm:^7.1.5":
-  version: 7.1.7
-  resolution: "@mantine/ds@npm:7.1.7"
+"@mantine/ds@npm:^7.2.2":
+  version: 7.2.2
+  resolution: "@mantine/ds@npm:7.2.2"
   dependencies:
     clsx: "npm:2.0.0"
   peerDependencies:
-    "@mantine/code-highlight": 7.1.7
-    "@mantine/core": 7.1.7
-    "@mantine/hooks": 7.1.7
+    "@mantine/code-highlight": 7.2.2
+    "@mantine/core": 7.2.2
+    "@mantine/hooks": 7.2.2
     "@tabler/icons-react": ^2.29.0
     react: ^18.2.0
     react-dom: ^18.2.0
-  checksum: c77e293d26c3444fee26f5a74f3309f468212bd92d72e8119b94cbfb82478f0aa46bf01ef1d504f02c9efb211e3cbf3aed27e4793f38d0aa7751ad031beddfa1
+  checksum: f8730b2d4417859ce01e5c6787bf06793f78b2f04e5df612196ac2933155474eb0bb39acb18daaa4e74f94e51a0a80ee0d0e44e0c911f3b744d2fa95e054fca6
   languageName: node
   linkType: hard
 
@@ -2264,12 +2264,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mantine/hooks@npm:^7.1.7":
-  version: 7.1.7
-  resolution: "@mantine/hooks@npm:7.1.7"
+"@mantine/hooks@npm:^7.5.1":
+  version: 7.5.1
+  resolution: "@mantine/hooks@npm:7.5.1"
   peerDependencies:
     react: ^18.2.0
-  checksum: 10203ed4fd85459a25a169707a1b10a5362ff28f916eca27445de1cf2604241189d3b31a2772b795d33286ce547d4a0ea1729273c468915c9b039629bf840e7a
+  checksum: 2f085a16b7d5f2db3351c44836c75daaeb48a4af486b44fc642dd7f94e2f91877ab683677141f835d16def1bb67c6dc90b021e056caa43b6f78fe63b3c2fb690
   languageName: node
   linkType: hard
 
@@ -11226,9 +11226,9 @@ __metadata:
     "@babel/core": "npm:^7.22.1"
     "@mantine/code-highlight": "npm:^7.5.1"
     "@mantine/core": "npm:^7.5.1"
-    "@mantine/ds": "npm:^7.1.5"
+    "@mantine/ds": "npm:^7.2.2"
     "@mantine/form": "npm:7.5.1"
-    "@mantine/hooks": "npm:^7.1.7"
+    "@mantine/hooks": "npm:^7.5.1"
     "@next/bundle-analyzer": "npm:^13.4.4"
     "@next/eslint-plugin-next": "npm:^13.4.4"
     "@storybook/addon-essentials": "npm:^7.0.18"
