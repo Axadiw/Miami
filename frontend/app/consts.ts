@@ -6,3 +6,5 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 export const LOGIN_TOKEN_LOCAL_STORAGE_KEY = 'LOGIN_TOKEN_LOCAL_STORAGE_KEY';
+
+export const MarketPageChartDefaultBarsWidth = 100;

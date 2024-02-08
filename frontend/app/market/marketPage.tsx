@@ -12,6 +12,7 @@ import {
   Stack,
   Switch,
   Text,
+  TextInput,
   Timeline,
   useMantineColorScheme,
 } from '@mantine/core';
@@ -26,12 +27,12 @@ import {
   IconSearch,
 } from '@tabler/icons-react';
 import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
-import { ChartComponent } from '@/app/account/components/chart/chart';
 import {
   calculateMarketValues,
   PriceTypeType,
   Side,
 } from '@/app/account/components/positionCalculators/marketCalculator';
+import { ChartComponent } from '@/app/account/components/chart/chart';
 
 export default function MarketPage() {
   const exchange = 'bybit';
@@ -56,6 +57,7 @@ export default function MarketPage() {
   const [tp2Percent, setTp2Percent] = useState<number | string | undefined>(undefined);
   const [tp3Percent, setTp3Percent] = useState<number | string | undefined>(undefined);
   const [slToBreakEvenAtTp1, setSlToBreakEvenAtTp1] = useState(false);
+  const [iframeURL, setIFrameURL] = useState<string | undefined>(undefined);
 
   const [side, setSide] = useState<Side>('Buy');
 
@@ -347,27 +349,37 @@ export default function MarketPage() {
         </Stack>
 
         <Stack>
-          <ChartComponent
-            isDarkTheme={isDarkTheme}
-            data={ohlcvs?.ohlcvs ?? []}
-            tp1Price={Number(calculatedValues.tp1Price)}
-            tp2Price={Number(calculatedValues.tp2Price)}
-            tp3Price={Number(calculatedValues.tp3Price)}
-            sl={Number(sl)}
-          />
-          <Group>
-            {timeframes &&
-              timeframes.timeframes.map((timeframe) => (
-                <Button
-                  key={`tf-${timeframe}`}
-                  variant={timeframe === selectedTimeframe ? 'filled' : 'default'}
-                  size="xs"
-                  onClick={() => setSelectedTimeframe(timeframe)}
-                >
-                  {timeframe}
-                </Button>
-              ))}
-          </Group>
+          <Stack>
+            <ChartComponent
+              isDarkTheme={isDarkTheme}
+              data={ohlcvs?.ohlcvs ?? []}
+              tp1Price={Number(calculatedValues.tp1Price)}
+              tp2Price={Number(calculatedValues.tp2Price)}
+              tp3Price={Number(calculatedValues.tp3Price)}
+              sl={Number(calculatedValues.slPrice)}
+            />
+            <Group>
+              {timeframes &&
+                timeframes.timeframes.map((timeframe) => (
+                  <Button
+                    key={`tf-${timeframe}`}
+                    variant={timeframe === selectedTimeframe ? 'filled' : 'default'}
+                    size="xs"
+                    onClick={() => setSelectedTimeframe(timeframe)}
+                  >
+                    {timeframe}
+                  </Button>
+                ))}
+            </Group>
+            {iframeURL && <img alt="Helper" src={iframeURL} height={300} />}
+            <TextInput
+              size="xs"
+              value={iframeURL}
+              onChange={(v) => setIFrameURL(v.currentTarget.value)}
+              label="URL"
+              placeholder="type URL"
+            />
+          </Stack>
           <Space h="md" />
           <Button disabled={active < 4}>Execute</Button>
         </Stack>
