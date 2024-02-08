@@ -24,6 +24,7 @@
     "@mantine/core": "^7.5.1",
     "@mantine/form": "^7.5.1",
     "@mantine/hooks": "^7.5.1",
+    "@mantine/spotlight": "^7.5.1",
     "@next/bundle-analyzer": "^13.4.4",
     "@tabler/icons-react": "^2.47.0",
     "@tanstack/react-query": "^5.4.3",

@@ -12,6 +12,7 @@ import React, { useEffect, useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { usePathname, useRouter } from 'next/navigation';
 import classes from '@/app/styles/NavbarSimple.module.css';
+import '@mantine/spotlight/styles.css';
 import darkLogoImage from '@/public/logo-dark.png';
 import lightLogoImage from '@/public/logo-light.png';
 import { useLoginContext } from '@/contexts/LoginContext/LoginContext';
@@ -67,7 +68,7 @@ export function LoggedInContentContainer({ children }: { children: any }) {
   return (
     <AppShell
       header={{ height: 48 }}
-      navbar={{ width: 300, breakpoint: 'sm', collapsed: { mobile: !opened } }}
+      navbar={{ width: 130, breakpoint: 'sm', collapsed: { mobile: !opened } }}
       padding="md"
     >
       <AppShell.Header>

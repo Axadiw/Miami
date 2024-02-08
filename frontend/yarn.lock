@@ -2304,6 +2304,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mantine/spotlight@npm:^7.5.1":
+  version: 7.5.1
+  resolution: "@mantine/spotlight@npm:7.5.1"
+  dependencies:
+    "@mantine/store": "npm:7.5.1"
+  peerDependencies:
+    "@mantine/core": 7.5.1
+    "@mantine/hooks": 7.5.1
+    react: ^18.2.0
+    react-dom: ^18.2.0
+  checksum: 3af7166522e55d521b8d2d4789251cc6ceea130c99162d97e8a6bdcc38e622feedbeb846498b55d2c97c62f2c7e08290f521176b4f9cfccf897137cfa49d36bc
+  languageName: node
+  linkType: hard
+
+"@mantine/store@npm:7.5.1":
+  version: 7.5.1
+  resolution: "@mantine/store@npm:7.5.1"
+  peerDependencies:
+    react: ^18.2.0
+  checksum: 2b3b98e9673bec2804b18d167891d92363768e1a4609ba584d85e90fa19fcba951284e350c54c367c1ffdabc3a161700456a7012a9fa3a413eae9a1bfbc781a5
+  languageName: node
+  linkType: hard
+
 "@mdx-js/react@npm:^2.1.5":
   version: 2.3.0
   resolution: "@mdx-js/react@npm:2.3.0"
@@ -11259,6 +11282,7 @@ __metadata:
     "@mantine/core": "npm:^7.5.1"
     "@mantine/form": "npm:^7.5.1"
     "@mantine/hooks": "npm:^7.5.1"
+    "@mantine/spotlight": "npm:^7.5.1"
     "@next/bundle-analyzer": "npm:^13.4.4"
     "@next/eslint-plugin-next": "npm:^13.4.4"
     "@storybook/addon-essentials": "npm:^7.0.18"
