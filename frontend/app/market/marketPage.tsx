@@ -122,7 +122,7 @@ export default function MarketPage() {
 
   return (
     <Stack>
-      <Group align="flex-start">
+      <Group grow align="flex-start">
         <Stack>
           <Group>
             <Text>Balance:</Text>
