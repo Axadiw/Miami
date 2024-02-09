@@ -22,6 +22,7 @@ export interface MarketCalculatorProps {
 
 export interface MarketCalculatorResponse {
   positionSize: number;
+  positionSizeUSD: number;
   maxLossUSD: number;
   maxLossPercent: number;
   tp1USDReward: number;
@@ -55,28 +56,25 @@ export const calculateMarketValues = (props: MarketCalculatorProps): MarketCalcu
     props.slType === '$' ? sl : props.openPrice * (1 + ((isBuy ? -1 : 1) * sl) / 100.0);
   const slPercent = 100 * (isBuy ? 1 - slPrice / props.openPrice : slPrice / props.openPrice - 1);
   const positionSize = maxLossUSD / ((props.openPrice * slPercent) / 100);
-  const tp1Price = props.tp1Type === '$' ? tp1 : props.openPrice * (1 + tp1 / 100.0);
-  const tp1Percent = 100 * (tp1Price / props.openPrice - 1);
-  const tp2Price = props.tp1Type === '$' ? tp2 : props.openPrice * (1 + tp2 / 100.0);
-  const tp2Percent = 100 * (tp2Price / props.openPrice - 1);
-  const tp3Price = props.tp1Type === '$' ? tp3 : props.openPrice * (1 + tp3 / 100.0);
-  const tp3Percent = 100 * (tp3Price / props.openPrice - 1);
+  const positionSizeUSD = positionSize * props.openPrice;
+  const tp1Price =
+    props.tp1Type === '$' ? tp1 : props.openPrice * (1 + ((isBuy ? 1 : -1) * tp1) / 100.0);
+  const tp1Percent = 100 * (isBuy ? 1 : -1) * (tp1Price / props.openPrice - 1);
+  const tp2Price =
+    props.tp2Type === '$' ? tp2 : props.openPrice * (1 + ((isBuy ? 1 : -1) * tp2) / 100.0);
+  const tp2Percent = 100 * (isBuy ? 1 : -1) * (tp2Price / props.openPrice - 1);
+  const tp3Price =
+    props.tp3Type === '$' ? tp3 : props.openPrice * (1 + ((isBuy ? 1 : -1) * tp3) / 100.0);
+  const tp3Percent = 100 * (isBuy ? 1 : -1) * (tp3Price / props.openPrice - 1);
 
-  const tp1USDReward = isBuy
-    ? positionSize * props.openPrice * (tp1Percent / 100) * tp1CutPercent
-    : positionSize * props.openPrice * (1 - (1 + tp1Percent / 100.0)) * tp1CutPercent;
+  const tp1USDReward = positionSize * props.openPrice * (tp1Percent / 100.0) * tp1CutPercent;
   const tp2USDReward =
-    tp1USDReward +
-    (isBuy
-      ? positionSize * props.openPrice * (tp2Percent / 100) * tp2CutPercent
-      : positionSize * props.openPrice * (1 - (1 + tp2Percent / 100.0)) * tp2CutPercent);
+    tp1USDReward + positionSize * props.openPrice * (tp2Percent / 100.0) * tp2CutPercent;
   const tp3USDReward =
-    tp2USDReward +
-    (isBuy
-      ? positionSize * props.openPrice * (tp3Percent / 100) * tp3CutPercent
-      : positionSize * props.openPrice * (1 - (1 + tp3Percent / 100.0)) * tp3CutPercent);
+    tp2USDReward + positionSize * props.openPrice * (tp3Percent / 100.0) * tp3CutPercent;
   return {
     positionSize,
+    positionSizeUSD,
     maxLossUSD,
     maxLossPercent: (maxLossUSD / balance) * 100.0,
     tp1USDReward,

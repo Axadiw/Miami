@@ -23,6 +23,7 @@ describe('calculateMarketValues', () => {
       })
     ).toEqual({
       positionSize: 0.2,
+      positionSizeUSD: 20,
       maxLossUSD: 10,
       maxLossPercent: 10,
       tp1USDReward: 10,
@@ -47,13 +48,13 @@ describe('calculateMarketValues', () => {
       maxLossType: '%',
       sl: 50,
       slType: '%',
-      tp1: -10,
+      tp1: 10,
       tp1Type: '%',
       tp1Percent: 50,
-      tp2: -20,
+      tp2: 20,
       tp2Type: '%',
       tp2Percent: 25,
-      tp3: -30,
+      tp3: 30,
       tp3Type: '%',
       tp3Percent: 25,
     });
@@ -62,13 +63,13 @@ describe('calculateMarketValues', () => {
     expect(sut.maxLossPercent).toEqual(10);
     expect(sut.tp1USDReward).toBeCloseTo(1);
     expect(sut.tp1Price).toEqual(90);
-    expect(sut.tp1Percent).toBeCloseTo(-10);
+    expect(sut.tp1Percent).toBeCloseTo(10);
     expect(sut.tp2USDReward).toBeCloseTo(2);
     expect(sut.tp2Price).toEqual(80);
-    expect(sut.tp2Percent).toBeCloseTo(-20);
+    expect(sut.tp2Percent).toBeCloseTo(20);
     expect(sut.tp3USDReward).toBeCloseTo(3.5);
     expect(sut.tp3Price).toEqual(70);
-    expect(sut.tp3Percent).toBeCloseTo(-30);
+    expect(sut.tp3Percent).toBeCloseTo(30);
     expect(sut.slPrice).toEqual(150);
     expect(sut.slPercent).toEqual(50);
   });

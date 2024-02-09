@@ -8,6 +8,7 @@ import {
   NumberInput,
   rem,
   SegmentedControl,
+  Slider,
   Space,
   Stack,
   Switch,
@@ -53,9 +54,9 @@ export default function MarketPage() {
   const [tp1, setTp1] = useState<number | string | undefined>(undefined);
   const [tp2, setTp2] = useState<number | string | undefined>(undefined);
   const [tp3, setTp3] = useState<number | string | undefined>(undefined);
-  const [tp1Percent, setTp1Percent] = useState<number | string | undefined>(undefined);
-  const [tp2Percent, setTp2Percent] = useState<number | string | undefined>(undefined);
-  const [tp3Percent, setTp3Percent] = useState<number | string | undefined>(undefined);
+  const [tp1Percent, setTp1Percent] = useState<number | string | undefined>(50);
+  const [tp2Percent, setTp2Percent] = useState<number | string | undefined>(25);
+  const [tp3Percent, setTp3Percent] = useState<number | string | undefined>(25);
   const [slToBreakEvenAtTp1, setSlToBreakEvenAtTp1] = useState(false);
   const [iframeURL, setIFrameURL] = useState<string | undefined>(undefined);
 
@@ -63,8 +64,6 @@ export default function MarketPage() {
 
   const dataLayer = useDataLayerContext();
   const { data: timeframes } = dataLayer.useGetTimeframes({ exchange });
-
-  const calculateAmountSign = (value: number) => (value === 0 ? '' : value > 0 ? '+' : '');
 
   const { data: ohlcvs } = dataLayer.useGetOHLCVs({
     exchange,
@@ -130,7 +129,7 @@ export default function MarketPage() {
             <Text>Balance:</Text>
             <NumberFormatter prefix="$ " value={`${accountBalance}`} thousandSeparator />
           </Group>
-          <Text>Position size: {calculatedValues.positionSize.toFixed(6)}</Text>
+
           <Timeline active={active} bulletSize={24} lineWidth={2}>
             <Timeline.Item bullet={<IconNumber0 size={20} />}>
               <Group>
@@ -177,6 +176,7 @@ export default function MarketPage() {
                   <NumberInput
                     disabled={active < 2}
                     w="100px"
+                    min={0}
                     size="xs"
                     value={maxLoss}
                     onChange={setMaxLoss}
@@ -198,13 +198,19 @@ export default function MarketPage() {
               </Input.Wrapper>
               <Input.Wrapper label="Stop loss" size="xs">
                 <Group>
-                  <Text>Price</Text>
                   <NumberInput
                     disabled={active < 2}
                     w="100px"
+                    min={0}
+                    max={slType === '%' ? 100 : undefined}
                     size="xs"
                     value={sl}
                     onChange={setSl}
+                    error={
+                      calculatedValues.slPercent < 0
+                        ? `should be ${side === 'Buy' ? 'below' : 'above'} current price`
+                        : undefined
+                    }
                   />
                   <SegmentedControl
                     disabled={active < 2}
@@ -219,17 +225,28 @@ export default function MarketPage() {
                   </Text>
                 </Group>
               </Input.Wrapper>
+              {active > 2 && (
+                <Text>
+                  Position size: {calculatedValues.positionSize.toFixed(6)} ($
+                  {calculatedValues.positionSizeUSD.toFixed(2)})
+                </Text>
+              )}
             </Timeline.Item>
             <Timeline.Item bullet={<IconNumber3 size={20} />}>
               <Input.Wrapper label="Take profit 1:" size="xs">
                 <Group>
-                  <Text>Price</Text>
                   <NumberInput
                     disabled={active < 3}
                     w="100px"
+                    min={0}
                     size="xs"
                     value={tp1}
                     onChange={setTp1}
+                    error={
+                      calculatedValues.tp1Percent < 0
+                        ? `should be ${side === 'Buy' ? 'above' : 'below'} current price`
+                        : undefined
+                    }
                   />
                   <SegmentedControl
                     disabled={active < 3}
@@ -239,35 +256,47 @@ export default function MarketPage() {
                     data={['%', '$']}
                   />
                   <Text>
-                    {tp1 && tp1Type === '%' && `$${calculatedValues.tp1Price.toFixed(2)}`}
+                    {tp1 && tp1Type === '%' && `$${calculatedValues.tp1Price.toFixed(6)}`}
                     {tp1 && tp1Type === '$' && `(${calculatedValues.tp1Percent.toFixed(2)}%)`}
                   </Text>
-                  <Text>Volume</Text>
-                  <NumberInput
-                    disabled={active < 3}
-                    w="50px"
-                    size="xs"
-                    value={tp1Percent}
-                    onChange={setTp1Percent}
-                  />
+                  <Input.Wrapper label="Volume" size="xs">
+                    <Stack>
+                      <NumberInput
+                        disabled={active < 3}
+                        w="50px"
+                        min={0}
+                        max={100}
+                        size="xs"
+                        value={tp1Percent}
+                        onChange={setTp1Percent}
+                      />
+                      <Slider
+                        color="blue"
+                        disabled={active < 3}
+                        value={tp1Percent as number}
+                        onChange={setTp1Percent}
+                      />
+                    </Stack>
+                  </Input.Wrapper>
                   <Text c="green">
-                    {tp1 &&
-                      tp1Percent &&
-                      `$ ${calculateAmountSign(
-                        calculatedValues.tp1USDReward
-                      )}${calculatedValues.tp1USDReward.toFixed(2)}`}
+                    {tp1 && tp1Percent && `$ ${calculatedValues.tp1USDReward.toFixed(2)}`}
                   </Text>
                 </Group>
               </Input.Wrapper>
               <Input.Wrapper label="Take profit 2:" size="xs">
                 <Group>
-                  <Text>Price</Text>
                   <NumberInput
                     disabled={active < 3}
                     w="100px"
+                    min={0}
                     size="xs"
                     value={tp2}
                     onChange={setTp2}
+                    error={
+                      calculatedValues.tp2Percent < 0
+                        ? `should be ${side === 'Buy' ? 'above' : 'below'} current price`
+                        : undefined
+                    }
                   />
                   <SegmentedControl
                     disabled={active < 3}
@@ -277,35 +306,47 @@ export default function MarketPage() {
                     data={['%', '$']}
                   />
                   <Text>
-                    {tp2 && tp2Type === '%' && `$${calculatedValues.tp2Price.toFixed(2)}`}
+                    {tp2 && tp2Type === '%' && `$${calculatedValues.tp2Price.toFixed(6)}`}
                     {tp2 && tp2Type === '$' && `(${calculatedValues.tp2Percent.toFixed(2)}%)`}
                   </Text>
-                  <Text>Volume</Text>
-                  <NumberInput
-                    disabled={active < 3}
-                    w="50px"
-                    size="xs"
-                    value={tp2Percent}
-                    onChange={setTp2Percent}
-                  />
+                  <Input.Wrapper label="Volume" size="xs">
+                    <Stack>
+                      <NumberInput
+                        disabled={active < 3}
+                        w="50px"
+                        min={0}
+                        max={100}
+                        size="xs"
+                        value={tp2Percent}
+                        onChange={setTp2Percent}
+                      />
+                      <Slider
+                        color="blue"
+                        disabled={active < 3}
+                        value={tp2Percent as number}
+                        onChange={setTp2Percent}
+                      />
+                    </Stack>
+                  </Input.Wrapper>
                   <Text c="green">
-                    {tp2 &&
-                      tp2Percent &&
-                      `$ ${calculateAmountSign(
-                        calculatedValues.tp2USDReward
-                      )}${calculatedValues.tp2USDReward.toFixed(2)}`}
+                    {tp2 && tp2Percent && `$ ${calculatedValues.tp2USDReward.toFixed(2)}`}
                   </Text>
                 </Group>
               </Input.Wrapper>
               <Input.Wrapper label="Take profit 3:" size="xs">
                 <Group>
-                  <Text>Price</Text>
                   <NumberInput
                     disabled={active < 3}
                     w="100px"
                     size="xs"
+                    min={0}
                     value={tp3}
                     onChange={setTp3}
+                    error={
+                      calculatedValues.tp3Percent < 0
+                        ? `should be ${side === 'Buy' ? 'above' : 'below'} current price`
+                        : undefined
+                    }
                   />
                   <SegmentedControl
                     disabled={active < 3}
@@ -315,23 +356,30 @@ export default function MarketPage() {
                     data={['%', '$']}
                   />
                   <Text>
-                    {tp3 && tp3Type === '%' && `$${calculatedValues.tp3Price.toFixed(2)}`}
+                    {tp3 && tp3Type === '%' && `$${calculatedValues.tp3Price.toFixed(6)}`}
                     {tp3 && tp3Type === '$' && `(${calculatedValues.tp3Percent.toFixed(2)}%)`}
                   </Text>
-                  <Text>Volume</Text>
-                  <NumberInput
-                    disabled={active < 3}
-                    w="50px"
-                    size="xs"
-                    value={tp3Percent}
-                    onChange={setTp3Percent}
-                  />
+                  <Input.Wrapper label="Volume" size="xs">
+                    <Stack>
+                      <NumberInput
+                        disabled={active < 3}
+                        w="50px"
+                        size="xs"
+                        min={0}
+                        max={100}
+                        value={tp3Percent}
+                        onChange={setTp3Percent}
+                      />
+                      <Slider
+                        color="blue"
+                        disabled={active < 3}
+                        value={tp3Percent as number}
+                        onChange={setTp3Percent}
+                      />
+                    </Stack>
+                  </Input.Wrapper>
                   <Text c="green">
-                    {tp3 &&
-                      tp3Percent &&
-                      `$ ${calculateAmountSign(
-                        calculatedValues.tp3USDReward
-                      )}${calculatedValues.tp3USDReward.toFixed(2)}`}
+                    {tp3 && tp3Percent && `$ ${calculatedValues.tp3USDReward.toFixed(2)}`}
                   </Text>
                 </Group>
               </Input.Wrapper>
