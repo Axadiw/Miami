@@ -54,6 +54,7 @@ export const calculateMarketValues = (props: MarketCalculatorProps): MarketCalcu
 
   const slPrice =
     props.slType === '$' ? sl : props.openPrice * (1 + ((isBuy ? -1 : 1) * sl) / 100.0);
+
   const slPercent = 100 * (isBuy ? 1 - slPrice / props.openPrice : slPrice / props.openPrice - 1);
   const positionSize = maxLossUSD / ((props.openPrice * slPercent) / 100);
   const positionSizeUSD = positionSize * props.openPrice;

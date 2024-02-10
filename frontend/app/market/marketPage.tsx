@@ -46,6 +46,7 @@ export default function MarketPage() {
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState<string | null>(null);
   const [sl, setSl] = useState<number | string | undefined>(undefined);
+
   const [maxLossType, setMaxLossType] = useState<PriceTypeType>('%');
   const [slType, setSlType] = useState<PriceTypeType>('%');
   const [tp1Type, setTp1Type] = useState<PriceTypeType>('%');
@@ -57,7 +58,7 @@ export default function MarketPage() {
   const [tp1Percent, setTp1Percent] = useState<number | string | undefined>(50);
   const [tp2Percent, setTp2Percent] = useState<number | string | undefined>(25);
   const [tp3Percent, setTp3Percent] = useState<number | string | undefined>(25);
-  const [slToBreakEvenAtTp1, setSlToBreakEvenAtTp1] = useState(false);
+  const [slToBreakEvenAtTp1, setSlToBreakEvenAtTp1] = useState(true);
   const [iframeURL, setIFrameURL] = useState<string | undefined>(undefined);
 
   const [side, setSide] = useState<Side>('Buy');
@@ -192,7 +193,7 @@ export default function MarketPage() {
                     {maxLoss && maxLossType === '%' && `$${calculatedValues.maxLossUSD.toFixed(2)}`}
                     {maxLoss &&
                       maxLossType === '$' &&
-                      `(${calculatedValues.maxLossPercent.toFixed(2)}%)`}
+                      `${calculatedValues.maxLossPercent.toFixed(2)}%`}
                   </Text>
                 </Group>
               </Input.Wrapper>
@@ -205,7 +206,9 @@ export default function MarketPage() {
                     max={slType === '%' ? 100 : undefined}
                     size="xs"
                     value={sl}
-                    onChange={setSl}
+                    onChange={(v) => {
+                      setSl(v);
+                    }}
                     error={
                       calculatedValues.slPercent < 0
                         ? `should be ${side === 'Buy' ? 'below' : 'above'} current price`
@@ -216,7 +219,9 @@ export default function MarketPage() {
                     disabled={active < 2}
                     value={slType}
                     color={slType === '%' ? 'yellow' : 'violet'}
-                    onChange={(v) => setSlType(v as PriceTypeType)}
+                    onChange={(v) => {
+                      setSlType(v as PriceTypeType);
+                    }}
                     data={['%', '$']}
                   />
                   <Text>
@@ -225,6 +230,7 @@ export default function MarketPage() {
                   </Text>
                 </Group>
               </Input.Wrapper>
+
               {active > 2 && (
                 <Text>
                   Position size: {calculatedValues.positionSize.toFixed(6)} ($
@@ -405,6 +411,14 @@ export default function MarketPage() {
               tp2Price={Number(calculatedValues.tp2Price)}
               tp3Price={Number(calculatedValues.tp3Price)}
               sl={Number(calculatedValues.slPrice)}
+              setSl={setSl}
+              setTp1={setTp1}
+              setTp2={setTp2}
+              setTp3={setTp3}
+              setSlToPriceType={() => setSlType('$')}
+              setTp1ToPriceType={() => setTp1Type('$')}
+              setTp2ToPriceType={() => setTp2Type('$')}
+              setTp3ToPriceType={() => setTp3Type('$')}
             />
             <Group>
               {timeframes &&

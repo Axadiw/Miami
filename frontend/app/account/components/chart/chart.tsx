@@ -1,15 +1,13 @@
-import {
-  CandlestickData,
-  ColorType,
-  createChart,
-  CrosshairMode,
-  LineData,
-  LineWidth,
-  Time,
-  UTCTimestamp,
-} from 'lightweight-charts';
 import { useEffect, useRef } from 'react';
+import { ColorType, createChart, CrosshairMode } from '@felipecsl/lightweight-charts';
 import { OHLCV } from '@/api/useGetOHLCVs';
+
+// function timeToTz(originalTime: Time, timeZone: string) {
+//   const zonedDate = new Date(
+//     new Date(Number(originalTime) * 1000).toLocaleString('en-US', { timeZone })
+//   );
+//   return zonedDate.getTime() / 1000;
+// }
 
 export const ChartComponent = (props: {
   data: OHLCV[];
@@ -18,8 +16,31 @@ export const ChartComponent = (props: {
   tp3Price: number | undefined;
   sl: number | undefined;
   isDarkTheme: boolean;
+  setSl: (sl: number) => void;
+  setTp1: (sl: number) => void;
+  setTp2: (sl: number) => void;
+  setTp3: (sl: number) => void;
+  setSlToPriceType: () => void;
+  setTp1ToPriceType: () => void;
+  setTp2ToPriceType: () => void;
+  setTp3ToPriceType: () => void;
 }) => {
-  const { data, isDarkTheme, sl, tp1Price, tp2Price, tp3Price } = props;
+  const {
+    data,
+    isDarkTheme,
+    sl,
+    tp1Price,
+    tp2Price,
+    tp3Price,
+    setSl,
+    setTp1,
+    setTp2,
+    setTp3,
+    setSlToPriceType,
+    setTp1ToPriceType,
+    setTp2ToPriceType,
+    setTp3ToPriceType,
+  } = props;
 
   const chartContainerRef = useRef();
   useEffect(() => {
@@ -80,67 +101,81 @@ export const ChartComponent = (props: {
       },
     });
 
-    const priceLinesData: LineData<Time>[] = [];
+    // const priceLinesData = [];
+    //
+    // if (tp1Price) {
+    //   const tpLine = {
+    //     price: tp1Price,
+    //     color: '#26a69a',
+    //     lineWidth: 1 as LineWidth,
+    //     lineStyle: 2,
+    //     axisLabelVisible: true,
+    //     title: 'TP1',
+    //     draggable: true,
+    //   };
+    //   priceSeries.createPriceLine(tpLine);
+    //   priceLinesData.push({ value: tp1Price, time: 0 as UTCTimestamp });
+    // }
+    // if (tp2Price) {
+    //   const tpLine = {
+    //     price: tp2Price,
+    //     color: '#26a69a',
+    //     lineWidth: 1 as LineWidth,
+    //     lineStyle: 2,
+    //     axisLabelVisible: true,
+    //     title: 'TP2',
+    //     draggable: true,
+    //   };
+    //   priceSeries.createPriceLine(tpLine);
+    //   priceLinesData.push({ value: tp2Price, time: 1 as UTCTimestamp });
+    // }
+    // if (tp3Price) {
+    //   const tpLine = {
+    //     price: tp3Price,
+    //     color: '#26a69a',
+    //     lineWidth: 1 as LineWidth,
+    //     lineStyle: 2,
+    //     axisLabelVisible: true,
+    //     title: 'TP3',
+    //     draggable: true,
+    //   };
+    //   priceSeries.createPriceLine(tpLine);
+    //   priceLinesData.push({ value: tp3Price, time: 2 as UTCTimestamp });
+    // }
+    //
+    // if (sl) {
+    //   const slLine: CreatePriceLineOptions = {
+    //     price: sl,
+    //     color: '#ef5350',
+    //     lineWidth: 1 as LineWidth,
+    //     lineStyle: 2,
+    //     axisLabelVisible: true,
+    //     title: 'SL',
+    //     draggable: true,
+    //   };
+    //   priceSeries.createPriceLine(slLine);
+    //   priceLinesData.push({ value: sl, time: 3 as UTCTimestamp });
+    // }
+    //
+    //
+    // const priceLineSeries = chart.addLineSeries({
+    //   color: 'transparent',
+    //   lastValueVisible: false,
+    //   crosshairMarkerVisible: false,
+    // });
+    //
+    // priceLineSeries.setData(priceLinesData);
 
-    if (tp1Price) {
-      const tpLine = {
-        price: tp1Price,
-        color: '#26a69a',
-        lineWidth: 1 as LineWidth,
-        lineStyle: 2,
-        axisLabelVisible: true,
-        title: 'TP1',
-      };
-      priceSeries.createPriceLine(tpLine);
-      priceLinesData.push({ value: tp1Price, time: (Date.now() - 3) as UTCTimestamp });
-    }
-    if (tp2Price) {
-      const tpLine = {
-        price: tp2Price,
-        color: '#26a69a',
-        lineWidth: 1 as LineWidth,
-        lineStyle: 2,
-        axisLabelVisible: true,
-        title: 'TP2',
-      };
-      priceSeries.createPriceLine(tpLine);
-      priceLinesData.push({ value: tp2Price, time: (Date.now() - 2) as UTCTimestamp });
-    }
-    if (tp3Price) {
-      const tpLine = {
-        price: tp3Price,
-        color: '#26a69a',
-        lineWidth: 1 as LineWidth,
-        lineStyle: 2,
-        axisLabelVisible: true,
-        title: 'TP3',
-      };
-      priceSeries.createPriceLine(tpLine);
-      priceLinesData.push({ value: tp3Price, time: (Date.now() - 1) as UTCTimestamp });
-    }
-
-    if (sl) {
-      const slLine = {
-        price: sl,
-        color: '#ef5350',
-        lineWidth: 1 as LineWidth,
-        lineStyle: 2, // LineStyle.Dashed
-        axisLabelVisible: true,
-        title: 'SL',
-      };
-      priceSeries.createPriceLine(slLine);
-      priceLinesData.push({ value: sl, time: Date.now() as UTCTimestamp });
-    }
-
-    const priceLineSeries = chart.addLineSeries({
-      color: 'transparent',
-      lastValueVisible: false,
-      crosshairMarkerVisible: false,
-    });
-
-    priceLineSeries.setData(priceLinesData);
-
-    priceSeries.setData(data as CandlestickData[]);
+    priceSeries.setData(
+      data.map((o) => ({
+        open: o.open,
+        high: o.high,
+        low: o.low,
+        close: o.close,
+        // time: timeToTz(o.time, Intl.DateTimeFormat().resolvedOptions().timeZone) as UTCTimestamp,
+        time: o.time,
+      }))
+    );
     volumeSeries.setData(
       data.map((element) => ({
         time: element.time,
@@ -149,6 +184,26 @@ export const ChartComponent = (props: {
       }))
     );
 
+    chart.subscribeCustomPriceLineDragged((params) => {
+      switch (params.customPriceLine.options().title) {
+        case 'SL':
+          setSlToPriceType();
+          setSl(params.customPriceLine.options().price);
+          break;
+        case 'TP1':
+          setTp1ToPriceType();
+          setTp1(params.customPriceLine.options().price);
+          break;
+        case 'TP2':
+          setTp2ToPriceType();
+          setTp2(params.customPriceLine.options().price);
+          break;
+        case 'TP3':
+          setTp3ToPriceType();
+          setTp3(params.customPriceLine.options().price);
+          break;
+      }
+    });
     window.addEventListener('resize', handleResize);
 
     return () => {
@@ -156,7 +211,22 @@ export const ChartComponent = (props: {
 
       chart.remove();
     };
-  }, [data, isDarkTheme, sl, tp1Price, tp2Price, tp3Price]);
+  }, [
+    data,
+    isDarkTheme,
+    setSl,
+    setSlToPriceType,
+    setTp1,
+    setTp1ToPriceType,
+    setTp2,
+    setTp2ToPriceType,
+    setTp3,
+    setTp3ToPriceType,
+    sl,
+    tp1Price,
+    tp2Price,
+    tp3Price,
+  ]);
 
   // @ts-ignore
   return <div ref={chartContainerRef} />;

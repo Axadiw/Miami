@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
-import { Time } from 'lightweight-charts';
+import { Time } from '@felipecsl/lightweight-charts';
 import { BASE_URL } from '@/app/consts';
 
 export interface OHLCV {
@@ -20,7 +20,7 @@ export interface GetOHLCVsProps {
   exchange: string;
   timeframe: string;
   symbol: string;
-  limit: number;
+  limit: number | undefined;
 }
 
 export const OHLCVsCacheKey = 'OHLCVs';
@@ -44,4 +44,5 @@ export const useGetOHLCVs = (props: GetOHLCVsProps): UseQueryResult<GetOHLCVsRes
   useQuery({
     queryKey: [OHLCVsCacheKey, props.exchange, props.symbol, props.timeframe, props.limit, props],
     queryFn: () => getOHLCVs(props),
+    enabled: props.limit !== undefined,
   });
