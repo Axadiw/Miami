@@ -3,6 +3,7 @@
 import {
   Button,
   Group,
+  Image,
   Input,
   NumberFormatter,
   NumberInput,
@@ -433,7 +434,7 @@ export default function MarketPage() {
                   </Button>
                 ))}
             </Group>
-            {iframeURL && <img alt="Helper" src={iframeURL} height={300} />}
+            {iframeURL && <Image alt="Helper" src={iframeURL} height={300} />}
             <TextInput
               size="xs"
               value={iframeURL}

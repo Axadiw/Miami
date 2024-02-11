@@ -1812,15 +1812,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@felipecsl/lightweight-charts@npm:4.0.4":
-  version: 4.0.4
-  resolution: "@felipecsl/lightweight-charts@npm:4.0.4"
-  dependencies:
-    fancy-canvas: "npm:0.2.2"
-  checksum: 077e9bfd7affb9ad4fa7df45f71b0fba0e24b90cec658ea4c9131318cf092ac3bb0d2913e93f5ca8bb4e22c1892a8f4ff47c3d9a838d2d3be6b3039a9b94642c
-  languageName: node
-  linkType: hard
-
 "@floating-ui/core@npm:^1.4.2":
   version: 1.5.0
   resolution: "@floating-ui/core@npm:1.5.0"
@@ -8526,13 +8517,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fancy-canvas@npm:0.2.2":
-  version: 0.2.2
-  resolution: "fancy-canvas@npm:0.2.2"
-  checksum: c86e2f258bc7976086f6730db80c7858b446ec1956561522d63f5bff83eaedd7523a63824eae37866dd6e617b161dee4b5fdec73855ef4da643b0eef53965310
-  languageName: node
-  linkType: hard
-
 "fast-deep-equal@npm:^3.1.1, fast-deep-equal@npm:^3.1.3":
   version: 3.1.3
   resolution: "fast-deep-equal@npm:3.1.3"
@@ -11278,7 +11262,6 @@ __metadata:
   resolution: "miami-trade@workspace:."
   dependencies:
     "@babel/core": "npm:^7.22.1"
-    "@felipecsl/lightweight-charts": "npm:4.0.4"
     "@mantine/code-highlight": "npm:^7.5.1"
     "@mantine/core": "npm:^7.5.1"
     "@mantine/form": "npm:^7.5.1"

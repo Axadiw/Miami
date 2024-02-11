@@ -1,6 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { ColorType, createChart, CrosshairMode } from '@felipecsl/lightweight-charts';
 import { OHLCV } from '@/api/useGetOHLCVs';
+import { ColorType, CrosshairMode } from '@/vendor/lightweight-charts/src';
+import { LineWidth } from '@/vendor/lightweight-charts/src/renderers/draw-line';
+import { UTCTimestamp } from '@/vendor/lightweight-charts/src/model/horz-scale-behavior-time/types';
+import { CreatePriceLineOptions } from '@/vendor/lightweight-charts/src/model/price-line-options';
+import { createChart } from '@/vendor/lightweight-charts/src/api/create-chart';
 
 // function timeToTz(originalTime: Time, timeZone: string) {
 //   const zonedDate = new Date(
@@ -101,70 +105,69 @@ export const ChartComponent = (props: {
       },
     });
 
-    // const priceLinesData = [];
-    //
-    // if (tp1Price) {
-    //   const tpLine = {
-    //     price: tp1Price,
-    //     color: '#26a69a',
-    //     lineWidth: 1 as LineWidth,
-    //     lineStyle: 2,
-    //     axisLabelVisible: true,
-    //     title: 'TP1',
-    //     draggable: true,
-    //   };
-    //   priceSeries.createPriceLine(tpLine);
-    //   priceLinesData.push({ value: tp1Price, time: 0 as UTCTimestamp });
-    // }
-    // if (tp2Price) {
-    //   const tpLine = {
-    //     price: tp2Price,
-    //     color: '#26a69a',
-    //     lineWidth: 1 as LineWidth,
-    //     lineStyle: 2,
-    //     axisLabelVisible: true,
-    //     title: 'TP2',
-    //     draggable: true,
-    //   };
-    //   priceSeries.createPriceLine(tpLine);
-    //   priceLinesData.push({ value: tp2Price, time: 1 as UTCTimestamp });
-    // }
-    // if (tp3Price) {
-    //   const tpLine = {
-    //     price: tp3Price,
-    //     color: '#26a69a',
-    //     lineWidth: 1 as LineWidth,
-    //     lineStyle: 2,
-    //     axisLabelVisible: true,
-    //     title: 'TP3',
-    //     draggable: true,
-    //   };
-    //   priceSeries.createPriceLine(tpLine);
-    //   priceLinesData.push({ value: tp3Price, time: 2 as UTCTimestamp });
-    // }
-    //
-    // if (sl) {
-    //   const slLine: CreatePriceLineOptions = {
-    //     price: sl,
-    //     color: '#ef5350',
-    //     lineWidth: 1 as LineWidth,
-    //     lineStyle: 2,
-    //     axisLabelVisible: true,
-    //     title: 'SL',
-    //     draggable: true,
-    //   };
-    //   priceSeries.createPriceLine(slLine);
-    //   priceLinesData.push({ value: sl, time: 3 as UTCTimestamp });
-    // }
-    //
-    //
-    // const priceLineSeries = chart.addLineSeries({
-    //   color: 'transparent',
-    //   lastValueVisible: false,
-    //   crosshairMarkerVisible: false,
-    // });
-    //
-    // priceLineSeries.setData(priceLinesData);
+    const priceLinesData = [];
+
+    if (tp1Price) {
+      const tpLine = {
+        price: tp1Price,
+        color: '#26a69a',
+        lineWidth: 1 as LineWidth,
+        lineStyle: 2,
+        axisLabelVisible: true,
+        title: 'TP1',
+        draggable: true,
+      };
+      priceSeries.createPriceLine(tpLine);
+      priceLinesData.push({ value: tp1Price, time: 0 as UTCTimestamp });
+    }
+    if (tp2Price) {
+      const tpLine = {
+        price: tp2Price,
+        color: '#26a69a',
+        lineWidth: 1 as LineWidth,
+        lineStyle: 2,
+        axisLabelVisible: true,
+        title: 'TP2',
+        draggable: true,
+      };
+      priceSeries.createPriceLine(tpLine);
+      priceLinesData.push({ value: tp2Price, time: 1 as UTCTimestamp });
+    }
+    if (tp3Price) {
+      const tpLine = {
+        price: tp3Price,
+        color: '#26a69a',
+        lineWidth: 1 as LineWidth,
+        lineStyle: 2,
+        axisLabelVisible: true,
+        title: 'TP3',
+        draggable: true,
+      };
+      priceSeries.createPriceLine(tpLine);
+      priceLinesData.push({ value: tp3Price, time: 2 as UTCTimestamp });
+    }
+
+    if (sl) {
+      const slLine: CreatePriceLineOptions = {
+        price: sl,
+        color: '#ef5350',
+        lineWidth: 1 as LineWidth,
+        lineStyle: 2,
+        axisLabelVisible: true,
+        title: 'SL',
+        draggable: true,
+      };
+      priceSeries.createPriceLine(slLine);
+      priceLinesData.push({ value: sl, time: 3 as UTCTimestamp });
+    }
+
+    const priceLineSeries = chart.addLineSeries({
+      color: 'transparent',
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    });
+
+    priceLineSeries.setData(priceLinesData);
 
     priceSeries.setData(
       data.map((o) => ({
@@ -204,6 +207,8 @@ export const ChartComponent = (props: {
           break;
       }
     });
+
+    chart.timeScale().fitContent();
     window.addEventListener('resize', handleResize);
 
     return () => {

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
-import { Time } from '@felipecsl/lightweight-charts';
 import { BASE_URL } from '@/app/consts';
+import { Time } from '@/vendor/lightweight-charts/src/model/horz-scale-behavior-time/types';
 
 export interface OHLCV {
   open: number;
