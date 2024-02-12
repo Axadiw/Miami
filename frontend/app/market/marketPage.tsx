@@ -177,7 +177,10 @@ export default function MarketPage() {
       priceLineSeries.lines.tp3.options(),
     ].forEach((value, index) => {
       if (value.lineVisible) {
-        priceLinesData.push({ value: value.price, time: (Date.now() + index) as UTCTimestamp });
+        priceLinesData.push({
+          value: value.price,
+          time: (Date.now() / 1000 + index) as UTCTimestamp,
+        });
       }
     });
 
@@ -247,7 +250,6 @@ export default function MarketPage() {
                         label: `${value}\n`,
                         onClick: () => {
                           setSelectedSymbol(value);
-                          chartRef.current?.timeScale().fitContent();
                         },
                       }))}
                       nothingFound="Nothing found..."
@@ -499,22 +501,6 @@ export default function MarketPage() {
 
         <Stack>
           <Stack>
-            {/*<OldChartComponent*/}
-            {/*  isDarkTheme={isDarkTheme}*/}
-            {/*  data={ohlcvs?.ohlcvs ?? []}*/}
-            {/*  tp1Price={Number(calculatedValues.tp1Price)}*/}
-            {/*  tp2Price={Number(calculatedValues.tp2Price)}*/}
-            {/*  tp3Price={Number(calculatedValues.tp3Price)}*/}
-            {/*  sl={Number(calculatedValues.slPrice)}*/}
-            {/*  setSl={setSl}*/}
-            {/*  setTp1={setTp1}*/}
-            {/*  setTp2={setTp2}*/}
-            {/*  setTp3={setTp3}*/}
-            {/*  setSlToPriceType={() => setSlType('$')}*/}
-            {/*  setTp1ToPriceType={() => setTp1Type('$')}*/}
-            {/*  setTp2ToPriceType={() => setTp2Type('$')}*/}
-            {/*  setTp3ToPriceType={() => setTp3Type('$')}*/}
-            {/*/>*/}
             <ChartComponent
               ref={chartRef}
               options={{
@@ -595,7 +581,9 @@ export default function MarketPage() {
                     key={`tf-${timeframe}`}
                     variant={timeframe === selectedTimeframe ? 'filled' : 'default'}
                     size="xs"
-                    onClick={() => setSelectedTimeframe(timeframe)}
+                    onClick={() => {
+                      setSelectedTimeframe(timeframe);
+                    }}
                   >
                     {timeframe}
                   </Button>
