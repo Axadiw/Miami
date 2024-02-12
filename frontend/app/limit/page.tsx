@@ -1,7 +1,7 @@
 'use client';
 
-import { Text } from '@mantine/core';
+import { Stack } from '@mantine/core';
 
 export default function LimitPage() {
-  return <Text>LIMIT</Text>;
+  return <Stack w={500} h={500} />;
 }

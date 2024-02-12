@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { OHLCV } from '@/api/useGetOHLCVs';
 import { ColorType, CrosshairMode } from '@/vendor/lightweight-charts/src';
 import { LineWidth } from '@/vendor/lightweight-charts/src/renderers/draw-line';
@@ -13,7 +13,7 @@ import { createChart } from '@/vendor/lightweight-charts/src/api/create-chart';
 //   return zonedDate.getTime() / 1000;
 // }
 
-export const ChartComponent = (props: {
+export const OldChartComponent = (props: {
   data: OHLCV[];
   tp1Price: number | undefined;
   tp2Price: number | undefined;
@@ -70,12 +70,32 @@ export const ChartComponent = (props: {
       width: chartContainerRef.current.clientWidth,
       height: 300,
     });
-
     chart.timeScale().applyOptions({
       rightOffset: 9,
       fixLeftEdge: true,
       timeVisible: true,
     });
+    chart.subscribeCustomPriceLineDragged((params) => {
+      switch (params.customPriceLine.options().title) {
+        case 'SL':
+          setSlToPriceType();
+          setSl(params.customPriceLine.options().price);
+          break;
+        case 'TP1':
+          setTp1ToPriceType();
+          setTp1(params.customPriceLine.options().price);
+          break;
+        case 'TP2':
+          setTp2ToPriceType();
+          setTp2(params.customPriceLine.options().price);
+          break;
+        case 'TP3':
+          setTp3ToPriceType();
+          setTp3(params.customPriceLine.options().price);
+          break;
+      }
+    });
+    chart.timeScale().fitContent();
 
     const handleResize = () => {
       // @ts-ignore
@@ -85,6 +105,23 @@ export const ChartComponent = (props: {
     const priceSeries = chart.addCandlestickSeries({
       priceFormat: { precision: 6, minMove: 0.000001 },
     });
+    priceSeries.priceScale().applyOptions({
+      scaleMargins: {
+        top: 0.01,
+        bottom: 0.1, // lowest point will be 40% away from the bottom
+      },
+    });
+    priceSeries.setData(
+      data.map((o) => ({
+        open: o.open,
+        high: o.high,
+        low: o.low,
+        close: o.close,
+        // time: timeToTz(o.time, Intl.DateTimeFormat().resolvedOptions().timeZone) as UTCTimestamp,
+        time: o.time,
+      }))
+    );
+
     const volumeSeries = chart.addHistogramSeries({
       priceFormat: {
         type: 'volume',
@@ -92,21 +129,21 @@ export const ChartComponent = (props: {
       lastValueVisible: false,
       priceScaleId: '',
     });
-    priceSeries.priceScale().applyOptions({
-      scaleMargins: {
-        top: 0.01,
-        bottom: 0.1, // lowest point will be 40% away from the bottom
-      },
-    });
     volumeSeries.priceScale().applyOptions({
       scaleMargins: {
         top: 0.9,
         bottom: 0,
       },
     });
+    volumeSeries.setData(
+      data.map((element) => ({
+        time: element.time,
+        value: element.volume,
+        color: element.open > element.close ? '#DD5E56' : '#52A49A',
+      }))
+    );
 
     const priceLinesData = [];
-
     if (tp1Price) {
       const tpLine = {
         price: tp1Price,
@@ -166,51 +203,9 @@ export const ChartComponent = (props: {
       lastValueVisible: false,
       crosshairMarkerVisible: false,
     });
-
     priceLineSeries.setData(priceLinesData);
 
-    priceSeries.setData(
-      data.map((o) => ({
-        open: o.open,
-        high: o.high,
-        low: o.low,
-        close: o.close,
-        // time: timeToTz(o.time, Intl.DateTimeFormat().resolvedOptions().timeZone) as UTCTimestamp,
-        time: o.time,
-      }))
-    );
-    volumeSeries.setData(
-      data.map((element) => ({
-        time: element.time,
-        value: element.volume,
-        color: element.open > element.close ? '#DD5E56' : '#52A49A',
-      }))
-    );
-
-    chart.subscribeCustomPriceLineDragged((params) => {
-      switch (params.customPriceLine.options().title) {
-        case 'SL':
-          setSlToPriceType();
-          setSl(params.customPriceLine.options().price);
-          break;
-        case 'TP1':
-          setTp1ToPriceType();
-          setTp1(params.customPriceLine.options().price);
-          break;
-        case 'TP2':
-          setTp2ToPriceType();
-          setTp2(params.customPriceLine.options().price);
-          break;
-        case 'TP3':
-          setTp3ToPriceType();
-          setTp3(params.customPriceLine.options().price);
-          break;
-      }
-    });
-
-    chart.timeScale().fitContent();
     window.addEventListener('resize', handleResize);
-
     return () => {
       window.removeEventListener('resize', handleResize);
 
