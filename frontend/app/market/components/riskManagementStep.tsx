@@ -3,7 +3,7 @@ import React from 'react';
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
 import { PriceTypeType } from '@/app/account/components/positionCalculators/marketCalculator';
 
-export const Step2 = () => {
+export const RiskManagementStep = () => {
   const {
     active,
     maxLoss,

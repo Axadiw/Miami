@@ -3,7 +3,7 @@ import React from 'react';
 import { Side } from '@/app/account/components/positionCalculators/marketCalculator';
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
 
-export const Step0 = () => {
+export const SideSelectionStep = () => {
   const { side, setSide } = useMarketPageContext();
   return (
     <Group>

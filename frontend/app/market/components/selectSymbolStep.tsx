@@ -4,7 +4,7 @@ import React from 'react';
 import { spotlight, Spotlight } from '@mantine/spotlight';
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
 
-export const Step1 = () => {
+export const SelectSymbolStep = () => {
   const { fetchSymbolsSuccess, symbols, setSelectedSymbol, selectedSymbol, currentPrice } =
     useMarketPageContext();
   const symbolsList = symbols?.symbols ?? [];

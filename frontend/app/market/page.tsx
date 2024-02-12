@@ -1,3 +1,10 @@
-import MarketPage from '@/app/market/marketPage';
+'use client';
 
-export default MarketPage;
+import MarketPage from '@/app/market/marketPage';
+import { MarketPageContextProvider } from '@/contexts/MarketPageContext/MarketPageContext';
+
+export default () => (
+  <MarketPageContextProvider>
+    <MarketPage />
+  </MarketPageContextProvider>
+);

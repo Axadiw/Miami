@@ -2,7 +2,7 @@ import { Switch } from '@mantine/core';
 import React from 'react';
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
 
-export const Step4 = () => {
+export const ExtraSettingsStep = () => {
   const { slToBreakEvenAtTp1, setSlToBreakEvenAtTp1, active } = useMarketPageContext();
   return (
     <>

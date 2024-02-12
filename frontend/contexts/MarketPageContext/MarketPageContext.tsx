@@ -53,8 +53,8 @@ interface MarketPageContext {
   setTp3Percent: Dispatch<SetStateAction<number | string | undefined>>;
   slToBreakEvenAtTp1: boolean;
   setSlToBreakEvenAtTp1: Dispatch<SetStateAction<boolean>>;
-  iframeURL: string | undefined;
-  setIFrameURL: Dispatch<SetStateAction<string | undefined>>;
+  externalChartHelperURL: string | undefined;
+  setExternalChartHelperURL: Dispatch<SetStateAction<string | undefined>>;
   side: Side;
   setSide: Dispatch<SetStateAction<Side>>;
   ohlcvs: GetOHLCVsResponse | undefined;
@@ -91,7 +91,9 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
   const [tp2Percent, setTp2Percent] = useState<number | string | undefined>(25);
   const [tp3Percent, setTp3Percent] = useState<number | string | undefined>(25);
   const [slToBreakEvenAtTp1, setSlToBreakEvenAtTp1] = useState(true);
-  const [iframeURL, setIFrameURL] = useState<string | undefined>(undefined);
+  const [externalChartHelperURL, setExternalChartHelperURL] = useState<string | undefined>(
+    undefined
+  );
   const [side, setSide] = useState<Side>('Buy');
   const { data: ohlcvs } = dataLayer.useGetOHLCVs({
     exchange,
@@ -178,8 +180,8 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
       setTp3Percent,
       slToBreakEvenAtTp1,
       setSlToBreakEvenAtTp1,
-      iframeURL,
-      setIFrameURL,
+      externalChartHelperURL,
+      setExternalChartHelperURL,
       side,
       setSide,
       ohlcvs,
@@ -208,7 +210,7 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
       tp2Percent,
       tp3Percent,
       slToBreakEvenAtTp1,
-      iframeURL,
+      externalChartHelperURL,
       side,
       ohlcvs,
       currentPrice,

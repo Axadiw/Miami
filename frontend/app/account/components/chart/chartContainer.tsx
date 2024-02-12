@@ -74,7 +74,7 @@ export const ChartContainer = forwardRef((props: ChartContainerProps, ref) => {
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
-      chart.remove();
+      // chart.remove();
     };
   }, [container.clientWidth]);
 

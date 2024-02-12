@@ -4,21 +4,22 @@ import PrismaZoom from 'react-prismazoom';
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
 
 export const ExternalChartHelper = () => {
-  const { iframeURL, setIFrameURL } = useMarketPageContext();
+  const { externalChartHelperURL, setExternalChartHelperURL } = useMarketPageContext();
   return (
     <>
-      {iframeURL && (
+      {externalChartHelperURL && (
         <Group h={300} style={{ overflow: 'hidden' }}>
-          <PrismaZoom style={{ overflow: 'hidden' }}>
-            <Image alt="Helper" src={iframeURL} height={300} style={{ overflow: 'hidden' }} />
+          <PrismaZoom>
+            <Image alt="Helper" src={externalChartHelperURL} height={300} fit="contain" />
           </PrismaZoom>
         </Group>
       )}
       <TextInput
         size="xs"
-        value={iframeURL}
-        onChange={(v) => setIFrameURL(v.currentTarget.value)}
-        label="URL"
+        w="100%"
+        value={externalChartHelperURL}
+        onChange={(v) => setExternalChartHelperURL(v.currentTarget.value)}
+        label="URL for external chart (double click to zoom)"
         placeholder="type URL"
       />
     </>

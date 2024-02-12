@@ -1,4 +1,4 @@
-import { Button, Group } from '@mantine/core';
+import { Center, SegmentedControl } from '@mantine/core';
 import React, { useEffect } from 'react';
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
 
@@ -10,20 +10,14 @@ export const TimeframesSelector = () => {
     }
   }, [setSelectedTimeframe, timeframes]);
   return (
-    <Group>
-      {timeframes &&
-        timeframes.timeframes.map((timeframe) => (
-          <Button
-            key={`tf-${timeframe}`}
-            variant={timeframe === selectedTimeframe ? 'filled' : 'default'}
-            size="xs"
-            onClick={() => {
-              setSelectedTimeframe(timeframe);
-            }}
-          >
-            {timeframe}
-          </Button>
-        ))}
-    </Group>
+    <Center>
+      {timeframes && (
+        <SegmentedControl
+          value={selectedTimeframe ?? undefined}
+          onChange={(timeframe) => setSelectedTimeframe(timeframe)}
+          data={timeframes.timeframes}
+        />
+      )}
+    </Center>
   );
 };
