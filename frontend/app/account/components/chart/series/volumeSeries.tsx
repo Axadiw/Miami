@@ -1,6 +1,10 @@
 /* eslint-disable react/no-this-in-sfc */
 import React, { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
-import { ChartContext, useChartContext, VolumeSeriesWrapper } from '@/contexts/ChartContext/ChartContext';
+import {
+  ChartContext,
+  useChartContext,
+  VolumeSeriesWrapper,
+} from '@/contexts/ChartContext/ChartContext';
 
 export const VolumeSeries = forwardRef(
   (
