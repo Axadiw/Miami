@@ -1,6 +1,6 @@
 'use client';
 
-import { Group, NumberFormatter, Space, Stack, Text, Timeline } from '@mantine/core';
+import { Group, NumberFormatter, SimpleGrid, Space, Stack, Text, Timeline } from '@mantine/core';
 import React from 'react';
 import {
   IconNumber0,
@@ -28,44 +28,42 @@ export default function MarketPage() {
 
   return (
     <MarketPageContextProvider>
-      <Stack>
-        <Group grow align="flex-start">
-          <Stack>
-            <Group>
-              <Text>Balance:</Text>
-              <NumberFormatter prefix="$ " value={`${accountBalance}`} thousandSeparator />
-            </Group>
-            <Timeline active={active} bulletSize={24} lineWidth={2}>
-              <Timeline.Item bullet={<IconNumber0 size={20} />}>
-                <Step0 />
-              </Timeline.Item>
-              <Timeline.Item bullet={<IconNumber1 size={20} />}>
-                <Step1 />
-              </Timeline.Item>
-              <Timeline.Item bullet={<IconNumber2 size={20} />}>
-                <Step2 />
-              </Timeline.Item>
-              <Timeline.Item bullet={<IconNumber3 size={20} />}>
-                <Step3 />
-              </Timeline.Item>
-              <Timeline.Item bullet={<IconNumber4 size={20} />}>
-                <Step4 />
-              </Timeline.Item>
-            </Timeline>
-            <Space h="md" />
-          </Stack>
+      <SimpleGrid cols={{ base: 1, sm: 2 }}>
+        <Stack>
+          <Group>
+            <Text>Balance:</Text>
+            <NumberFormatter prefix="$ " value={`${accountBalance}`} thousandSeparator />
+          </Group>
+          <Timeline active={active} bulletSize={24} lineWidth={2}>
+            <Timeline.Item bullet={<IconNumber0 size={20} />}>
+              <Step0 />
+            </Timeline.Item>
+            <Timeline.Item bullet={<IconNumber1 size={20} />}>
+              <Step1 />
+            </Timeline.Item>
+            <Timeline.Item bullet={<IconNumber2 size={20} />}>
+              <Step2 />
+            </Timeline.Item>
+            <Timeline.Item bullet={<IconNumber3 size={20} />}>
+              <Step3 />
+            </Timeline.Item>
+            <Timeline.Item bullet={<IconNumber4 size={20} />}>
+              <Step4 />
+            </Timeline.Item>
+          </Timeline>
+          <Space h="md" />
+        </Stack>
 
+        <Stack>
           <Stack>
-            <Stack>
-              <MarketChart />
-              <TimeframesSelector />
-              <ExternalChartHelper />
-            </Stack>
-            <Space h="md" />
-            <ExecuteButton />
+            <MarketChart />
+            <TimeframesSelector />
+            <ExternalChartHelper />
           </Stack>
-        </Group>
-      </Stack>
+          <Space h="md" />
+          <ExecuteButton />
+        </Stack>
+      </SimpleGrid>
     </MarketPageContextProvider>
   );
 }
