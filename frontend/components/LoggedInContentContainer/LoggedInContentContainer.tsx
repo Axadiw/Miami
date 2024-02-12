@@ -104,9 +104,7 @@ export function LoggedInContentContainer({ children }: { children: any }) {
             </a>
             <Group p="10px">
               <ColorSchemeToggle />
-              <Code fw={700}>
-                version: {versionDataFetchStatus === 'success' ? versionData : ''}
-              </Code>
+              <Code fw={700}>{versionDataFetchStatus === 'success' ? versionData : ''}</Code>
             </Group>
           </div>
         </nav>

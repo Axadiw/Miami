@@ -80,6 +80,11 @@ export const ChartContainer = forwardRef((props: ChartContainerProps, ref) => {
 
   useLayoutEffect(() => {
     const currentRef = chartApiRef.current;
+    currentRef.chart().applyOptions(options);
+  }, [options]);
+
+  useLayoutEffect(() => {
+    const currentRef = chartApiRef.current;
     currentRef.chart();
   }, []);
 
