@@ -1,56 +1,58 @@
 /* eslint-disable react/no-this-in-sfc */
 import React, { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
-import {
-  ChartContext,
-  PriceSeriesWrapper,
-  useChartContext,
-} from '@/contexts/ChartContext/ChartContext';
-import { SeriesProps } from '@/app/account/components/chart/series/common';
+import { ChartContext, PriceSeriesWrapper, useChartContext } from '@/contexts/ChartContext/ChartContext';
 
-export const PriceSeries = forwardRef((props: SeriesProps, ref) => {
-  const { chartWrapper } = useChartContext();
-
-  const context = useRef({
-    series() {
-      if (!this._series) {
-        const series = chartWrapper?.chart().addCandlestickSeries({
-          priceFormat: { precision: 6, minMove: 0.000001 },
-        });
-        series?.priceScale().applyOptions({
-          scaleMargins: {
-            top: 0.01,
-            bottom: 0.1,
-          },
-        });
-        this._series = series;
-      }
-      return this._series;
+export const PriceSeries = forwardRef(
+  (
+    props: {
+      children?: any;
     },
-    free() {
-      // if (this._series) {
-      //   chartWrapper?.free();
-      // }
-    },
-  } as PriceSeriesWrapper);
+    ref
+  ) => {
+    const { chartWrapper } = useChartContext();
 
-  useLayoutEffect(() => {
-    const currentRef = context.current;
-    currentRef.series();
+    const context = useRef({
+      series() {
+        if (!this._series) {
+          const series = chartWrapper?.chart().addCandlestickSeries({
+            priceFormat: { precision: 6, minMove: 0.000001 },
+          });
+          series?.priceScale().applyOptions({
+            scaleMargins: {
+              top: 0.01,
+              bottom: 0.1,
+            },
+          });
+          this._series = series;
+        }
+        return this._series;
+      },
+      free() {
+        // if (this._series) {
+        //   chartWrapper?.free();
+        // }
+      },
+    } as PriceSeriesWrapper);
 
-    return () => currentRef.free();
-  }, []);
+    useLayoutEffect(() => {
+      const currentRef = context.current;
+      currentRef.series();
 
-  useImperativeHandle(ref, () => context.current.series(), []);
+      return () => currentRef.free();
+    }, []);
 
-  return (
-    <ChartContext.Provider
-      value={{
-        chartWrapper,
-        priceSeriesWrapper: context.current,
-      }}
-    >
-      {props.children}
-    </ChartContext.Provider>
-  );
-});
+    useImperativeHandle(ref, () => context.current.series(), []);
+
+    return (
+      <ChartContext.Provider
+        value={{
+          chartWrapper,
+          priceSeriesWrapper: context.current,
+        }}
+      >
+        {props.children}
+      </ChartContext.Provider>
+    );
+  }
+);
 PriceSeries.displayName = 'PriceSeries';
