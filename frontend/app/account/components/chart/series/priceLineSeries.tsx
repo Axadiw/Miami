@@ -43,9 +43,9 @@ export const PriceLinesSeries = forwardRef((props: PriceLineSeriesProps, ref) =>
       return this._data;
     },
     free() {
-      if (this._data) {
-        chartWrapper?.free();
-      }
+      // if (this._data) {
+      //   chartWrapper?.free();
+      // }
     },
   } as PriceLinesSeriesWrapper);
 

@@ -13,7 +13,6 @@ export const PriceSeries = forwardRef((props: SeriesProps, ref) => {
   const context = useRef({
     series() {
       if (!this._series) {
-        const { data } = props;
         const series = chartWrapper?.chart().addCandlestickSeries({
           priceFormat: { precision: 6, minMove: 0.000001 },
         });
@@ -23,15 +22,14 @@ export const PriceSeries = forwardRef((props: SeriesProps, ref) => {
             bottom: 0.1,
           },
         });
-        series?.setData(data);
         this._series = series;
       }
       return this._series;
     },
     free() {
-      if (this._series) {
-        chartWrapper?.free();
-      }
+      // if (this._series) {
+      //   chartWrapper?.free();
+      // }
     },
   } as PriceSeriesWrapper);
 

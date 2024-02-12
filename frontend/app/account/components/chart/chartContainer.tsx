@@ -55,9 +55,9 @@ export const ChartContainer = forwardRef((props: ChartContainerProps, ref) => {
       return this._chart;
     },
     free() {
-      if (this._chart) {
-        this._chart.remove();
-      }
+      // if (this._chart) {
+      //   this._chart.remove();
+      // }
     },
   } as ChartWrapper);
 

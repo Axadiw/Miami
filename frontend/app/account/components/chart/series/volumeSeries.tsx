@@ -13,7 +13,6 @@ export const VolumeSeries = forwardRef((props: SeriesProps, ref) => {
   const context = useRef({
     series() {
       if (!this._series) {
-        const { data } = props;
         const series = chartWrapper?.chart().addHistogramSeries({
           priceFormat: {
             type: 'volume',
@@ -27,16 +26,15 @@ export const VolumeSeries = forwardRef((props: SeriesProps, ref) => {
             bottom: 0,
           },
         });
-        series?.setData(data);
 
         this._series = series;
       }
       return this._series;
     },
     free() {
-      if (this._series) {
-        chartWrapper?.free();
-      }
+      // if (this._series) {
+      //   chartWrapper?.free();
+      // }
     },
   } as VolumeSeriesWrapper);
 
