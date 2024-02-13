@@ -79,9 +79,9 @@ async def launch_all_harvesters_for_single_exchange(exchange_name: str, connecto
                              args=(exchange_name, connector_generator, historical_queue, realtime_queue,))
 
     historical_thread.start()
-    # realtime_thread.start()
+    realtime_thread.start()
     metadata_thread.start()
 
     historical_thread.join()
-    # realtime_thread.join()
+    realtime_thread.join()
     metadata_thread.join()

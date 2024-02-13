@@ -128,11 +128,13 @@ class HistoricalHarvester:
             select(LastFetchedDate).filter_by(exchange=self.exchange.id, symbol=data.symbol.id,
                                               timeframe=data.timeframe.id))).scalar_one_or_none()
 
+        newLastFetchedDate = data.end - timedelta(seconds=data.timeframe.seconds)
         if existing_date_entry is None:
             db_session.add(LastFetchedDate(exchange=self.exchange.id, symbol=data.symbol.id,
-                                           timeframe=data.timeframe.id, last_fetched=data.end))
+                                           timeframe=data.timeframe.id,
+                                           last_fetched=newLastFetchedDate))
         else:
-            existing_date_entry.last_fetched = data.end
+            existing_date_entry.last_fetched = newLastFetchedDate
         await db_session.commit()
 
     async def fetch_single_ohlcv(self, data: DataToFetch, current_fetch: int,
