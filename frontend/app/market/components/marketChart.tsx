@@ -85,7 +85,7 @@ export const MarketChart = () => {
   }, [ohlcvs?.ohlcvs]);
 
   useEffect(() => {
-    const newSocket = socketIOClient(BASE_URL, { transports: ['polling'] });
+    const newSocket = socketIOClient(BASE_URL);
     newSocket.connect();
     setCurrentSocket(newSocket);
   }, []);

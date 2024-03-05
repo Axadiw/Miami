@@ -47,18 +47,21 @@ def prepare_app():
     return app
 
 
+def gunicorn_create(wsgi, response):
+    create_app()
+
+
 def create_app():
     application = prepare_app()
     mqtt = Mqtt(application)
     socketio_instance = SocketIO(application, cors_allowed_origins='*')
 
     is_debug = True if os.environ.get(miami_version_env_key) == 'local' else False
-
     db.init_app(application)
-    # socketio_instance.run(application, debug=is_debug, allow_unsafe_werkzeug=is_debug, log_output=is_debug,
-    #                       use_reloader=is_debug, host='127.0.0.1' if is_debug else '0.0.0.0')
-    socketio_instance.run(application, debug=True, allow_unsafe_werkzeug=True, log_output=True,
-                          use_reloader=True, host='127.0.0.1' if is_debug else 'api.miamitrade.pro')
+
     mqtt.init_app(application)
     handle_ohlcv_realtime_candles(socketio_instance, mqtt)
+    socketio_instance.run(application, debug=is_debug, allow_unsafe_werkzeug=is_debug, log_output=is_debug,
+                          use_reloader=False, host='127.0.0.1' if is_debug else '0.0.0.0')
+
     return application
