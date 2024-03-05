@@ -1,7 +1,8 @@
 import { Group, Input, NumberInput, SegmentedControl, Text } from '@mantine/core';
 import React from 'react';
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
-import { PriceTypeType } from '@/app/account/components/positionCalculators/marketCalculator';
+import { PriceTypeType } from '@/app/shared/components/positionCalculators/marketCalculator';
+import { usePositionDetailsValidators } from '@/app/shared/hooks/usePositionDetailsValidators/usePositionDetailsValidators';
 
 export const RiskManagementStep = () => {
   const {
@@ -14,9 +15,10 @@ export const RiskManagementStep = () => {
     slType,
     sl,
     setSl,
-    side,
     setSlType,
   } = useMarketPageContext();
+
+  const { maximumLossAbove0, slAbove0, slBelowOpen } = usePositionDetailsValidators();
   return (
     <>
       <Input.Wrapper label="Max loss:" size="xs">
@@ -28,6 +30,7 @@ export const RiskManagementStep = () => {
             size="xs"
             value={maxLoss}
             onChange={setMaxLoss}
+            error={maximumLossAbove0}
           />
           <SegmentedControl
             value={maxLossType}
@@ -54,11 +57,7 @@ export const RiskManagementStep = () => {
             onChange={(v) => {
               setSl(v);
             }}
-            error={
-              calculatedValues.slPercent < 0
-                ? `should be ${side === 'Buy' ? 'below' : 'above'} current price`
-                : undefined
-            }
+            error={slAbove0 ?? slBelowOpen}
           />
           <SegmentedControl
             disabled={active < 2}

@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useState } from 'react';
-import { ChartContainer } from '@/app/account/components/chart/chartContainer';
+import { ChartContainer } from '@/app/shared/components/chart/chartContainer';
 import { ChartOptionsBase } from '@/vendor/lightweight-charts/src/model/chart-model';
 
 export interface ChartComponentProps {

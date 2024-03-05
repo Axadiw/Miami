@@ -12,7 +12,7 @@ import {
   MarketCalculatorResponse,
   PriceTypeType,
   Side,
-} from '@/app/account/components/positionCalculators/marketCalculator';
+} from '@/app/shared/components/positionCalculators/marketCalculator';
 import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 import { GetOHLCVsResponse } from '@/api/useGetOHLCVs';
 import { GetTimeframesResponse } from '@/api/useGetTimeframes';
@@ -94,7 +94,7 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
   const [externalChartHelperURL, setExternalChartHelperURL] = useState<string | undefined>(
     undefined
   );
-  const [side, setSide] = useState<Side>('Buy');
+  const [side, setSide] = useState<Side>('Long');
   const { data: ohlcvs } = dataLayer.useGetOHLCVs({
     exchange,
     symbol: selectedSymbol ?? '',

@@ -34,6 +34,14 @@ services:
         - "traefik.docker.network=traefik-public"
         - "traefik.constraint-label=traefik-public"
         - "traefik.http.services.miami-frontend-https.loadbalancer.server.port=3000"
+  mqtt:
+    image:
+      eclipse-mosquitto:2.0
+    ports:
+      - 1883:1883
+      - 9001:9001
+    networks:
+      - miami-internal
 
   api:
     image: ghcr.io/axadiw/miami-api:_MIAMI_VERSION_

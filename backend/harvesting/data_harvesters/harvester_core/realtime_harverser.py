@@ -5,10 +5,12 @@ from datetime import datetime, timedelta
 from queue import Queue
 from typing import Type, Callable
 
+from gmqtt import Client as MQTTClient
 from sqlalchemy import select, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ccxt import BadSymbol
 from harvesting.data_harvesters.consts import GLOBAL_QUEUE_START_COMMAND, GLOBAL_QUEUE_REFRESH_COMMAND
 from harvesting.data_harvesters.database import get_session
 from harvesting.data_harvesters.harvester_core.common_harvester import fetch_list_of_symbols, fetch_exchange_entry, \
@@ -29,8 +31,6 @@ class RealtimeHarvester:
         logging.info('[Realtime Harvester Watcher] Initializing ')
         self.queue = queue
         self.exchange_connector_generator = client_generator
-        self.should_refresh_candle_symbols = True
-        self.should_refresh_tickers_symbols = True
         self.is_initialized = False
         self.exchange_name = exchange_name
         self.symbols: list[Type[Symbol]] = []
@@ -39,6 +39,7 @@ class RealtimeHarvester:
         self.added_tickers_count = 0
         self.tickers_counter_timer = datetime.now()
         self.added_candles_count = 0
+        self.mqttt_client = MQTTClient(f'{exchange_name}-realtime-harvester')
         self.candles_counter_timer = datetime.now()
 
     async def watch_candles_all_timeframes(self):
@@ -50,30 +51,27 @@ class RealtimeHarvester:
         await asyncio.gather(*[self.watch_candles(timeframe) for timeframe in self.timeframes])
 
     async def watch_candles(self, timeframe: Type[Timeframe]):
-        logging.info(f'[Realtime Harvester Watcher] Will start watching for candles')
+        logging.info(f'[Realtime Harvester Watcher] Will start watching for candles TF: {timeframe.name}')
         exchange_connector = self.exchange_connector_generator()
-        subscriptions = []
 
         async with get_session(app_name='watch_candles') as db_session:
             while True:
                 try:
-                    if self.should_refresh_candle_symbols:
-                        subscriptions = []
-                        for symbol in self.symbols:
-                            subscriptions.append([symbol.name, timeframe.name])
-                        self.should_refresh_candle_symbols = False
+                    subscriptions = []
+                    for symbol in self.symbols:
+                        subscriptions.append([symbol.name, timeframe.name])
+                    # if (datetime.now() - self.candles_counter_timer).total_seconds() > 60:
+                    #     logging.info(
+                    #         f'[Realtime Harvester Watcher]: In the last minute processed {self.added_candles_count} new candles')
+                    #     self.candles_counter_timer = datetime.now()
+                    #     self.added_candles_count = 0
 
-                    if (datetime.now() - self.candles_counter_timer).total_seconds() > 60:
-                        logging.info(
-                            f'[Realtime Harvester Watcher]: In the last minute processed {self.added_candles_count} new candles')
-                        self.candles_counter_timer = datetime.now()
-                        self.added_candles_count = 0
-
-                    if len(subscriptions) > 0:
-                        candles: dict = await exchange_connector.watch_ohlcv(subscriptions)
-                        await asyncio.create_task(self.handle_candles(candles, db_session=db_session))
-                    else:
-                        await asyncio.sleep(1)  # empty subscriptions array
+                    candles: dict = await exchange_connector.watch_ohlcv(subscriptions)
+                    await asyncio.create_task(self.handle_candles(candles, db_session=db_session))
+                    await asyncio.sleep(1)  # empty subscriptions array
+                except BadSymbol as e:
+                    logging.critical(f'Bad symbol {e}')
+                    exchange_connector.load_markets()
                 except Exception as e:
                     logging.critical(f'[Realtime Harvester Watcher] Error watch_candles {e}')
                     await asyncio.sleep(1)
@@ -88,12 +86,20 @@ class RealtimeHarvester:
                 candle_data = received_timeframes_and_data[1]
 
                 for candle in candle_data:
+                    converted_candle = await self.convert_candle_data_to_ohlcv_object(db_session, candle_symbol,
+                                                                                      candle_timeframe, candle)
+                    toEmit = {**converted_candle,
+                              'timestamp': datetime.timestamp(converted_candle['timestamp']),
+                              'exchange': self.exchange.name,
+                              'symbol': candle_symbol,
+                              'timeframe': candle_timeframe, }
+                    self.mqttt_client.publish('ohlcv', toEmit)
+
                     if candle[6]:
-                        ohlcv_candles_to_save.append(
-                            await self.convert_candle_data_to_ohlcv_object(db_session, candle_symbol,
-                                                                           candle_timeframe, candle))
+                        ohlcv_candles_to_save.append(converted_candle)
                         # logging.warning(
                         #     f'New Realtime candle for {candle_symbol} {candle_timeframe} {datetime.fromtimestamp(candle[0] / 1000.0)}')
+
         if len(ohlcv_candles_to_save) > 0:
             self.added_candles_count += len(ohlcv_candles_to_save)
             await db_session.execute(
@@ -128,28 +134,28 @@ class RealtimeHarvester:
     async def watch_tickers(self):
         exchange_connector = self.exchange_connector_generator()
         logging.info(f'[Realtime Harvester Watcher] Will start watching for ticker')
-        subscriptions = []
 
         async with get_session(app_name='watch_tickers') as db_session:
             while True:
                 try:
-                    if self.should_refresh_tickers_symbols:
-                        subscriptions = []
-                        for symbol in self.symbols:
-                            subscriptions.append(symbol.name)
-                        self.should_refresh_tickers_symbols = False
+                    subscriptions = []
+                    for symbol in self.symbols:
+                        subscriptions.append(symbol.name)
 
-                    if (datetime.now() - self.tickers_counter_timer).total_seconds() > 60:
-                        logging.info(
-                            f'[Realtime Harvester Watcher]: In the last minute processed {self.added_tickers_count} new tickers')
-                        self.tickers_counter_timer = datetime.now()
-                        self.added_tickers_count = 0
+                    # if (datetime.now() - self.tickers_counter_timer).total_seconds() > 60:
+                    #     logging.info(
+                    #         f'[Realtime Harvester Watcher]: In the last minute processed {self.added_tickers_count} new tickers')
+                    #     self.tickers_counter_timer = datetime.now()
+                    #     self.added_tickers_count = 0
 
                     if len(subscriptions) > 0:
                         ticker: dict = await exchange_connector.watch_tickers(subscriptions)
                         await asyncio.create_task(self.handle_tickers(ticker, db_session=db_session))
                     else:
                         await asyncio.sleep(1)  # empty subscriptions array
+                except BadSymbol as e:
+                    logging.critical(f'Bad symbol {e}')
+                    exchange_connector.load_markets()
                 except Exception as e:
                     logging.critical(f'[Realtime Harvester Watcher] Error watch_tickers {e}')
                     await asyncio.sleep(1)
@@ -184,8 +190,7 @@ class RealtimeHarvester:
                 self.is_initialized = True
             elif command == GLOBAL_QUEUE_REFRESH_COMMAND:
                 self.symbols = await fetch_list_of_symbols(self.exchange)
-                self.should_refresh_candle_symbols = True
-                self.should_refresh_tickers_symbols = True
 
     async def start(self):
+        await self.mqttt_client.connect('mqtt', 1883, keepalive=60)
         await asyncio.gather(*[self.start_queue_loop(), self.watch_candles_all_timeframes(), self.watch_tickers()])

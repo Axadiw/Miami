@@ -14,6 +14,10 @@ class BaseExchangeConnector(ABC):
         pass
 
     @abstractmethod
+    async def load_markets(self):
+        pass
+
+    @abstractmethod
     async def fetch_ohlcv(self, exchange: Type[Exchange], data: DataToFetch) -> List[tuple]:
         pass
 

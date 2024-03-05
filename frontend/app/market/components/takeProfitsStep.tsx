@@ -1,11 +1,11 @@
 import { Group, Input, NumberInput, SegmentedControl, Slider, Stack, Text } from '@mantine/core';
 import React from 'react';
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
-import { PriceTypeType } from '@/app/account/components/positionCalculators/marketCalculator';
+import { PriceTypeType } from '@/app/shared/components/positionCalculators/marketCalculator';
+import { usePositionDetailsValidators } from '@/app/shared/hooks/usePositionDetailsValidators/usePositionDetailsValidators';
 
 export const TakeProfitsStep = () => {
   const {
-    side,
     active,
     calculatedValues,
     tp1,
@@ -27,6 +27,16 @@ export const TakeProfitsStep = () => {
     setTp2Percent,
     setTp3Percent,
   } = useMarketPageContext();
+
+  const {
+    tp1Above0,
+    tp2Above0,
+    tp3Above0,
+    tp1AboveOpen,
+    tp2AboveTp1,
+    tp3AboveTp2,
+    tpVolumesAddTo100,
+  } = usePositionDetailsValidators();
   return (
     <>
       <Group>
@@ -39,11 +49,7 @@ export const TakeProfitsStep = () => {
               size="xs"
               value={tp1}
               onChange={setTp1}
-              error={
-                calculatedValues.tp1Percent < 0
-                  ? `should be ${side === 'Buy' ? 'above' : 'below'} current price`
-                  : undefined
-              }
+              error={tp1Above0 ?? tp1AboveOpen}
             />
             <SegmentedControl
               disabled={active < 3}
@@ -69,6 +75,7 @@ export const TakeProfitsStep = () => {
                 size="xs"
                 value={tp1Percent}
                 onChange={setTp1Percent}
+                error={tpVolumesAddTo100}
               />
               <Slider
                 color="blue"
@@ -94,11 +101,7 @@ export const TakeProfitsStep = () => {
               size="xs"
               value={tp2}
               onChange={setTp2}
-              error={
-                calculatedValues.tp2Percent < 0
-                  ? `should be ${side === 'Buy' ? 'above' : 'below'} current price`
-                  : undefined
-              }
+              error={tp2Above0 ?? tp2AboveTp1}
             />
             <SegmentedControl
               disabled={active < 3}
@@ -124,6 +127,7 @@ export const TakeProfitsStep = () => {
                 size="xs"
                 value={tp2Percent}
                 onChange={setTp2Percent}
+                error={tpVolumesAddTo100}
               />
               <Slider
                 color="blue"
@@ -149,11 +153,7 @@ export const TakeProfitsStep = () => {
               min={0}
               value={tp3}
               onChange={setTp3}
-              error={
-                calculatedValues.tp3Percent < 0
-                  ? `should be ${side === 'Buy' ? 'above' : 'below'} current price`
-                  : undefined
-              }
+              error={tp3Above0 ?? tp3AboveTp2}
             />
             <SegmentedControl
               disabled={active < 3}
@@ -179,6 +179,7 @@ export const TakeProfitsStep = () => {
                 max={100}
                 value={tp3Percent}
                 onChange={setTp3Percent}
+                error={tpVolumesAddTo100}
               />
               <Slider
                 color="blue"

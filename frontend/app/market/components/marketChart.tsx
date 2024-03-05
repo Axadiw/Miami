@@ -1,11 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useMantineColorScheme } from '@mantine/core';
+import socketIOClient, { Socket } from 'socket.io-client';
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
 import { ColorType, CrosshairMode, LineStyle } from '@/vendor/lightweight-charts/src';
-import { PriceSeries } from '@/app/account/components/chart/series/priceSeries';
-import { PriceLinesSeries } from '@/app/account/components/chart/series/priceLineSeries';
-import { VolumeSeries } from '@/app/account/components/chart/series/volumeSeries';
-import { ChartComponent } from '@/app/account/components/chart/chartComponent';
+import { PriceSeries } from '@/app/shared/components/chart/series/priceSeries';
+import { PriceLinesSeries } from '@/app/shared/components/chart/series/priceLineSeries';
+import { VolumeSeries } from '@/app/shared/components/chart/series/volumeSeries';
+import { ChartComponent } from '@/app/shared/components/chart/chartComponent';
 import { IChartApi } from '@/vendor/lightweight-charts/src/api/create-chart';
 import {
   PriceLinesSeriesWrapper,
@@ -14,7 +15,16 @@ import {
 } from '@/contexts/ChartContext/ChartContext';
 import { SeriesDataItemTypeMap } from '@/vendor/lightweight-charts/src/model/data-consumer';
 import { UTCTimestamp } from '@/vendor/lightweight-charts/src/model/horz-scale-behavior-time/types';
+import { BASE_URL } from '@/app/consts';
 
+const BYBIT_EXCHANGE_NAME = 'bybit';
+
+type OHLCVRealtimeDataType = {
+  exchange: string;
+  timeframe: string;
+  symbol: string;
+  ohlcv: number[];
+};
 export const MarketChart = () => {
   const { colorScheme } = useMantineColorScheme();
   const isDarkTheme = colorScheme === 'dark';
@@ -33,11 +43,18 @@ export const MarketChart = () => {
     tp2,
     tp3,
     sl,
+    selectedSymbol,
+    selectedTimeframe,
   } = useMarketPageContext();
   const chartRef = useRef<IChartApi | null>(null);
   const priceSeriesRef = useRef<PriceSeriesWrapper['_series'] | null>(null);
   const volumeSeriesRef = useRef<VolumeSeriesWrapper['_series'] | null>(null);
   const priceLineSeriesRef = useRef<PriceLinesSeriesWrapper['_data'] | null>(null);
+  const [currentSocket, setCurrentSocket] = useState<Socket | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_realtimeRoom, setRealtimeRoom] = useState<string>();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_realtimeHandler, setRealtimeHandler] = useState<(data: OHLCVRealtimeDataType) => void>();
 
   useEffect(() => {
     const priceSeries = priceSeriesRef.current;
@@ -46,6 +63,7 @@ export const MarketChart = () => {
     if (priceSeries === null || volumeSeries === null || !ohlcvs?.ohlcvs) {
       return;
     }
+
     priceSeries?.setData(
       ohlcvs.ohlcvs.map((o) => ({
         open: o.open,
@@ -65,6 +83,63 @@ export const MarketChart = () => {
       }))
     );
   }, [ohlcvs?.ohlcvs]);
+
+  useEffect(() => {
+    const newSocket = socketIOClient(BASE_URL);
+    newSocket.connect();
+    setCurrentSocket(newSocket);
+  }, []);
+
+  useEffect(() => {
+    const handler = (data: OHLCVRealtimeDataType) => {
+      const priceSeries = priceSeriesRef.current;
+      const volumeSeries = volumeSeriesRef.current;
+
+      if (
+        priceSeries === null ||
+        volumeSeries === null ||
+        data.exchange !== BYBIT_EXCHANGE_NAME ||
+        data.timeframe !== selectedTimeframe ||
+        data.symbol !== selectedSymbol
+      ) {
+        return;
+      }
+
+      priceSeries?.update({
+        open: data.ohlcv[1],
+        high: data.ohlcv[2],
+        low: data.ohlcv[3],
+        close: data.ohlcv[4],
+        time: data.ohlcv[0] as UTCTimestamp,
+      });
+      volumeSeries?.update({
+        value: data.ohlcv[5],
+        color: data.ohlcv[1] > data.ohlcv[4] ? '#DD5E56' : '#52A49A',
+        time: data.ohlcv[0] as UTCTimestamp,
+      });
+    };
+    currentSocket?.on('ohlcv', handler);
+    setRealtimeHandler((prevState: any) => {
+      currentSocket?.off('ohlcv', prevState);
+      return handler;
+    });
+  }, [currentSocket, selectedSymbol, selectedTimeframe]);
+
+  useEffect(() => {
+    if (!selectedSymbol || !selectedTimeframe) {
+      return;
+    }
+    const room = `${BYBIT_EXCHANGE_NAME}:${selectedSymbol}:${selectedTimeframe}`;
+
+    setRealtimeRoom((prevState) => {
+      if (prevState) {
+        currentSocket?.emit('leave', room);
+      }
+      currentSocket?.emit('join', room);
+      return room;
+    });
+  }, [currentSocket, selectedSymbol, selectedTimeframe]);
+
   useEffect(() => {
     const priceLineSeries = priceLineSeriesRef.current;
     if (priceLineSeries === null || priceLineSeries === undefined) {

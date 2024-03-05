@@ -5,6 +5,8 @@ from sqlalchemy import desc
 
 from api.database import db
 from api.endpoints.consts import PARAMS_INVALID_RESPONSE
+from api.last_ohlcv_database import last_ohlcv_database
+from api.mqtt.handle_mqtt import room_name_generator
 from shared.consts import bybit_ohlcv_timeframes
 from shared.models.exchange import Exchange
 from shared.models.ohlcv import OHLCV
@@ -73,4 +75,17 @@ def get_ohlcv():
                    .limit(limit)
                    .all(), key=attrgetter('timestamp'))
             ))
+
+    room_name = room_name_generator(exchange.name, timeframe.name, symbol.name)
+    if room_name in last_ohlcv_database:
+        latest = last_ohlcv_database[room_name]
+        if latest['ohlcv'][0] >= ohlcvs[-1]['time']:
+            ohlcvs.append(
+                {"open": latest['ohlcv'][1],
+                 "high": latest['ohlcv'][2],
+                 "low": latest['ohlcv'][3],
+                 "close": latest['ohlcv'][4],
+                 "volume": latest['ohlcv'][5],
+                 "time": latest['ohlcv'][0]})
+
     return jsonify({'ohlcvs': ohlcvs})

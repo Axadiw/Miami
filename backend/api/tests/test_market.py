@@ -162,3 +162,5 @@ def test_get_ohlcv_incorrect_data(client):
     response = client.get("/ohlcv?exchange=bybit&tf=1m&symbol=A")
     assert response.status_code == 400
     assert response.json == PARAMS_INVALID_RESPONSE
+
+# TODO: Added tests for realtime data existing in the database

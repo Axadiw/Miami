@@ -1297,7 +1297,7 @@ class Exchange(BaseExchange):
                     return await getattr(self, method)(symbol, since, limit, params)
             except Exception as e:
                 if isinstance(e, RateLimitExceeded):
-                    await asyncio.sleep(random.randint(0, 9))
+                    await asyncio.sleep(random.randint(0, 60))
                     raise e  # if we are rate limited, we should not retry and fail fast
                 errors += 1
                 if errors > maxRetries:

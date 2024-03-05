@@ -1,10 +1,10 @@
-import { calculateMarketValues } from '@/app/account/components/positionCalculators/marketCalculator';
+import { calculateMarketValues } from '@/app/shared/components/positionCalculators/marketCalculator';
 
 describe('calculateMarketValues', () => {
   it('should calculate longs in correct manner', () => {
     expect(
       calculateMarketValues({
-        side: 'Buy',
+        side: 'Long',
         openPrice: 100,
         accountBalance: 100,
         maxLoss: 10,
@@ -41,7 +41,7 @@ describe('calculateMarketValues', () => {
   });
   it('should calculate shorts in correct manner', () => {
     const sut = calculateMarketValues({
-      side: 'Sell',
+      side: 'Short',
       openPrice: 100,
       accountBalance: 100,
       maxLoss: 10,

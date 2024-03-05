@@ -1,6 +1,6 @@
 import { Group, SegmentedControl } from '@mantine/core';
 import React from 'react';
-import { Side } from '@/app/account/components/positionCalculators/marketCalculator';
+import { Side } from '@/app/shared/components/positionCalculators/marketCalculator';
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
 
 export const SideSelectionStep = () => {
@@ -10,8 +10,8 @@ export const SideSelectionStep = () => {
       <SegmentedControl
         onChange={(v) => setSide(v as Side)}
         value={side}
-        color={side === 'Buy' ? 'green' : 'red'}
-        data={['Buy', 'Sell']}
+        color={side === 'Long' ? 'green' : 'red'}
+        data={['Long', 'Short']}
       />
     </Group>
   );

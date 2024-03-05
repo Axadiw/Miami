@@ -2,7 +2,7 @@
 import React, { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import { createChart } from '@/vendor/lightweight-charts/src';
 import { ChartContext, ChartWrapper } from '@/contexts/ChartContext/ChartContext';
-import { ChartComponentProps } from '@/app/account/components/chart/chartComponent';
+import { ChartComponentProps } from '@/app/shared/components/chart/chartComponent';
 
 interface ChartContainerProps extends ChartComponentProps {
   container: any;
