@@ -38,7 +38,7 @@ services:
     image:
       eclipse-mosquitto:2.0
     volumes:
-      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - /mnt/mosquitto.conf:/mosquitto/config/mosquitto.conf # FIXME - probably create separate image with config
     ports:
       - 1883:1883
       - 9001:9001
