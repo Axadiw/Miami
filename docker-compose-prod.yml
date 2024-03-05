@@ -69,6 +69,9 @@ services:
         - "traefik.docker.network=traefik-public"
         - "traefik.constraint-label=traefik-public"
         - "traefik.http.services.miami-backend-https.loadbalancer.server.port=5000"
+        - "traefik.http.routers.miami-backend.rule=PathPrefix(`/`)"
+        - "traefik.http.services.miami-backend-https.loadBalancer.sticky.cookie.name=miami-backend-https"
+        - "traefik.http.services.miami-backend-https.loadBalancer.sticky.cookie.httpOnly=true"
 
   bybit-harvester:
     image: ghcr.io/axadiw/miami-data-harvester:_MIAMI_VERSION_
