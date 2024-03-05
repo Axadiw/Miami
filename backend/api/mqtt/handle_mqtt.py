@@ -1,10 +1,9 @@
 import json
-from typing import Any
 
-from flask_socketio import SocketIO, join_room, leave_room, emit
+from flask_socketio import SocketIO, join_room, leave_room
 
 from api.last_ohlcv_database import last_ohlcv_database
-from harvesting.data_harvesters.consts import OHLCV_SOCKETIO_EVENT_NAME
+from shared.consts import OHLCV_SOCKETIO_EVENT_NAME
 
 
 def room_name_generator(exchange: str, timeframe: str, symbol: str):
