@@ -6,7 +6,7 @@ from sqlalchemy import desc
 from api.database import db
 from api.endpoints.consts import PARAMS_INVALID_RESPONSE
 from api.last_ohlcv_database import last_ohlcv_database
-from api.mqtt.handle_mqtt import room_name_generator
+from api.realtime_candles.handle_ohlcv_realtime_candles import room_name_generator
 from shared.consts import bybit_ohlcv_timeframes
 from shared.models.exchange import Exchange
 from shared.models.ohlcv import OHLCV

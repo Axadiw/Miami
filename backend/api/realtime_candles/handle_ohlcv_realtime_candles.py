@@ -39,5 +39,4 @@ def handle_ohlcv_realtime_candles(socket: SocketIO, mqtt):
                               json.loads(message.payload.decode())['close'],
                               json.loads(message.payload.decode())['volume']]}
             last_ohlcv_database[room] = data
-            # socket.emit(OHLCV_SOCKETIO_EVENT_NAME, data, to=room)
-            socket.emit(OHLCV_SOCKETIO_EVENT_NAME, data)
+            socket.emit(OHLCV_SOCKETIO_EVENT_NAME, data, to=room)

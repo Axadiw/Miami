@@ -11,7 +11,7 @@ from api.endpoints.account.account import account_routes
 from api.endpoints.general.general import general_routes
 from api.endpoints.market_data.market import market_routes
 from api.endpoints.session.session import session_routes
-from api.mqtt.handle_mqtt import handle_ohlcv_realtime_candles
+from api.realtime_candles.handle_ohlcv_realtime_candles import handle_ohlcv_realtime_candles
 from api.tests.test_token_required import token_required_test_routes
 from shared.consts_secrets import db_username, db_password, db_name, miami_version_env_key
 from shared.consts_tpl import flask_api_secret
