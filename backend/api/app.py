@@ -55,8 +55,8 @@ def create_app():
     is_debug = True if os.environ.get(miami_version_env_key) == 'local' else False
 
     db.init_app(application)
-    socketio_instance.run(application, debug=is_debug, allow_unsafe_werkzeug=is_debug, log_output=is_debug,
-                          use_reloader=is_debug)
-    mqtt.init_app(application)
-    handle_ohlcv_realtime_candles(socketio_instance, mqtt)
+    # socketio_instance.run(application, debug=is_debug, allow_unsafe_werkzeug=is_debug, log_output=is_debug,
+    #                       use_reloader=is_debug)
+    # mqtt.init_app(application)
+    # handle_ohlcv_realtime_candles(socketio_instance, mqtt)
     return application
