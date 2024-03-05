@@ -596,18 +596,23 @@ files = [
 Flask = ">=0.9"
 
 [[package]]
-name = "flask-mqtt"
-version = "1.1.1"
+name = "Flask-MQTT"
+version = "1.2.0"
 description = "Flask extension for the MQTT protocol"
 optional = false
 python-versions = ">=3.6"
-files = [
-    {file = "Flask-MQTT-1.1.1.tar.gz", hash = "sha256:6d37c5ebb8e180f6aaa409d776a04f6dcf2fcd61cc22d67341bc146db36641e0"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 Flask = "*"
 paho-mqtt = "*"
+
+[package.source]
+type = "git"
+url = "https://github.com/vindolin/Flask-MQTT.git"
+reference = "patch-1"
+resolved_reference = "7bd32d1deb1afd6451a73b347f0eb868c31b26f2"
 
 [[package]]
 name = "flask-socketio"
@@ -1857,4 +1862,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "fdf9065607b7f2cd79041821d2efccd30ff71599c459f7d34948fb72f70487c5"
+content-hash = "721dbb99154626986a708b704a58235623742522049ae85d991d46cb8138992c"
