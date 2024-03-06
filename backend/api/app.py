@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 
 from flask import Flask
 from flask_cors import CORS
@@ -22,7 +23,7 @@ if not db_username or not db_password or not db_name:
     logging.critical('No database creds detected')
     exit()
 
-is_debug = True if os.environ.get(miami_version_env_key) in ['local', None] else False
+is_tests = "pytest" in sys.modules
 
 
 def register_extensions(app):
@@ -38,7 +39,7 @@ def prepare_app():
 
     CORS(app)
     app.config['SECRET_KEY'] = flask_api_secret
-    app.config['MQTT_BROKER_URL'] = 'localhost' if is_debug else 'mqtt'
+    app.config['MQTT_BROKER_URL'] = 'mqtt'
     app.config[
         'SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_username}:{db_password}@db/{db_name}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
@@ -49,13 +50,19 @@ def prepare_app():
     return app
 
 
-def create_app():
-    app = prepare_app()
+def configure_ohlcv_realtime_candles(app, socketio_instance):
     mqtt = Mqtt(app)
-    socketio_instance = SocketIO(app, cors_allowed_origins='*')
-    db.init_app(app)
     mqtt.init_app(app)
     handle_ohlcv_realtime_candles(socketio_instance, mqtt)
+
+
+def create_app():
+    app = prepare_app()
+    socketio_instance = SocketIO(app, cors_allowed_origins='*')
+    db.init_app(app)
+    if not is_tests:
+        configure_ohlcv_realtime_candles(app, socketio_instance)
+
     return app
 
 
