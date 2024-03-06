@@ -22,6 +22,8 @@ if not db_username or not db_password or not db_name:
     logging.critical('No database creds detected')
     exit()
 
+is_debug = True if os.environ.get(miami_version_env_key) in ['local', None] else False
+
 
 def register_extensions(app):
     app.register_blueprint(account_routes)
@@ -36,7 +38,7 @@ def prepare_app():
 
     CORS(app)
     app.config['SECRET_KEY'] = flask_api_secret
-    app.config['MQTT_BROKER_URL'] = 'mqtt'
+    app.config['MQTT_BROKER_URL'] = 'localhost' if is_debug else 'mqtt'
     app.config[
         'SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_username}:{db_password}@db/{db_name}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
