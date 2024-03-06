@@ -23,39 +23,38 @@ if not db_username or not db_password or not db_name:
     exit()
 
 
-def register_extensions(app_to_register):
-    app_to_register.register_blueprint(account_routes)
-    app_to_register.register_blueprint(session_routes)
-    app_to_register.register_blueprint(general_routes)
-    app_to_register.register_blueprint(token_required_test_routes)
-    app_to_register.register_blueprint(market_routes)
+def register_extensions(app):
+    app.register_blueprint(account_routes)
+    app.register_blueprint(session_routes)
+    app.register_blueprint(general_routes)
+    app.register_blueprint(token_required_test_routes)
+    app.register_blueprint(market_routes)
 
 
 def prepare_app():
-    prepared_app = Flask(__name__)
+    app = Flask(__name__)
 
-    CORS(prepared_app)
-    prepared_app.config['SECRET_KEY'] = flask_api_secret
-    prepared_app.config['MQTT_BROKER_URL'] = 'mqtt'
-    prepared_app.config[
+    CORS(app)
+    app.config['SECRET_KEY'] = flask_api_secret
+    app.config['MQTT_BROKER_URL'] = 'mqtt'
+    app.config[
         'SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_username}:{db_password}@db/{db_name}'
-    prepared_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
-    prepared_app.app_context().push()
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+    app.app_context().push()
 
-    register_extensions(prepared_app)
+    register_extensions(app)
 
-    return prepared_app
+    return app
 
 
 def create_app():
-    prepared_app = prepare_app()
-    mqtt = Mqtt(prepared_app)
-    socketio_instance = SocketIO(prepared_app, cors_allowed_origins='*')
-    db.init_app(prepared_app)
-    mqtt.init_app(prepared_app)
+    app = prepare_app()
+    mqtt = Mqtt(app)
+    socketio_instance = SocketIO(app, cors_allowed_origins='*')
+    db.init_app(app)
+    mqtt.init_app(app)
     handle_ohlcv_realtime_candles(socketio_instance, mqtt)
-    return prepared_app
+    return app
 
 
-def gunicorn_create(wsgi, response):
-    create_app()
+gunicorn_app = create_app()
