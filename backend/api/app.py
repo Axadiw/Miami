@@ -57,4 +57,5 @@ def create_app():
     return prepared_app
 
 
-application = app = create_app()
+def gunicorn_create(wsgi, response):
+    application = app = create_app()
