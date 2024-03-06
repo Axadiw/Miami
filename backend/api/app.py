@@ -58,4 +58,4 @@ def create_app():
 
 
 def gunicorn_create(wsgi, response):
-    application = app = create_app()
+    create_app()
