@@ -1,4 +1,3 @@
 #!/bin/sh
 poetry run alembic -c shared/alembic.ini upgrade heads
-sleep 90000
-#poetry run gunicorn -b :5000 -k eventlet api.app:gunicorn_create
+poetry run gunicorn -b :5000 -k eventlet api.app:app
