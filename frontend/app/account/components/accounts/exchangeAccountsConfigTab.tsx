@@ -16,6 +16,9 @@ import {
 import { useForm } from '@mantine/form';
 import { useAccountPageContext } from '@/contexts/AccountPageContext/AccountPageContext';
 import ByBit3CommasNewAccountForm from './exchangeSpecificForms/byBit3CommasNewAccountForm';
+import { useAddNewExchangeAccount } from '@/api/useAddNewExchangeAccount';
+import { useRemoveExchangeAccount } from '@/api/useRemoveExchangeAccount';
+import { useListExchangeAccounts } from '@/api/useListExchangeAccounts';
 
 export type ExchangeType = {
   id: string;
@@ -43,17 +46,16 @@ export default function ExchangeAccountsConfigTab() {
     },
   });
 
+  const { mutate: addNewAccount } = useAddNewExchangeAccount();
+  const { mutate: removeAccount } = useRemoveExchangeAccount();
+
   const { accountDetails } = useAccountPageContext();
 
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
   });
 
-  const existingAccounts = [
-    { id: '1', name: 'Account 1' },
-    { id: '2', name: 'Account 2' },
-    { id: '3', name: 'Account 3' },
-  ];
+  const { data: existingAccounts } = useListExchangeAccounts();
 
   const options = exchanges.map((item) => (
     <Combobox.Option value={item.id} key={item.id}>
@@ -69,9 +71,7 @@ export default function ExchangeAccountsConfigTab() {
           <Stack>
             <form
               onSubmit={form.onSubmit(async () => {
-                // eslint-disable-next-line no-console
-
-                console.log({ ...form.values, accountDetails });
+                addNewAccount({ ...form.values, newAccountExchangeDetails: accountDetails });
               })}
             >
               <Stack>
@@ -138,13 +138,12 @@ export default function ExchangeAccountsConfigTab() {
         <Card w="20%" padding="lg" radius="md" withBorder>
           <Stack>
             <Text size="sm">Existing accounts:</Text>
-            {existingAccounts.map((e) => (
+            {existingAccounts?.accounts.map((e) => (
               <Group key={e.id}>
                 <Text>{e.name}</Text>
                 <Button
-                  onClick={() => {
-                    // eslint-disable-next-line no-console
-                    console.log('Removing account', e.id);
+                  onClick={async () => {
+                    removeAccount({ accountId: e.id });
                   }}
                   variant="filled"
                   color="red"

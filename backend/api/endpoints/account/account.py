@@ -40,3 +40,25 @@ def account_info(user):
     configs = list(map(convert_to_json, configs))
     is_admin = user.admin or user.email == DEFAULT_ADMIN_EMAIL
     return jsonify({'email': user.email, 'is_admin': is_admin, 'config_keys': configs})
+
+
+@account_routes.route('/add_new_exchange_account', methods=['POST'])
+@token_required
+def add_new_exchange_account(user):
+    data = request.get_json()
+    return jsonify({'message': 'gituwa'})
+
+
+@account_routes.route('/remove_exchange_account', methods=['POST'])
+@token_required
+def remove_exchange_account(user):
+    data = request.get_json()
+    return jsonify({'message': 'gituwa'})
+
+
+@account_routes.route('/list_exchange_accounts', methods=['GET'])
+@token_required
+def list_exchange_account(user):
+    return jsonify({'accounts': [{'id': 1, 'name': 'Account A 1', 'type': 'bybit_3commas'},
+                                 {'id': 2, 'name': 'Account B 2', 'type': 'bybit_3commas'},
+                                 {'id': 3, 'name': 'Account C 3', 'type': 'bybit_3commas'}]})
