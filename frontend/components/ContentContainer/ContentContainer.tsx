@@ -12,13 +12,13 @@ export function ContentContainer({ children }: { children: any }) {
     dataLayer.useCheckIfLoginTokenIsValid();
 
   useEffect(() => {
-    if (loginToken && !isLoginTokenValid && isLoginTokenValidSuccess) {
+    if (loginToken && isLoginTokenValid === false && isLoginTokenValidSuccess) {
       setLastLogoutReason('Token expired');
       setLoginToken(null);
     }
   }, [isLoginTokenValid, isLoginTokenValidSuccess, loginToken, setLastLogoutReason, setLoginToken]);
 
-  if (loginToken === undefined) {
+  if (loginToken === undefined || isLoginTokenValid === undefined) {
     return <Loading />;
   }
 
