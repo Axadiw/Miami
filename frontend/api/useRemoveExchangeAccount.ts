@@ -36,7 +36,7 @@ export async function removeExchangeAccount(
         'x-access-tokens': token,
       },
       data: JSON.stringify({
-        account_id: props.accountId,
+        id: props.accountId,
       }),
     })
     .then((response) => response.data as RemoveExchangeAccountResponse)

@@ -1,8 +1,10 @@
 from flask import jsonify, request, Blueprint
 
 from api.database import db
-from api.endpoints.consts import USER_CONFIG_SAVED_RESPONSE, DEFAULT_ADMIN_EMAIL
+from api.endpoints.consts import USER_CONFIG_SAVED_RESPONSE, DEFAULT_ADMIN_EMAIL, EXCHANGE_ACCOUNT_ADDED, \
+    EXCHANGE_ACCOUNT_REMOVED
 from api.endpoints.session.token_required import token_required
+from shared.models.exchange_account import ExchangeAccount
 from shared.models.user_configs import UserConfig
 from shared.models.user import User
 
@@ -46,19 +48,23 @@ def account_info(user):
 @token_required
 def add_new_exchange_account(user):
     data = request.get_json()
-    return jsonify({'message': 'gituwa'})
+    db.session.add(ExchangeAccount(type=data['type'], name=data['name'], details=data['details'], user_id=user.id))
+    db.session.commit()
+    return jsonify(EXCHANGE_ACCOUNT_ADDED)
 
 
 @account_routes.route('/remove_exchange_account', methods=['POST'])
 @token_required
 def remove_exchange_account(user):
     data = request.get_json()
-    return jsonify({'message': 'gituwa'})
+    account_to_delete = db.session.query(ExchangeAccount).filter_by(id=data['id']).one()
+    db.session.delete(account_to_delete)
+    db.session.commit()
+    return jsonify(EXCHANGE_ACCOUNT_REMOVED)
 
 
 @account_routes.route('/list_exchange_accounts', methods=['GET'])
 @token_required
 def list_exchange_account(user):
-    return jsonify({'accounts': [{'id': 1, 'name': 'Account A 1', 'type': 'bybit_3commas'},
-                                 {'id': 2, 'name': 'Account B 2', 'type': 'bybit_3commas'},
-                                 {'id': 3, 'name': 'Account C 3', 'type': 'bybit_3commas'}]})
+    accounts = db.session.query(ExchangeAccount).filter_by(user_id=user.id).all()
+    return jsonify({'accounts': list(map(lambda x: {'id': x.id, 'name': x.name, 'type': x.type}, accounts))})

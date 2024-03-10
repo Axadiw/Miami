@@ -3,6 +3,8 @@ REGISTRATION_SUCCESS_RESPONSE = dict(message='Registered successfully')
 TOKEN_VALID_RESPONSE = dict(message='Token valid')
 USER_CONFIG_SAVED_RESPONSE = dict(message='Config saved')
 PASSWORD_CHANGED_RESPONSE = dict(message='Password changed successfully')
+EXCHANGE_ACCOUNT_ADDED = dict(message='Added')
+EXCHANGE_ACCOUNT_REMOVED = dict(message='Removed')
 
 # errors
 PARAMS_INVALID_RESPONSE = dict(error='Parameters invalid')

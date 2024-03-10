@@ -38,9 +38,9 @@ export async function addNewExchangeAccount(
         'x-access-tokens': token,
       },
       data: JSON.stringify({
-        exchange_type: props.newAccountExchangeType,
-        account_name: props.newAccountName,
-        account_details: props.newAccountExchangeDetails,
+        type: props.newAccountExchangeType,
+        name: props.newAccountName,
+        details: props.newAccountExchangeDetails,
       }),
     })
     .then((response) => response.data as AddNewExchangeAccountResponse)
