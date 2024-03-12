@@ -31,6 +31,7 @@
     "@tanstack/react-query-devtools": "^5.18.1",
     "axios": "1.5.1",
     "bufferutil": "^4.0.8",
+    "eventemitter3": "^5.0.1",
     "next": "13.4.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",

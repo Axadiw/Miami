@@ -2,13 +2,28 @@
 
 import { Stack, TextInput } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { useAccountPageContext } from '@/contexts/AccountPageContext/AccountPageContext';
+import {
+  AccountPageClearAllExchangeSpecificFormsEvent,
+  useAccountPageContext,
+} from '@/contexts/AccountPageContext/AccountPageContext';
 
 export default function ByBit3CommasNewAccountForm() {
   const [accountId, setAccountId] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
-  const { setAccountDetails } = useAccountPageContext();
+  const { setAccountDetails, accountPageEventEmitter } = useAccountPageContext();
+
+  useEffect(() => {
+    accountPageEventEmitter.on(AccountPageClearAllExchangeSpecificFormsEvent, () => {
+      setAccountId('');
+      setApiKey('');
+      setApiSecret('');
+    });
+    return () => {
+      accountPageEventEmitter.off(AccountPageClearAllExchangeSpecificFormsEvent);
+    };
+  }, [accountPageEventEmitter]);
+
   useEffect(() => {
     if (accountId && apiKey && apiSecret) {
       setAccountDetails(JSON.stringify({ accountId, apiKey, apiSecret }));

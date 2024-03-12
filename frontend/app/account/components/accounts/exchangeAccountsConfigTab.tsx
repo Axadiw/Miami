@@ -16,7 +16,10 @@ import {
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconInfoCircle } from '@tabler/icons-react';
-import { useAccountPageContext } from '@/contexts/AccountPageContext/AccountPageContext';
+import {
+  AccountPageClearAllExchangeSpecificFormsEvent,
+  useAccountPageContext,
+} from '@/contexts/AccountPageContext/AccountPageContext';
 import ByBit3CommasNewAccountForm from './exchangeSpecificForms/byBit3CommasNewAccountForm';
 import { useAddNewExchangeAccount } from '@/api/useAddNewExchangeAccount';
 import { useRemoveExchangeAccount } from '@/api/useRemoveExchangeAccount';
@@ -56,7 +59,7 @@ export default function ExchangeAccountsConfigTab() {
   const { mutate: removeAccount, error: removeAccountError } = useRemoveExchangeAccount();
   const { data: existingAccounts, error: listAccountError } = useListExchangeAccounts();
 
-  const { accountDetails, setAccountDetails } = useAccountPageContext();
+  const { accountDetails, accountPageEventEmitter } = useAccountPageContext();
 
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
@@ -103,7 +106,7 @@ export default function ExchangeAccountsConfigTab() {
                 addNewAccount({ ...form.values, newAccountExchangeDetails: accountDetails });
                 form.setFieldValue('newAccountExchangeType', '');
                 form.setFieldValue('newAccountName', '');
-                setAccountDetails('');
+                accountPageEventEmitter.emit(AccountPageClearAllExchangeSpecificFormsEvent);
               })}
             >
               <Stack>
@@ -112,7 +115,7 @@ export default function ExchangeAccountsConfigTab() {
                   onOptionSubmit={(val) => {
                     form.setFieldValue('newAccountExchangeType', val);
                     form.setFieldValue('newAccountData', '');
-                    setAccountDetails('');
+                    accountPageEventEmitter.emit(AccountPageClearAllExchangeSpecificFormsEvent);
                     combobox.closeDropdown();
                   }}
                 >
