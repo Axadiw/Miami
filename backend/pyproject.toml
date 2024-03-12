@@ -29,6 +29,7 @@ gmqtt = "^0.6.14"
 flask-mqtt = {git = "https://github.com/vindolin/Flask-MQTT.git", rev = "patch-1"}
 eventlet = "^0.35.2"
 gunicorn = "^21.2.0"
+py3cw = "^0.1.1"
 
 [build-system]
 requires = ["poetry-core"]

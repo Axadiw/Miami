@@ -9,6 +9,7 @@ from flask_socketio import SocketIO
 
 from api.database import db
 from api.endpoints.account.account import account_routes
+from api.endpoints.exchange.exchange import exchange_routes
 from api.endpoints.general.general import general_routes
 from api.endpoints.market_data.market import market_routes
 from api.endpoints.session.session import session_routes
@@ -32,6 +33,7 @@ def register_extensions(app):
     app.register_blueprint(general_routes)
     app.register_blueprint(token_required_test_routes)
     app.register_blueprint(market_routes)
+    app.register_blueprint(exchange_routes)
 
 
 def prepare_app():

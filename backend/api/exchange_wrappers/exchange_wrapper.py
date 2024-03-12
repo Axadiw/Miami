@@ -8,6 +8,9 @@ from shared.models.symbol import Symbol
 
 
 class ExchangeWrapper(ABC):
+    @abstractmethod
+    def __init__(self, serialized_account_details: str):
+        pass
 
     @staticmethod
     @abstractmethod
