@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Alert,
   Button,
   Card,
   Combobox,
@@ -14,6 +15,7 @@ import {
   useCombobox,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import { IconInfoCircle } from '@tabler/icons-react';
 import { useAccountPageContext } from '@/contexts/AccountPageContext/AccountPageContext';
 import ByBit3CommasNewAccountForm from './exchangeSpecificForms/byBit3CommasNewAccountForm';
 import { useAddNewExchangeAccount } from '@/api/useAddNewExchangeAccount';
@@ -46,16 +48,19 @@ export default function ExchangeAccountsConfigTab() {
     },
   });
 
-  const { mutate: addNewAccount } = useAddNewExchangeAccount();
-  const { mutate: removeAccount } = useRemoveExchangeAccount();
+  const {
+    mutate: addNewAccount,
+    error: addNewAccountError,
+    isSuccess: addNewAccountIsSuccess,
+  } = useAddNewExchangeAccount();
+  const { mutate: removeAccount, error: removeAccountError } = useRemoveExchangeAccount();
+  const { data: existingAccounts, error: listAccountError } = useListExchangeAccounts();
 
-  const { accountDetails } = useAccountPageContext();
+  const { accountDetails, setAccountDetails } = useAccountPageContext();
 
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
   });
-
-  const { data: existingAccounts } = useListExchangeAccounts();
 
   const options = exchanges.map((item) => (
     <Combobox.Option value={item.id} key={item.id}>
@@ -66,12 +71,39 @@ export default function ExchangeAccountsConfigTab() {
   return (
     <>
       <Space h="md" />
+      {(addNewAccountError || removeAccountError || listAccountError) && (
+        <>
+          <Alert variant="light" color="red" radius="md" title="Error" icon={<IconInfoCircle />}>
+            {addNewAccountError?.message ??
+              removeAccountError?.message ??
+              listAccountError?.message}
+          </Alert>
+          <Space h="md" />
+        </>
+      )}
+      {addNewAccountIsSuccess && (
+        <>
+          <Alert
+            variant="light"
+            color="greeb"
+            radius="md"
+            title="Added account"
+            icon={<IconInfoCircle />}
+          >
+            Success
+          </Alert>
+          <Space h="md" />
+        </>
+      )}
       <Group align="top">
         <Card w="60%" padding="lg" radius="md" withBorder>
           <Stack>
             <form
               onSubmit={form.onSubmit(async () => {
                 addNewAccount({ ...form.values, newAccountExchangeDetails: accountDetails });
+                form.setFieldValue('newAccountExchangeType', '');
+                form.setFieldValue('newAccountName', '');
+                setAccountDetails('');
               })}
             >
               <Stack>
@@ -80,7 +112,7 @@ export default function ExchangeAccountsConfigTab() {
                   onOptionSubmit={(val) => {
                     form.setFieldValue('newAccountExchangeType', val);
                     form.setFieldValue('newAccountData', '');
-                    // TODO: reset all details forms data
+                    setAccountDetails('');
                     combobox.closeDropdown();
                   }}
                 >

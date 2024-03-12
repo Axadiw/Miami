@@ -30,11 +30,8 @@ export const saveAccountInfo = async (token: string | null | undefined, info: Us
         'x-access-tokens': token,
       },
       data: JSON.stringify({
-        '3commas_account': info.threeCommasAccountId,
-        '3commas_api_key': info.threeCommasApiKey,
-        '3commas_secret': info.threeCommasSecret,
-        bybit_api_key: info.byBitApiKey,
-        bybit_api_secret: info.byBitApiSecret,
+        twitter_id: info.twitterId,
+        ui_timezone: info.uiTimezone,
       }),
     })) as SaveAccountInfoResponse;
   } catch (error: any) {

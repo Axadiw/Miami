@@ -36,31 +36,19 @@ async function getAccountInfo(token: string | null | undefined): Promise<UserCon
     .then((response) => {
       const userConfig: UserConfig = {
         email: response.email,
-        byBitApiKey: '',
-        byBitApiSecret: '',
-        threeCommasAccountId: '',
-        threeCommasApiKey: '',
-        threeCommasSecret: '',
+        twitterId: '',
+        uiTimezone: '',
       };
-      for (const item of response.config_keys) {
+      response.config_keys.forEach((item) => {
         switch (item.key) {
-          case 'bybit_api_key':
-            userConfig.byBitApiKey = item.value;
+          case 'twitter_id':
+            userConfig.twitterId = item.value;
             break;
-          case 'bybit_api_secret':
-            userConfig.byBitApiSecret = item.value;
-            break;
-          case '3commas_account':
-            userConfig.threeCommasAccountId = item.value;
-            break;
-          case '3commas_api_key':
-            userConfig.threeCommasApiKey = item.value;
-            break;
-          case '3commas_secret':
-            userConfig.threeCommasSecret = item.value;
+          case 'ui_timezone':
+            userConfig.uiTimezone = item.value;
             break;
         }
-      }
+      });
       return userConfig;
     })
     .catch((error) => {

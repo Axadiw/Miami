@@ -4,7 +4,8 @@ import json
 from api.database import db
 from api.endpoints.account.account import ALLOWED_USER_CONFIG_KEYS
 from api.endpoints.consts import USER_CONFIG_SAVED_RESPONSE, DEFAULT_ADMIN_EMAIL, EXCHANGE_ACCOUNT_ADDED, \
-    EXCHANGE_ACCOUNT_REMOVED
+    EXCHANGE_ACCOUNT_REMOVED, PARAMS_INVALID_RESPONSE
+from api.exchange_wrappers.bybit_3commas_wrapper import Bybit3CommasWrapper
 from api.tests.test_session import get_test_user_token
 from shared.models.exchange_account import ExchangeAccount
 from shared.models.user import User
@@ -89,16 +90,16 @@ def test_adding_new_exchange_account_should_be_visible_in_db(client):
 
     test_account_name = 'account 1'
     test_account2_name = 'account 2'
-    test_account_type = 'bybit'
-    test_account_details = json.dumps({'key': '123', 'secret': 'abcd'})
-    test_account2_details = json.dumps({'key': '1234', 'secret': 'abcde'})
+    test_account_type = 'bybit_3commas'
+    test_account_details = json.dumps({'accountId': '123', 'apiKey': 'abcd', 'apiSecret': 'def'})
+    test_account2_details = json.dumps({'accountId': '1234', 'apiKey': 'abcde', 'apiSecret': 'defg'})
 
     response = client.post('/add_new_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
                            json={'type': test_account_type,
                                  'name': test_account_name,
                                  'details': test_account_details})
     response2 = client.post('/add_new_exchange_account', headers={"x-access-tokens": user2_token},
-                            json={'type': 'bybit',
+                            json={'type': 'bybit_3commas',
                                   'name': test_account2_name,
                                   'details': test_account2_details})
 
@@ -119,15 +120,72 @@ def test_adding_new_exchange_account_should_be_visible_in_db(client):
 
 
 def test_added_exchange_account_should_have_all_necessary_fields(client):
-    pass
+    client.post("/register", json={"username": "other_user", 'password': 'pass1', 'email': 'email2@gmail.com'})
+
+    response = client.post('/add_new_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
+                           json={'name': 'name', 'details': json.dumps(
+                               {'accountId': '1234', 'apiKey': 'abcde', 'apiSecret': 'secret'})})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.post('/add_new_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
+                           json={'type': Bybit3CommasWrapper.get_name(), 'details': json.dumps(
+                               {'accountId': '1234', 'apiKey': 'abcde', 'apiSecret': 'secret'})})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.post('/add_new_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
+                           json={'name': 'name', 'type': Bybit3CommasWrapper.get_name()})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
 
 
-def test_added_exchange_account_should_have_one_of_the_supported_types(client):
-    pass
+def test_added_exchange_account_should_not_allow_creating_exchange_of_unsupported_type(client):
+    client.post("/register", json={"username": "other_user", 'password': 'pass1', 'email': 'email2@gmail.com'})
+
+    response = client.post('/add_new_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
+                           json={'type': 'unknown', 'name': 'name', 'details': json.dumps(
+                               {'accountId': '1234', 'apiKey': 'abcde', 'apiSecret': 'secret'})})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
 
 
 def test_added_exchange_account_3commas_bybit_should_have_necessary_details_fields(client):
-    pass
+    client.post("/register", json={"username": "other_user", 'password': 'pass1', 'email': 'email2@gmail.com'})
+
+    response = client.post('/add_new_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
+                           json={'type': Bybit3CommasWrapper.get_name(), 'name': 'name', 'details': json.dumps(
+                               {'apiKey': 'abcde', 'apiSecret': 'secret'})})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.post('/add_new_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
+                           json={'type': Bybit3CommasWrapper.get_name(), 'name': 'name', 'details': json.dumps(
+                               {'accountId': '1234', 'apiSecret': 'secret'})})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.post('/add_new_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
+                           json={'type': Bybit3CommasWrapper.get_name(), 'name': 'name', 'details': json.dumps(
+                               {'accountId': '1234', 'apiKey': 'abcde'})})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.post('/add_new_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
+                           json={'type': Bybit3CommasWrapper.get_name(), 'name': 'name', 'details': ''})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.post('/add_new_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
+                           json={'type': Bybit3CommasWrapper.get_name(), 'name': 'name', 'details': 'abcd'})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.post('/add_new_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
+                           json={'type': Bybit3CommasWrapper.get_name(), 'name': 'name', 'details': json.dumps(
+                               {'accountId': '1234', 'apiKey': 'abcde', 'apiSecret': 'secret'})})
+    assert response.status_code == 200
+    assert response.json == EXCHANGE_ACCOUNT_ADDED
 
 
 def test_list_exchange_account_should_return_accounts_for_correct_users(client):
@@ -138,16 +196,16 @@ def test_list_exchange_account_should_return_accounts_for_correct_users(client):
 
     test_account_name = 'account 1'
     test_account2_name = 'account 2'
-    test_account_type = 'bybit'
-    test_account_details = json.dumps({'key': '123', 'secret': 'abcd'})
-    test_account2_details = json.dumps({'key': '1234', 'secret': 'abcde'})
+    test_account_type = 'bybit_3commas'
+    test_account_details = json.dumps({'accountId': '1234', 'apiKey': 'abcde', 'apiSecret': 'secret'})
+    test_account2_details = json.dumps({'accountId': '12345', 'apiKey': 'abcdef', 'apiSecret': 'secret2'})
 
     add_response_1 = client.post('/add_new_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
                                  json={'type': test_account_type,
                                        'name': test_account_name,
                                        'details': test_account_details})
     add_response_2 = client.post('/add_new_exchange_account', headers={"x-access-tokens": user2_token},
-                                 json={'type': 'bybit',
+                                 json={'type': 'bybit_3commas',
                                        'name': test_account2_name,
                                        'details': test_account2_details})
     assert add_response_1.status_code == 200
@@ -173,7 +231,7 @@ def test_list_exchange_account_should_return_accounts_for_correct_users(client):
     assert ('details' not in response2.json['accounts'][0]) is True
 
 
-def test_removing_exchange_account_should_be_work(client):
+def test_removing_exchange_account_should_work(client):
     client.post("/register", json={"username": "other_user", 'password': 'pass1', 'email': 'email2@gmail.com'})
     user_credentials = base64.b64encode(b"other_user:pass1").decode()
     response = client.post("/login", headers={"Authorization": "Basic {}".format(user_credentials)})
@@ -181,16 +239,16 @@ def test_removing_exchange_account_should_be_work(client):
 
     test_account_name = 'account 1'
     test_account2_name = 'account 2'
-    test_account_type = 'bybit'
-    test_account_details = json.dumps({'key': '123', 'secret': 'abcd'})
-    test_account2_details = json.dumps({'key': '1234', 'secret': 'abcde'})
+    test_account_type = 'bybit_3commas'
+    test_account_details = json.dumps({'accountId': '12345', 'apiKey': 'abcdef', 'apiSecret': 'secret2'})
+    test_account2_details = json.dumps({'accountId': '123456', 'apiKey': 'abcdefg', 'apiSecret': 'secret3'})
 
     client.post('/add_new_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
                 json={'type': test_account_type,
                       'name': test_account_name,
                       'details': test_account_details})
     client.post('/add_new_exchange_account', headers={"x-access-tokens": user2_token},
-                json={'type': 'bybit',
+                json={'type': 'bybit_3commas',
                       'name': test_account2_name,
                       'details': test_account2_details})
 
@@ -213,8 +271,36 @@ def test_removing_exchange_account_should_be_work(client):
 
 
 def test_removing_exchange_account_without_id_should_fail(client):
-    pass
+    client.post("/register", json={"username": "other_user", 'password': 'pass1', 'email': 'email2@gmail.com'})
+
+    delete_response = client.post('/remove_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
+                                  json={})
+    assert delete_response.status_code == 400
+    assert delete_response.json == PARAMS_INVALID_RESPONSE
 
 
 def test_removing_exchange_account_from_different_user_should_fail(client):
-    pass
+    client.post("/register", json={"username": "other_user", 'password': 'pass1', 'email': 'email2@gmail.com'})
+    user_credentials = base64.b64encode(b"other_user:pass1").decode()
+    response = client.post("/login", headers={"Authorization": "Basic {}".format(user_credentials)})
+    user2_token = response.json['token']
+
+    test_account_name = 'account 1'
+    test_account2_name = 'account 2'
+    test_account_type = 'bybit_3commas'
+    test_account_details = json.dumps({'accountId': '12345', 'apiKey': 'abcdef', 'apiSecret': 'secret2'})
+    test_account2_details = json.dumps({'accountId': '123456', 'apiKey': 'abcdefg', 'apiSecret': 'secret3'})
+
+    client.post('/add_new_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
+                json={'type': test_account_type,
+                      'name': test_account_name,
+                      'details': test_account_details})
+    client.post('/add_new_exchange_account', headers={"x-access-tokens": user2_token},
+                json={'type': 'bybit_3commas',
+                      'name': test_account2_name,
+                      'details': test_account2_details})
+
+    delete_response = client.post('/remove_exchange_account', headers={"x-access-tokens": get_test_user_token(client)},
+                                  json={'id': 2})
+    assert delete_response.status_code == 400
+    assert delete_response.json == PARAMS_INVALID_RESPONSE

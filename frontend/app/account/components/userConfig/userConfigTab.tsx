@@ -7,22 +7,14 @@ import { useForm } from '@mantine/form';
 import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 
 export interface UserConfig {
-  threeCommasAccountId: string;
-  threeCommasApiKey: string;
-  threeCommasSecret: string;
-  byBitApiKey: string;
-  byBitApiSecret: string;
   email: string;
+  twitterId: string;
+  uiTimezone: string;
 }
 
 export default function UserConfigTab() {
   const form = useForm({
     initialValues: {
-      threeCommasAccountId: '',
-      threeCommasApiKey: '',
-      threeCommasSecret: '',
-      byBitApiKey: '',
-      byBitApiSecret: '',
       email: '',
     },
   });
@@ -71,38 +63,6 @@ export default function UserConfigTab() {
             value={form.values.email}
             onChange={(event) => form.setFieldValue('email', event.currentTarget.value)}
             disabled
-            radius="md"
-          />
-          <TextInput
-            label="3commas Account ID"
-            value={form.values.threeCommasAccountId}
-            onChange={(event) =>
-              form.setFieldValue('threeCommasAccountId', event.currentTarget.value)
-            }
-            radius="md"
-          />
-          <TextInput
-            label="3commas API Key"
-            value={form.values.threeCommasApiKey}
-            onChange={(event) => form.setFieldValue('threeCommasApiKey', event.currentTarget.value)}
-            radius="md"
-          />
-          <TextInput
-            label="3commas API Secret"
-            value={form.values.threeCommasSecret}
-            onChange={(event) => form.setFieldValue('threeCommasSecret', event.currentTarget.value)}
-            radius="md"
-          />
-          <TextInput
-            label="Bybit API Key"
-            value={form.values.byBitApiKey}
-            onChange={(event) => form.setFieldValue('byBitApiKey', event.currentTarget.value)}
-            radius="md"
-          />
-          <TextInput
-            label="Bybit API Secret"
-            value={form.values.byBitApiSecret}
-            onChange={(event) => form.setFieldValue('byBitApiSecret', event.currentTarget.value)}
             radius="md"
           />
         </Stack>

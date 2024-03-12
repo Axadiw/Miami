@@ -1,14 +1,15 @@
-from flask import jsonify, request, Blueprint
+from flask import jsonify, request, Blueprint, make_response
 
 from api.database import db
 from api.endpoints.consts import USER_CONFIG_SAVED_RESPONSE, DEFAULT_ADMIN_EMAIL, EXCHANGE_ACCOUNT_ADDED, \
-    EXCHANGE_ACCOUNT_REMOVED
+    EXCHANGE_ACCOUNT_REMOVED, PARAMS_INVALID_RESPONSE
 from api.endpoints.session.token_required import token_required
+from api.exchange_wrappers.bybit_3commas_wrapper import Bybit3CommasWrapper
 from shared.models.exchange_account import ExchangeAccount
 from shared.models.user_configs import UserConfig
 from shared.models.user import User
 
-ALLOWED_USER_CONFIG_KEYS = ['3commas_account', '3commas_api_key', '3commas_secret', 'bybit_api_key', 'bybit_api_secret']
+ALLOWED_USER_CONFIG_KEYS = ['twitter_id', 'ui_timezone']
 
 account_routes = Blueprint('account_routes', __name__)
 
@@ -48,6 +49,18 @@ def account_info(user):
 @token_required
 def add_new_exchange_account(user):
     data = request.get_json()
+
+    if 'type' not in data or 'name' not in data or 'details' not in data:
+        return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
+
+    allowed_exchange_types = [Bybit3CommasWrapper.get_name()]
+    if data['type'] not in allowed_exchange_types:
+        return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
+
+    if data['type'] == Bybit3CommasWrapper.get_name() and not Bybit3CommasWrapper.validate_account_details(
+            data['details']):
+        return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
+
     db.session.add(ExchangeAccount(type=data['type'], name=data['name'], details=data['details'], user_id=user.id))
     db.session.commit()
     return jsonify(EXCHANGE_ACCOUNT_ADDED)
@@ -57,7 +70,15 @@ def add_new_exchange_account(user):
 @token_required
 def remove_exchange_account(user):
     data = request.get_json()
+
+    if 'id' not in data:
+        return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
+
     account_to_delete = db.session.query(ExchangeAccount).filter_by(id=data['id']).one()
+
+    if account_to_delete.user_id != user.id:
+        return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
+
     db.session.delete(account_to_delete)
     db.session.commit()
     return jsonify(EXCHANGE_ACCOUNT_REMOVED)
