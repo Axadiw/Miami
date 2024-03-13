@@ -142,7 +142,11 @@ export const MarketChart = () => {
 
   useEffect(() => {
     const priceLineSeries = priceLineSeriesRef.current;
-    if (priceLineSeries === null || priceLineSeries === undefined) {
+    if (
+      priceLineSeries === null ||
+      priceLineSeries === undefined ||
+      calculatedValues === undefined
+    ) {
       return;
     }
 
@@ -179,16 +183,7 @@ export const MarketChart = () => {
     });
 
     priceLineSeries.series.setData(priceLinesData);
-  }, [
-    calculatedValues.slPrice,
-    calculatedValues.tp1Price,
-    calculatedValues.tp2Price,
-    calculatedValues.tp3Price,
-    sl,
-    tp1,
-    tp2,
-    tp3,
-  ]);
+  }, [calculatedValues, sl, tp1, tp2, tp3]);
 
   return (
     <ChartComponent

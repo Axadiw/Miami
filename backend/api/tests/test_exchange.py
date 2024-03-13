@@ -37,3 +37,5 @@ def test_get_balance_should_fail_for_different_user_account(client):
     response = client.get('/exchange_get_balance?account=1', headers={"x-access-tokens": get_test_user_token(client)})
     assert response.status_code == 400
     assert response.json == PARAMS_INVALID_RESPONSE
+
+# TODO: Added test that checks if correct params were passed to the actual wrapper

@@ -5,7 +5,7 @@ import { spotlight, Spotlight } from '@mantine/spotlight';
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
 
 export const SelectSymbolStep = () => {
-  const { fetchSymbolsSuccess, symbols, setSelectedSymbol, selectedSymbol, currentPrice } =
+  const { active, fetchSymbolsSuccess, symbols, setSelectedSymbol, selectedSymbol, currentPrice } =
     useMarketPageContext();
   const symbolsList = symbols?.symbols ?? [];
   return (
@@ -13,7 +13,7 @@ export const SelectSymbolStep = () => {
       {fetchSymbolsSuccess && (
         <>
           <Group>
-            <Button size="xs" onClick={spotlight.open}>
+            <Button disabled={active < 1} size="xs" onClick={spotlight.open}>
               Pick symbol
             </Button>
             <Spotlight

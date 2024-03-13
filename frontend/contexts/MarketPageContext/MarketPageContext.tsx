@@ -4,6 +4,7 @@ import {
   ReactNode,
   SetStateAction,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -17,11 +18,14 @@ import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContex
 import { GetOHLCVsResponse } from '@/api/useGetOHLCVs';
 import { GetTimeframesResponse } from '@/api/useGetTimeframes';
 import { GetSymbolsResponse } from '@/api/useGetSymbols';
+import { useGetAccountBalance } from '@/api/useAccountBalance';
 
 interface MarketPageContext {
-  accountBalance: number;
-  setAccountBalance: Dispatch<SetStateAction<number>>;
+  accountBalance: number | undefined;
+  setAccountBalance: Dispatch<SetStateAction<number | undefined>>;
   maxLoss: number | string | undefined;
+  selectedAccountId: string | undefined;
+  setSelectedAccountId: Dispatch<SetStateAction<string | undefined>>;
   setMaxLoss: Dispatch<SetStateAction<number | string | undefined>>;
   selectedSymbol: string | null;
   setSelectedSymbol: Dispatch<SetStateAction<string | null>>;
@@ -61,9 +65,9 @@ interface MarketPageContext {
   timeframes: GetTimeframesResponse | undefined;
   symbols: GetSymbolsResponse | undefined;
   currentPrice: number;
-  calculatedValues: MarketCalculatorResponse;
   fetchSymbolsSuccess: boolean;
   active: number;
+  calculatedValues?: MarketCalculatorResponse;
 }
 
 export const MarketPageContext = createContext<MarketPageContext>({} as MarketPageContext);
@@ -74,7 +78,8 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
   const exchange = 'bybit';
   const limit = 1000;
   const dataLayer = useDataLayerContext();
-  const [accountBalance, setAccountBalance] = useState<number>(500);
+  const [accountBalance, setAccountBalance] = useState<number | undefined>(undefined);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(undefined);
   const [maxLoss, setMaxLoss] = useState<number | string | undefined>(undefined);
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState<string | null>(null);
@@ -104,25 +109,28 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
   const currentPrice = ohlcvs?.ohlcvs.at(-1)?.close ?? -1;
   const { data: timeframes } = dataLayer.useGetTimeframes({ exchange });
   const { isSuccess: fetchSymbolsSuccess, data: symbols } = dataLayer.useGetSymbols({ exchange });
-  const calculatedValues = calculateMarketValues({
-    side,
-    openPrice: currentPrice,
-    accountBalance,
-    maxLoss,
-    maxLossType,
-    sl,
-    tp1,
-    tp2,
-    tp3,
-    tp1Percent,
-    tp2Percent,
-    tp3Percent,
-    slType,
-    tp1Type,
-    tp2Type,
-    tp3Type,
-  });
+  const calculatedValues = accountBalance
+    ? calculateMarketValues({
+        side,
+        openPrice: currentPrice,
+        accountBalance,
+        maxLoss,
+        maxLossType,
+        sl,
+        tp1,
+        tp2,
+        tp3,
+        tp1Percent,
+        tp2Percent,
+        tp3Percent,
+        slType,
+        tp1Type,
+        tp2Type,
+        tp3Type,
+      })
+    : undefined;
 
+  const step0Finished = selectedAccountId !== undefined;
   const step1Finished = selectedSymbol !== null;
   const step2Finished = maxLoss !== undefined && sl !== undefined;
   const step3Finished =
@@ -133,7 +141,10 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
     tp3 !== undefined &&
     tp3Percent !== undefined;
 
-  let active = 1;
+  let active = 0;
+  if (step0Finished) {
+    active = 1;
+  }
   if (step1Finished) {
     active = 2;
   }
@@ -144,8 +155,16 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
     active = 4;
   }
 
+  const { data } = useGetAccountBalance({ accountId: selectedAccountId });
+
+  useEffect(() => {
+    if (data) setAccountBalance(data.balance);
+  }, [data]);
+
   const value = useMemo(
     () => ({
+      selectedAccountId,
+      setSelectedAccountId,
       accountBalance,
       setAccountBalance,
       maxLoss,
@@ -193,6 +212,7 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
       active,
     }),
     [
+      selectedAccountId,
       accountBalance,
       maxLoss,
       selectedSymbol,

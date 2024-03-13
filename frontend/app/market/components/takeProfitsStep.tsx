@@ -59,8 +59,14 @@ export const TakeProfitsStep = () => {
               data={['%', '$']}
             />
             <Text>
-              {tp1 && tp1Type === '%' && `$${calculatedValues.tp1Price.toFixed(6)}`}
-              {tp1 && tp1Type === '$' && `(${calculatedValues.tp1Percent.toFixed(2)}%)`}
+              {calculatedValues &&
+                tp1 &&
+                tp1Type === '%' &&
+                `$${calculatedValues.tp1Price.toFixed(6)}`}
+              {calculatedValues &&
+                tp1 &&
+                tp1Type === '$' &&
+                `(${calculatedValues.tp1Percent.toFixed(2)}%)`}
             </Text>
           </Group>
         </Input.Wrapper>
@@ -85,7 +91,10 @@ export const TakeProfitsStep = () => {
               />
             </Stack>
             <Text c="green">
-              {tp1 && tp1Percent && `$ ${calculatedValues.tp1USDReward.toFixed(2)}`}
+              {calculatedValues &&
+                tp1 &&
+                tp1Percent &&
+                `$ ${calculatedValues.tp1USDReward.toFixed(2)}`}
             </Text>
           </Group>
         </Input.Wrapper>
@@ -111,8 +120,14 @@ export const TakeProfitsStep = () => {
               data={['%', '$']}
             />
             <Text>
-              {tp2 && tp2Type === '%' && `$${calculatedValues.tp2Price.toFixed(6)}`}
-              {tp2 && tp2Type === '$' && `(${calculatedValues.tp2Percent.toFixed(2)}%)`}
+              {calculatedValues &&
+                tp2 &&
+                tp2Type === '%' &&
+                `$${calculatedValues.tp2Price.toFixed(6)}`}
+              {calculatedValues &&
+                tp2 &&
+                tp2Type === '$' &&
+                `(${calculatedValues.tp2Percent.toFixed(2)}%)`}
             </Text>
           </Group>
         </Input.Wrapper>
@@ -138,7 +153,10 @@ export const TakeProfitsStep = () => {
             </Stack>
 
             <Text c="green">
-              {tp2 && tp2Percent && `$ ${calculatedValues.tp2USDReward.toFixed(2)}`}
+              {calculatedValues &&
+                tp2 &&
+                tp2Percent &&
+                `$ ${calculatedValues.tp2USDReward.toFixed(2)}`}
             </Text>
           </Group>
         </Input.Wrapper>
@@ -163,8 +181,14 @@ export const TakeProfitsStep = () => {
               data={['%', '$']}
             />
             <Text>
-              {tp3 && tp3Type === '%' && `$${calculatedValues.tp3Price.toFixed(6)}`}
-              {tp3 && tp3Type === '$' && `(${calculatedValues.tp3Percent.toFixed(2)}%)`}
+              {calculatedValues &&
+                tp3 &&
+                tp3Type === '%' &&
+                `$${calculatedValues.tp3Price.toFixed(6)}`}
+              {calculatedValues &&
+                tp3 &&
+                tp3Type === '$' &&
+                `(${calculatedValues.tp3Percent.toFixed(2)}%)`}
             </Text>
           </Group>
         </Input.Wrapper>
@@ -190,7 +214,10 @@ export const TakeProfitsStep = () => {
             </Stack>
           </Input.Wrapper>
           <Text c="green">
-            {tp3 && tp3Percent && `$ ${calculatedValues.tp3USDReward.toFixed(2)}`}
+            {calculatedValues &&
+              tp3 &&
+              tp3Percent &&
+              `$ ${calculatedValues.tp3USDReward.toFixed(2)}`}
           </Text>
         </Group>
       </Group>

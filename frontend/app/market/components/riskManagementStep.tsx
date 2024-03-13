@@ -40,8 +40,14 @@ export const RiskManagementStep = () => {
             data={['%', '$']}
           />
           <Text>
-            {maxLoss && maxLossType === '%' && `$${calculatedValues.maxLossUSD.toFixed(2)}`}
-            {maxLoss && maxLossType === '$' && `${calculatedValues.maxLossPercent.toFixed(2)}%`}
+            {calculatedValues &&
+              maxLoss &&
+              maxLossType === '%' &&
+              `$${calculatedValues.maxLossUSD.toFixed(2)}`}
+            {calculatedValues &&
+              maxLoss &&
+              maxLossType === '$' &&
+              `${calculatedValues.maxLossPercent.toFixed(2)}%`}
           </Text>
         </Group>
       </Input.Wrapper>
@@ -69,13 +75,16 @@ export const RiskManagementStep = () => {
             data={['%', '$']}
           />
           <Text>
-            {sl && slType === '%' && `$${calculatedValues.slPrice.toFixed(6)}`}
-            {sl && slType === '$' && `${calculatedValues.slPercent.toFixed(2)}%`}
+            {calculatedValues && sl && slType === '%' && `$${calculatedValues.slPrice.toFixed(6)}`}
+            {calculatedValues &&
+              sl &&
+              slType === '$' &&
+              `${calculatedValues.slPercent.toFixed(2)}%`}
           </Text>
         </Group>
       </Input.Wrapper>
 
-      {active > 2 && (
+      {active > 2 && calculatedValues && (
         <Text>
           Position size: {calculatedValues.positionSize.toFixed(6)} ($
           {calculatedValues.positionSizeUSD.toFixed(2)})
