@@ -10,7 +10,7 @@ from sqlalchemy import select, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ccxt import BadSymbol
+import ccxt
 from harvesting.data_harvesters.consts import GLOBAL_QUEUE_START_COMMAND, GLOBAL_QUEUE_REFRESH_COMMAND
 from harvesting.data_harvesters.database import get_session
 from harvesting.data_harvesters.harvester_core.common_harvester import fetch_list_of_symbols, fetch_exchange_entry, \
@@ -66,10 +66,11 @@ class RealtimeHarvester:
                     #     self.candles_counter_timer = datetime.now()
                     #     self.added_candles_count = 0
 
-                    candles: dict = await exchange_connector.watch_ohlcv(subscriptions)
-                    await asyncio.create_task(self.handle_candles(candles, db_session=db_session))
+                    if len(subscriptions) > 0:
+                        candles: dict = await exchange_connector.watch_ohlcv(subscriptions)
+                        await asyncio.create_task(self.handle_candles(candles, db_session=db_session))
                     await asyncio.sleep(1)  # empty subscriptions array
-                except BadSymbol as e:
+                except ccxt.BadSymbol as e:
                     logging.critical(f'Bad symbol {e}')
                     exchange_connector.load_markets()
                 except Exception as e:
@@ -153,7 +154,7 @@ class RealtimeHarvester:
                         await asyncio.create_task(self.handle_tickers(ticker, db_session=db_session))
                     else:
                         await asyncio.sleep(1)  # empty subscriptions array
-                except BadSymbol as e:
+                except ccxt.BadSymbol as e:
                     logging.critical(f'Bad symbol {e}')
                     await exchange_connector.load_markets()
                 except Exception as e:
@@ -161,24 +162,26 @@ class RealtimeHarvester:
                     await asyncio.sleep(1)
 
     async def handle_tickers(self, ticker, db_session: AsyncSession):
-        # async with get_session(app_name='handle_tickers_realtime') as db_session:
-        symbol = (await db_session.execute(select(Symbol).filter_by(name=ticker['symbol']))).scalar()
-        timestamp = datetime.fromtimestamp(ticker['timestamp'] / 1000.0)
-        count = (await db_session.execute(select(func.count(Funding.id)).filter_by(symbol=symbol.id).filter(
-            Funding.timestamp > timestamp - timedelta(seconds=30)))).scalar()
-        if count == 0:
-            if 'fundingRate' in ticker['info']:
-                funding = {"exchange": self.exchange.id, "symbol": symbol.id,
-                           "timestamp": timestamp,
-                           "value": decimal.Decimal(ticker['info']['fundingRate'])}
-                self.added_tickers_count += 1
-                await db_session.execute(insert(Funding).values(funding).on_conflict_do_nothing())
-            if 'openInterest' in ticker['info']:
-                oi = {"exchange": self.exchange.id, "symbol": symbol.id,
-                      "timestamp": timestamp,
-                      "value": decimal.Decimal(ticker['info']['openInterest'])}
-                await db_session.execute(insert(OpenInterest).values(oi).on_conflict_do_nothing())
-            await db_session.commit()
+        try:
+            symbol = (await db_session.execute(select(Symbol).filter_by(name=ticker['symbol']))).scalar()
+            timestamp = datetime.fromtimestamp(ticker['timestamp'] / 1000.0)
+            count = (await db_session.execute(select(func.count(Funding.id)).filter_by(symbol=symbol.id).filter(
+                Funding.timestamp > timestamp - timedelta(seconds=30)))).scalar()
+            if count == 0:
+                if 'fundingRate' in ticker['info'] and ticker['info']['fundingRate']:
+                    funding = {"exchange": self.exchange.id, "symbol": symbol.id,
+                               "timestamp": timestamp,
+                               "value": decimal.Decimal(ticker['info']['fundingRate'])}
+                    self.added_tickers_count += 1
+                    await db_session.execute(insert(Funding).values(funding).on_conflict_do_nothing())
+                if 'openInterest' in ticker['info'] and ticker['info']['openInterest']:
+                    oi = {"exchange": self.exchange.id, "symbol": symbol.id,
+                          "timestamp": timestamp,
+                          "value": decimal.Decimal(ticker['info']['openInterest'])}
+                    await db_session.execute(insert(OpenInterest).values(oi).on_conflict_do_nothing())
+                await db_session.commit()
+        except Exception as e:
+            logging.critical(f'[Realtime Harvester Watcher] Error handle_tickers {e}')
 
     async def start_queue_loop(self):
         while True:
