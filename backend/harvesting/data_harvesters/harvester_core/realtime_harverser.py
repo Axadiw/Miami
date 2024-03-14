@@ -72,7 +72,7 @@ class RealtimeHarvester:
                     await asyncio.sleep(1)  # empty subscriptions array
                 except ccxt.BadSymbol as e:
                     logging.critical(f'Bad symbol {e}')
-                    exchange_connector.load_markets()
+                    await exchange_connector.load_markets()
                 except Exception as e:
                     logging.critical(f'[Realtime Harvester Watcher] Error watch_candles {e}')
                     await asyncio.sleep(1)

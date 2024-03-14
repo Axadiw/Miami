@@ -27,7 +27,7 @@ export const RiskManagementStep = () => {
             disabled={active < 2}
             w="100px"
             min={0}
-            size="xs"
+            size="md"
             value={maxLoss}
             onChange={setMaxLoss}
             error={maximumLossAbove0}
@@ -58,7 +58,7 @@ export const RiskManagementStep = () => {
             w="100px"
             min={0}
             max={slType === '%' ? 100 : undefined}
-            size="xs"
+            size="md"
             value={sl}
             onChange={(v) => {
               setSl(v);

@@ -46,7 +46,7 @@ export const TakeProfitsStep = () => {
               disabled={active < 3}
               w="100px"
               min={0}
-              size="xs"
+              size="md"
               value={tp1}
               onChange={setTp1}
               error={tp1Above0 ?? tp1AboveOpen}
@@ -78,7 +78,7 @@ export const TakeProfitsStep = () => {
                 w="50px"
                 min={0}
                 max={100}
-                size="xs"
+                size="md"
                 value={tp1Percent}
                 onChange={setTp1Percent}
                 error={tpVolumesAddTo100}
@@ -107,7 +107,7 @@ export const TakeProfitsStep = () => {
               disabled={active < 3}
               w="100px"
               min={0}
-              size="xs"
+              size="md"
               value={tp2}
               onChange={setTp2}
               error={tp2Above0 ?? tp2AboveTp1}
@@ -139,7 +139,7 @@ export const TakeProfitsStep = () => {
                 w="50px"
                 min={0}
                 max={100}
-                size="xs"
+                size="md"
                 value={tp2Percent}
                 onChange={setTp2Percent}
                 error={tpVolumesAddTo100}
@@ -167,7 +167,7 @@ export const TakeProfitsStep = () => {
             <NumberInput
               disabled={active < 3}
               w="100px"
-              size="xs"
+              size="md"
               min={0}
               value={tp3}
               onChange={setTp3}
@@ -198,7 +198,7 @@ export const TakeProfitsStep = () => {
               <NumberInput
                 disabled={active < 3}
                 w="50px"
-                size="xs"
+                size="md"
                 min={0}
                 max={100}
                 value={tp3Percent}
