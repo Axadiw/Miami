@@ -9,7 +9,7 @@ import {
   Text,
   useCombobox,
 } from '@mantine/core';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Side } from '@/app/shared/components/positionCalculators/marketCalculator';
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
 import { useListExchangeAccounts } from '@/api/useListExchangeAccounts';
@@ -19,6 +19,12 @@ export const AccountAndSideSelectionStep = () => {
     useMarketPageContext();
 
   const { data: existingAccounts } = useListExchangeAccounts();
+
+  useEffect(() => {
+    if (existingAccounts?.accounts && existingAccounts?.accounts.length > 0) {
+      setSelectedAccountId(existingAccounts?.accounts[0].id);
+    }
+  }, [existingAccounts?.accounts, setSelectedAccountId]);
 
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),

@@ -79,7 +79,7 @@ def get_ohlcv():
     room_name = room_name_generator(exchange.name, timeframe.name, symbol.name)
     if room_name in last_ohlcv_database:
         latest = last_ohlcv_database[room_name]
-        if latest['ohlcv'][0] >= ohlcvs[-1]['time']:
+        if latest['ohlcv'][0] > ohlcvs[-1]['time']:
             ohlcvs.append(
                 {"open": latest['ohlcv'][1],
                  "high": latest['ohlcv'][2],

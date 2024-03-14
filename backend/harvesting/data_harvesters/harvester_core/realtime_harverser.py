@@ -121,7 +121,7 @@ class RealtimeHarvester:
                 return {"exchange": self.exchange.id,
                         "symbol": symbol.id,
                         "timeframe": timeframe.id,
-                        "timestamp": datetime.fromtimestamp(candle_data[0] / 1000.0 + timeframe.seconds),
+                        "timestamp": datetime.fromtimestamp(candle_data[0] / 1000.0),
                         "open": candle_data[1],
                         "high": candle_data[2],
                         "low": candle_data[3],

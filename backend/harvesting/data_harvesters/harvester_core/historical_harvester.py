@@ -100,7 +100,6 @@ class HistoricalHarvester:
                     raw_connection = (await (await db_session.connection()).get_raw_connection()).driver_connection
                     await raw_connection.execute(
                         f'CREATE TEMP TABLE IF NOT EXISTS {temp_table_name}(symbol int4, exchange int4, '
-                        # f'CREATE TABLE IF NOT EXISTS {temp_table_name}(symbol int4, exchange int4, '
                         f'timeframe int4, timestamp timestamp, open numeric(30,10), high numeric(30,10), '
                         f'low numeric(30,10), close numeric(30,10), volume numeric(30,10))')
                     await raw_connection.copy_records_to_table(temp_table_name, records=new_candles,

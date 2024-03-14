@@ -25,6 +25,22 @@ type OHLCVRealtimeDataType = {
   symbol: string;
   ohlcv: number[];
 };
+
+function timeToLocal(originalTime: number) {
+  const d = new Date(originalTime * 1000);
+  return (
+    Date.UTC(
+      d.getFullYear(),
+      d.getMonth(),
+      d.getDate(),
+      d.getHours(),
+      d.getMinutes(),
+      d.getSeconds(),
+      d.getMilliseconds()
+    ) / 1000
+  );
+}
+
 export const MarketChart = () => {
   const { colorScheme } = useMantineColorScheme();
   const isDarkTheme = colorScheme === 'dark';
@@ -70,14 +86,13 @@ export const MarketChart = () => {
         high: o.high,
         low: o.low,
         close: o.close,
-        // time: timeToTz(o.time, Intl.DateTimeFormat().resolvedOptions().timeZone) as UTCTimestamp,
-        time: o.time,
+        time: timeToLocal(+o.time) as UTCTimestamp,
       }))
     );
 
     volumeSeries?.setData(
       ohlcvs.ohlcvs.map((element) => ({
-        time: element.time,
+        time: timeToLocal(+element.time) as UTCTimestamp,
         value: element.volume,
         color: element.open > element.close ? '#DD5E56' : '#52A49A',
       }))
@@ -110,12 +125,12 @@ export const MarketChart = () => {
         high: data.ohlcv[2],
         low: data.ohlcv[3],
         close: data.ohlcv[4],
-        time: data.ohlcv[0] as UTCTimestamp,
+        time: timeToLocal(data.ohlcv[0]) as UTCTimestamp,
       });
       volumeSeries?.update({
         value: data.ohlcv[5],
         color: data.ohlcv[1] > data.ohlcv[4] ? '#DD5E56' : '#52A49A',
-        time: data.ohlcv[0] as UTCTimestamp,
+        time: timeToLocal(data.ohlcv[0]) as UTCTimestamp,
       });
     };
     currentSocket?.on('ohlcv', handler);
