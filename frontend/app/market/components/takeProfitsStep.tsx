@@ -75,7 +75,7 @@ export const TakeProfitsStep = () => {
             <Stack>
               <NumberInput
                 disabled={active < 3}
-                w="50px"
+                w="70px"
                 min={0}
                 max={100}
                 size="md"
@@ -136,7 +136,7 @@ export const TakeProfitsStep = () => {
             <Stack>
               <NumberInput
                 disabled={active < 3}
-                w="50px"
+                w="70px"
                 min={0}
                 max={100}
                 size="md"
@@ -197,7 +197,7 @@ export const TakeProfitsStep = () => {
             <Stack>
               <NumberInput
                 disabled={active < 3}
-                w="50px"
+                w="70px"
                 size="md"
                 min={0}
                 max={100}
