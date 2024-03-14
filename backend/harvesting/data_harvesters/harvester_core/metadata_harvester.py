@@ -40,7 +40,7 @@ class MetadataHarvester:
 
     async def update_list_of_symbols(self) -> list[Type[Symbol]]:
         exchange_connector = self.exchange_connector_generator()
-        logging.info(f'[Metadata Harvester] Starting updating list of symbols')
+        logging.debug(f'[Metadata Harvester] Starting updating list of symbols')
         async with get_session(app_name='update_list_of_symbols_metadata') as db_session:
             while True:  # should finish after first round because of return at the end
                 try:
@@ -68,7 +68,7 @@ class MetadataHarvester:
 
                     new_symbols_count = len(new_symbols_to_add)
 
-                    logging.info(f'[Metadata Harvester] Updated list of symbols ({new_symbols_count} new added)')
+                    logging.debug(f'[Metadata Harvester] Updated list of symbols ({new_symbols_count} new added)')
                     await exchange_connector.close()
                     return list(
                         (await db_session.execute(select(Symbol).filter_by(exchange=self.exchange.id))).scalars())

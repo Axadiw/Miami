@@ -21,7 +21,7 @@ async def fetch_exchange_entry(exchange_name) -> Type[Exchange]:
 
 
 async def fetch_list_of_symbols(exchange: Type[Exchange]) -> list[Type[Symbol]]:
-    logging.info(f'[Historical Harvester] Starting updating list of symbols')
+    logging.debug(f'[Historical Harvester] Starting updating list of symbols')
     async with get_session(app_name='fetch_list_of_symbols') as db_session:
         return list(
             (await db_session.execute(
