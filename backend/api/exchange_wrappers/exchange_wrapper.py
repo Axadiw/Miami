@@ -1,10 +1,4 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
-from typing import List, Type
-
-from harvesting.data_harvesters.data_to_fetch import DataToFetch
-from shared.models.exchange import Exchange
-from shared.models.symbol import Symbol
 
 
 class ExchangeWrapper(ABC):
