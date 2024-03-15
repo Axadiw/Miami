@@ -61,6 +61,7 @@ export const MarketChart = () => {
     sl,
     selectedSymbol,
     selectedTimeframe,
+    setCurrentPrice,
   } = useMarketPageContext();
   const chartRef = useRef<IChartApi | null>(null);
   const priceSeriesRef = useRef<PriceSeriesWrapper['_series'] | null>(null);
@@ -89,6 +90,10 @@ export const MarketChart = () => {
         time: timeToLocal(+o.time) as UTCTimestamp,
       }))
     );
+    const lastPrice = ohlcvs?.ohlcvs.at(-1)?.close;
+    if (lastPrice) {
+      setCurrentPrice(lastPrice);
+    }
 
     volumeSeries?.setData(
       ohlcvs.ohlcvs.map((element) => ({
@@ -97,7 +102,7 @@ export const MarketChart = () => {
         color: element.open > element.close ? '#DD5E56' : '#52A49A',
       }))
     );
-  }, [ohlcvs?.ohlcvs]);
+  }, [ohlcvs?.ohlcvs, setCurrentPrice]);
 
   useEffect(() => {
     const newSocket = socketIOClient(BASE_URL);
@@ -127,6 +132,7 @@ export const MarketChart = () => {
         close: data.ohlcv[4],
         time: timeToLocal(data.ohlcv[0]) as UTCTimestamp,
       });
+      setCurrentPrice(data.ohlcv[4]);
       volumeSeries?.update({
         value: data.ohlcv[5],
         color: data.ohlcv[1] > data.ohlcv[4] ? '#DD5E56' : '#52A49A',
@@ -138,7 +144,7 @@ export const MarketChart = () => {
       currentSocket?.off('ohlcv', prevState);
       return handler;
     });
-  }, [currentSocket, selectedSymbol, selectedTimeframe]);
+  }, [currentSocket, selectedSymbol, selectedTimeframe, setCurrentPrice]);
 
   useEffect(() => {
     if (!selectedSymbol || !selectedTimeframe) {

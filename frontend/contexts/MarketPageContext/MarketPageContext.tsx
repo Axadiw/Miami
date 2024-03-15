@@ -65,6 +65,7 @@ interface MarketPageContext {
   timeframes: GetTimeframesResponse | undefined;
   symbols: GetSymbolsResponse | undefined;
   currentPrice: number;
+  setCurrentPrice: Dispatch<SetStateAction<number>>;
   fetchSymbolsSuccess: boolean;
   active: number;
   calculatedValues?: MarketCalculatorResponse;
@@ -78,6 +79,7 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
   const exchange = 'bybit';
   const limit = 1000;
   const dataLayer = useDataLayerContext();
+  const [currentPrice, setCurrentPrice] = useState<number>(-1);
   const [accountBalance, setAccountBalance] = useState<number | undefined>(undefined);
   const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(undefined);
   const [maxLoss, setMaxLoss] = useState<number | string | undefined>(undefined);
@@ -106,7 +108,6 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
     timeframe: selectedTimeframe ?? '',
     limit,
   });
-  const currentPrice = ohlcvs?.ohlcvs.at(-1)?.close ?? -1;
   const { data: timeframes } = dataLayer.useGetTimeframes({ exchange });
   const { isSuccess: fetchSymbolsSuccess, data: symbols } = dataLayer.useGetSymbols({ exchange });
   const calculatedValues = accountBalance
@@ -205,6 +206,7 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
       setSide,
       ohlcvs,
       currentPrice,
+      setCurrentPrice,
       timeframes,
       calculatedValues,
       fetchSymbolsSuccess,
@@ -234,6 +236,7 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
       side,
       ohlcvs,
       currentPrice,
+      setCurrentPrice,
       timeframes,
       calculatedValues,
       fetchSymbolsSuccess,
