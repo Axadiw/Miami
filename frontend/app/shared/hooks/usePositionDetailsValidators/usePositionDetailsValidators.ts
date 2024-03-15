@@ -1,7 +1,8 @@
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
 
 export const usePositionDetailsValidators = () => {
-  const { calculatedValues, side, tp1Percent, tp2Percent, tp3Percent } = useMarketPageContext();
+  const { calculatedValues, side, tp1Percent, tp2Percent, tp3Percent, comment } =
+    useMarketPageContext();
 
   return {
     slBelowOpen:
@@ -39,5 +40,6 @@ export const usePositionDetailsValidators = () => {
       calculatedValues && calculatedValues.tp2Percent <= 0 ? 'TP2 need to be above 0%' : undefined,
     tp3Above0:
       calculatedValues && calculatedValues.tp3Percent <= 0 ? 'TP3 need to be above 0%' : undefined,
+    commentNotTooLong: comment && comment.length > 1000 ? 'Comment too long' : undefined,
   };
 };

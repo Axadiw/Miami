@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { useDocumentTitle } from '@mantine/hooks';
 import {
   calculateMarketValues,
   MarketCalculatorResponse,
@@ -69,6 +70,8 @@ interface MarketPageContext {
   fetchSymbolsSuccess: boolean;
   active: number;
   calculatedValues?: MarketCalculatorResponse;
+  comment: string | undefined;
+  setComment: Dispatch<SetStateAction<string | undefined>>;
 }
 
 export const MarketPageContext = createContext<MarketPageContext>({} as MarketPageContext);
@@ -101,6 +104,7 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
   const [externalChartHelperURL, setExternalChartHelperURL] = useState<string | undefined>(
     undefined
   );
+  const [comment, setComment] = useState<string | undefined>(undefined);
   const [side, setSide] = useState<Side>('Long');
   const { data: ohlcvs } = dataLayer.useGetOHLCVs({
     exchange,
@@ -158,6 +162,12 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
 
   const { data } = useGetAccountBalance({ accountId: selectedAccountId });
 
+  useDocumentTitle(
+    currentPrice && currentPrice > 0 && selectedSymbol
+      ? `${currentPrice} - ${selectedSymbol}`
+      : 'Miami Trade'
+  );
+
   useEffect(() => {
     if (data) setAccountBalance(data.balance);
   }, [data]);
@@ -212,6 +222,8 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
       fetchSymbolsSuccess,
       symbols,
       active,
+      comment,
+      setComment,
     }),
     [
       selectedAccountId,
@@ -236,12 +248,12 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
       side,
       ohlcvs,
       currentPrice,
-      setCurrentPrice,
       timeframes,
       calculatedValues,
       fetchSymbolsSuccess,
       symbols,
       active,
+      comment,
     ]
   );
 
