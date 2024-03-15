@@ -39,6 +39,7 @@ class RealtimeHarvester:
         self.is_initialized = False
         self.exchange_name = exchange_name
         self.symbols: list[Type[Symbol]] = []
+        self.symbols_dict: dict[str:Type[Symbol]] = {}
         self.timeframes: list[Type[Timeframe]] = []
         self.supported_ohlcv_timeframes_names = ohlcv_timeframe_names
         self.added_tickers_count = 0
@@ -128,20 +129,15 @@ class RealtimeHarvester:
         if len(trades) == 0:
             return
         symbol_name = trades[0]['symbol']
-
-        symbol = (await db_session.execute(select(Symbol).filter_by(name=symbol_name))).scalar()
-
-        if symbol is None:
-            raise Exception(f'Symbol f{symbol_name} not found')
-
-        symbol_id = symbol.id
+        symbol_id = self.symbols_dict[symbol_name].id
+        candles_to_save = []
 
         for timeframe in self.timeframes:
             pair_identifier = f'{symbol_name}_{timeframe.name}'
             if pair_identifier in self.latest_candles:
-                new_candles = exchange_connector.build_ohlcvc(last_ohlcv=self.latest_candles[pair_identifier],
-                                                              trades=trades,
-                                                              timeframe=timeframe)
+                new_candles = exchange_connector.build_ohlcv(last_ohlcv=self.latest_candles[pair_identifier],
+                                                             trades=trades,
+                                                             timeframe=timeframe)
 
                 if len(new_candles) > 0:
                     converted_candle = self.convert_candle(new_candles[-1], symbol_id, timeframe.id)
@@ -160,9 +156,7 @@ class RealtimeHarvester:
                     if len(new_candles) > 1:
                         # logging.info(f'Adding new candle {symbol_name} {timeframe.name}')
                         self.added_candles_count += 1
-                        await db_session.execute(insert(OHLCV).values(
-                            self.convert_candle(new_candles[-2], symbol_id, timeframe.id)).on_conflict_do_nothing())
-                        await db_session.commit()
+                        candles_to_save.append(self.convert_candle(new_candles[-2], symbol_id, timeframe.id))
 
                     self.latest_candles[pair_identifier] = new_candles[-1]
                 else:
@@ -172,6 +166,10 @@ class RealtimeHarvester:
             else:
                 logging.critical(
                     f'[Realtime Harvester Watcher] Received trade for unknown symbol_name: {symbol_name}')
+
+        if len(candles_to_save) > 0:
+            await db_session.execute(insert(OHLCV).values(candles_to_save).on_conflict_do_nothing())
+            await db_session.commit()
 
     def convert_candle(self, candle, symbol_id, timeframe_id):
         return {"exchange": self.exchange.id,
@@ -241,6 +239,8 @@ class RealtimeHarvester:
                 self.is_initialized = True
             elif command == GLOBAL_QUEUE_REFRESH_COMMAND:
                 self.symbols = await fetch_list_of_symbols(self.exchange)
+
+            self.symbols_dict = {symbol.name: symbol for symbol in self.symbols}
 
     async def start(self):
         await self.mqtt_client.connect('mqtt', 1883, keepalive=60)

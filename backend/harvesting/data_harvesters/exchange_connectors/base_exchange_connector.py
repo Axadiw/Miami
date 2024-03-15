@@ -25,7 +25,7 @@ class BaseExchangeConnector(ABC):
         pass
 
     @abstractmethod
-    def build_ohlcvc(self, last_ohlcv: list, trades: List[Trade], timeframe: Type[Timeframe]):
+    def build_ohlcv(self, last_ohlcv: list, trades: List[Trade], timeframe: Type[Timeframe]):
         pass
 
     @abstractmethod

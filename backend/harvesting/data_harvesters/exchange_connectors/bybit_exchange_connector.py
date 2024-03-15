@@ -49,26 +49,16 @@ class BybitConnectorCCXT(BaseExchangeConnector):
     async def watch_trades(self, symbols_and_time_frames: List[str]):
         return await self.connector_pro.watch_trades_for_symbols(symbols_and_time_frames)
 
-    def sum(*args):  # TODO: remove it
-        return sum([arg for arg in args if isinstance(arg, (float, int))])
-
-    def build_ohlcvc(self, last_ohlcv: list, trades: List[Trade], timeframe: Type[Timeframe]):
-        seconds = timeframe.seconds
+    def build_ohlcv(self, last_ohlcv: list, trades: List[Trade], timeframe: Type[Timeframe]):
+        timeframe_in_seconds = timeframe.seconds
         ohlcvs = [last_ohlcv]
-        i_timestamp = 0
-        # open = 1
-        i_high = 2
-        i_low = 3
-        i_close = 4
-        i_volume = 5
-        oldest = len(trades)
-        for i in range(0, oldest):
-            trade = trades[i]
+        for trade in trades:
             ts = trade['timestamp'] / 1000
-            openingTime = int(math.floor(ts / seconds)) * seconds  # shift to the edge of m/h/d(but not M)
+            openingTime = int(
+                math.floor(ts / timeframe_in_seconds)) * timeframe_in_seconds  # shift to the edge of m/h/d(but not M)
             ohlcv_length = len(ohlcvs)
             candle = ohlcv_length - 1
-            if (candle == -1) or (openingTime >= self.sum(ohlcvs[candle][i_timestamp], seconds)):
+            if (candle == -1) or (openingTime >= ohlcvs[candle][0] + timeframe_in_seconds):
                 # moved to a new timeframe -> create a new candle from opening trade
                 ohlcvs.append([
                     openingTime,  # timestamp
@@ -80,10 +70,10 @@ class BybitConnectorCCXT(BaseExchangeConnector):
                 ])
             else:
                 # still processing the same timeframe -> update opening trade
-                ohlcvs[candle][i_high] = max(ohlcvs[candle][i_high], trade['price'])
-                ohlcvs[candle][i_low] = min(ohlcvs[candle][i_low], trade['price'])
-                ohlcvs[candle][i_close] = trade['price']
-                ohlcvs[candle][i_volume] = self.sum(ohlcvs[candle][i_volume], trade['amount'])
+                ohlcvs[candle][2] = max(ohlcvs[candle][2], trade['price'])
+                ohlcvs[candle][3] = min(ohlcvs[candle][3], trade['price'])
+                ohlcvs[candle][4] = trade['price']
+                ohlcvs[candle][5] = ohlcvs[candle][5] + trade['amount']
         return ohlcvs
 
     async def watch_ohlcv(self, symbols_and_time_frames: List[List[str]]):
