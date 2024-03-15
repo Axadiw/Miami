@@ -125,14 +125,10 @@ class RealtimeHarvester:
 
     async def handle_trades(self, exchange_connector: BaseExchangeConnector, trades: List[Trade],
                             db_session: AsyncSession):
-        debug_symbol = ''
         for trade in trades:
             symbol_name = trade['symbol']
 
-            if debug_symbol != '' and debug_symbol != symbol_name:
-                print('REMOVE_ME_Different symbols detected')
-                pass
-            debug_symbol = symbol_name
+            logging.info(f'Received new trades for {symbol_name}')
 
             symbol = (await db_session.execute(select(Symbol).filter_by(name=symbol_name))).scalar()
 
@@ -159,9 +155,11 @@ class RealtimeHarvester:
                                        'symbol': symbol_name,
                                        'timeframe': timeframe.name}
                             self.mqtt_client.publish('ohlcv', to_emit)
+                            logging.info(f'Updating candle {symbol_name} {timeframe.name}')
                             self.last_candles_mqtt_emit_dates[pair_identifier] = datetime.now()
 
                         if len(new_candles) > 1:
+                            logging.info(f'Adding new candle {symbol_name} {timeframe.name}')
                             self.added_candles_count += 1
                             await db_session.execute(insert(OHLCV).values(
                                 self.convert_candle(new_candles[-2], symbol_id, timeframe.id)).on_conflict_do_nothing())
