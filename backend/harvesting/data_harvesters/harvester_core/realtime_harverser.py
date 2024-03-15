@@ -149,16 +149,7 @@ class RealtimeHarvester:
                                                                   timeframe=timeframe)
 
                     if len(new_candles) > 0:
-
-                        converted_candle = {"exchange": self.exchange.id,
-                                            "symbol": symbol_id,
-                                            "timeframe": timeframe.id,
-                                            "timestamp": datetime.fromtimestamp(new_candles[-1][0]),
-                                            "open": new_candles[-1][1],
-                                            "high": new_candles[-1][2],
-                                            "low": new_candles[-1][3],
-                                            "close": new_candles[-1][4],
-                                            "volume": new_candles[-1][5]}
+                        converted_candle = self.convert_candle(new_candles[-1], symbol_id, timeframe.id)
                         pair_identifier = f'{symbol_name}_{timeframe.name}'
                         if pair_identifier not in self.last_candles_mqtt_emit_dates or datetime.now() - \
                                 self.last_candles_mqtt_emit_dates[pair_identifier] > timedelta(seconds=1):
@@ -172,7 +163,8 @@ class RealtimeHarvester:
 
                         if len(new_candles) > 1:
                             self.added_candles_count += 1
-                            await db_session.execute(insert(OHLCV).values(converted_candle).on_conflict_do_nothing())
+                            await db_session.execute(insert(OHLCV).values(
+                                self.convert_candle(new_candles[-2], symbol_id, timeframe.id)).on_conflict_do_nothing())
                             await db_session.commit()
 
                         self.latest_candles[pair_identifier] = new_candles[-1]
@@ -183,6 +175,17 @@ class RealtimeHarvester:
                 else:
                     logging.critical(
                         f'[Realtime Harvester Watcher] Received trade for unknown symbol_name: {symbol_name}')
+
+    def convert_candle(self, candle, symbol_id, timeframe_id):
+        return {"exchange": self.exchange.id,
+                "symbol": symbol_id,
+                "timeframe": timeframe_id,
+                "timestamp": datetime.fromtimestamp(candle[0]),
+                "open": candle[1],
+                "high": candle[2],
+                "low": candle[3],
+                "close": candle[4],
+                "volume": candle[5]}
 
     async def watch_tickers(self):
         exchange_connector = self.exchange_connector_generator()
