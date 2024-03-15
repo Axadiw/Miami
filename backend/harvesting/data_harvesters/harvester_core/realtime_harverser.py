@@ -3,18 +3,22 @@ import decimal
 import logging
 from datetime import datetime, timedelta
 from queue import Queue
-from typing import Type, Callable
-
+from typing import Type, Callable, List
+from ccxt.base.types import Trade
 from gmqtt import Client as MQTTClient
 from sqlalchemy import select, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import ccxt
-from harvesting.data_harvesters.consts import GLOBAL_QUEUE_START_COMMAND, GLOBAL_QUEUE_REFRESH_COMMAND
+from harvesting.data_harvesters.consts import GLOBAL_QUEUE_START_COMMAND, GLOBAL_QUEUE_REFRESH_COMMAND, \
+    MAX_CONCURRENT_FETCHES
+from harvesting.data_harvesters.data_to_fetch import DataToFetch
 from harvesting.data_harvesters.database import get_session
+from harvesting.data_harvesters.exchange_connectors.base_exchange_connector import BaseExchangeConnector
 from harvesting.data_harvesters.harvester_core.common_harvester import fetch_list_of_symbols, fetch_exchange_entry, \
     get_subset_of_timeframes
+from harvesting.data_harvesters.helpers.semaphore_gather import semaphore_gather
 from shared.models.exchange import Exchange
 from shared.models.funding import Funding
 from shared.models.ohlcv import OHLCV
@@ -25,6 +29,7 @@ from shared.models.timeframe import Timeframe
 
 class RealtimeHarvester:
     exchange: Type[Exchange]
+    temporary_ohlcv_fetching_exchange_connectors: list[BaseExchangeConnector]
 
     def __init__(self, exchange_name: str, client_generator: Callable, queue: Queue,
                  ohlcv_timeframe_names: list[str]):
@@ -39,37 +44,78 @@ class RealtimeHarvester:
         self.added_tickers_count = 0
         self.tickers_counter_timer = datetime.now()
         self.added_candles_count = 0
-        self.mqttt_client = MQTTClient(f'{exchange_name}-realtime-harvester')
+        self.mqtt_client = MQTTClient(f'{exchange_name}-realtime-harvester')
         self.candles_counter_timer = datetime.now()
+        self.latest_candles = {}
+        self.last_candles_mqtt_emit_dates: dict[str:datetime] = {}
 
-    async def watch_candles_all_timeframes(self):
-        logging.info(f'[Realtime Harvester Watcher] Will start watching for candles')
+    async def fetch_latest_candles(self):
+        logging.info(f'[Realtime Harvester Watcher] Will start fetching initial candles')
+        self.temporary_ohlcv_fetching_exchange_connectors = [self.exchange_connector_generator() for _ in
+                                                             range(0, MAX_CONCURRENT_FETCHES)]
+        tmp_connector = self.exchange_connector_generator()
+        current_time: datetime = await tmp_connector.get_server_time()
+        await tmp_connector.close()
 
+        data_to_fetch = []
+        for symbol in self.symbols:
+            for timeframe in self.timeframes:
+                data_to_fetch.append(
+                    DataToFetch(symbol=symbol, timeframe=timeframe,
+                                start=current_time - timedelta(seconds=timeframe.seconds + 1), end=current_time))
+
+        await semaphore_gather(MAX_CONCURRENT_FETCHES, [self.fetch_and_save_single_ohlcv(data=data) for index, data in
+                                                        enumerate(data_to_fetch)])
+
+        for connector in self.temporary_ohlcv_fetching_exchange_connectors:
+            await connector.close()
+
+        self.temporary_ohlcv_fetching_exchange_connectors = []
+        logging.info(f'[Realtime Harvester Watcher] Finished fetching initial candles')
+
+    async def fetch_and_save_single_ohlcv(self, data: DataToFetch):
+        new_candles: list[OHLCV] = await self.fetch_single_ohlcv(data=data)
+        if len(new_candles) > 0:
+            last_candle = new_candles[-1]
+            self.latest_candles[f'{data.symbol.name}_{data.timeframe.name}'] = [datetime.timestamp(last_candle[0]),
+                                                                                last_candle[4], last_candle[5],
+                                                                                last_candle[6], last_candle[7],
+                                                                                last_candle[8]]
+
+    async def fetch_single_ohlcv(self, data: DataToFetch):
+        success = False
+        new_candles = []
+        exchange_connector = self.temporary_ohlcv_fetching_exchange_connectors.pop()
+        while not success:
+            try:
+                new_candles = await exchange_connector.fetch_ohlcv(data=data, exchange=self.exchange,
+                                                                   trim_to_range=False)
+                success = True
+            except Exception as e:
+                logging.error(f'Fetch initial single realtime ohlcv {data.symbol.name} {data.timeframe.name} {e}')
+                await asyncio.sleep(1)
+        self.temporary_ohlcv_fetching_exchange_connectors.append(exchange_connector)
+        return new_candles
+
+    async def watch_trades(self):
         while not self.is_initialized:
             await asyncio.sleep(1)
 
-        await asyncio.gather(*[self.watch_candles(timeframe) for timeframe in self.timeframes])
-
-    async def watch_candles(self, timeframe: Type[Timeframe]):
-        logging.info(f'[Realtime Harvester Watcher] Will start watching for candles TF: {timeframe.name}')
         exchange_connector = self.exchange_connector_generator()
-
-        async with get_session(app_name='watch_candles') as db_session:
+        async with get_session(app_name='watch_trades') as db_session:
             while True:
                 try:
-                    subscriptions = []
+                    subscriptions: list[str] = []
                     for symbol in self.symbols:
-                        subscriptions.append([symbol.name, timeframe.name])
-                    # if (datetime.now() - self.candles_counter_timer).total_seconds() > 60:
-                    #     logging.info(
-                    #         f'[Realtime Harvester Watcher]: In the last minute processed {self.added_candles_count} new candles')
-                    #     self.candles_counter_timer = datetime.now()
-                    #     self.added_candles_count = 0
+                        subscriptions.append(symbol.name)
 
                     if len(subscriptions) > 0:
-                        candles: dict = await exchange_connector.watch_ohlcv(subscriptions)
-                        await asyncio.create_task(self.handle_candles(candles, db_session=db_session))
-                    await asyncio.sleep(1)  # empty subscriptions array
+                        trades: List[Trade] = await exchange_connector.watch_trades(subscriptions)
+                        await asyncio.create_task(
+                            self.handle_trades(exchange_connector=exchange_connector, trades=trades,
+                                               db_session=db_session))
+                    else:
+                        await asyncio.sleep(1)
                 except ccxt.BadSymbol as e:
                     logging.critical(f'Bad symbol {e}')
                     await exchange_connector.load_markets()
@@ -77,60 +123,76 @@ class RealtimeHarvester:
                     logging.critical(f'[Realtime Harvester Watcher] Error watch_candles {e}')
                     await asyncio.sleep(1)
 
-    async def handle_candles(self, candles, db_session: AsyncSession):
-        # async with get_session(app_name='handle_candles_realtime') as db_session:
-        ohlcv_candles_to_save = []
-        for received_symbol in candles.items():
-            for received_timeframes_and_data in received_symbol[1].items():
-                candle_symbol = received_symbol[0]
-                candle_timeframe = received_timeframes_and_data[0]
-                candle_data = received_timeframes_and_data[1]
+    async def handle_trades(self, exchange_connector: BaseExchangeConnector, trades: List[Trade],
+                            db_session: AsyncSession):
+        debug_symbol = ''
+        for trade in trades:
+            symbol_name = trade['symbol']
 
-                for candle in candle_data:
-                    converted_candle = await self.convert_candle_data_to_ohlcv_object(db_session, candle_symbol,
-                                                                                      candle_timeframe, candle)
-                    toEmit = {**converted_candle,
-                              'timestamp': datetime.timestamp(converted_candle['timestamp']),
-                              'exchange': self.exchange.name,
-                              'symbol': candle_symbol,
-                              'timeframe': candle_timeframe, }
-                    self.mqttt_client.publish('ohlcv', toEmit)
+            if debug_symbol != '' and debug_symbol != symbol_name:
+                print('REMOVE_ME_Different symbols detected')
+                pass
+            debug_symbol = symbol_name
 
-                    if candle[6]:
-                        ohlcv_candles_to_save.append(converted_candle)
-                        # logging.warning(
-                        #     f'New Realtime candle for {candle_symbol} {candle_timeframe} {datetime.fromtimestamp(candle[0] / 1000.0)}')
+            symbol = (await db_session.execute(select(Symbol).filter_by(name=symbol_name))).scalar()
 
-        if len(ohlcv_candles_to_save) > 0:
-            self.added_candles_count += len(ohlcv_candles_to_save)
-            await db_session.execute(
-                insert(OHLCV).values(ohlcv_candles_to_save).on_conflict_do_nothing())
-            await db_session.commit()
+            if symbol is None:
+                raise Exception(f'Symbol f{symbol_name} not found')
 
-    async def convert_candle_data_to_ohlcv_object(self, db_session: AsyncSession, symbol_name: str,
-                                                  timeframe_name: str,
-                                                  candle_data: list):
-        while True:
-            try:
-                symbol = (await db_session.execute(select(Symbol).filter_by(name=symbol_name))).scalar()
-                timeframe = (await db_session.execute(select(Timeframe).filter_by(name=timeframe_name))).scalar()
+            for timeframe in self.timeframes:
+                pair_identifier = f'{symbol_name}_{timeframe.name}'
+                if pair_identifier in self.latest_candles:
+                    new_candles = exchange_connector.build_ohlcvc(last_ohlcv=self.latest_candles[pair_identifier],
+                                                                  trades=[trade],
+                                                                  timeframe=timeframe)
 
-                if symbol is None or timeframe is None or len(candle_data) < 5:
-                    raise Exception('Not enough data to generate OHLCV candle')
+                    if len(new_candles) > 0:
+                        await self.handle_candle(candle=new_candles[-1], symbol=symbol, timeframe=timeframe,
+                                                 is_new_candle=len(new_candles) > 1, db_session=db_session)
+                        self.latest_candles[pair_identifier] = new_candles[-1]
+                    else:
+                        logging.critical(
+                            f'[Realtime Harvester Watcher] Received trade for {symbol_name} that '
+                            f'have not produced any candles')
+                else:
+                    logging.critical(
+                        f'[Realtime Harvester Watcher] Received trade for unknown symbol_name: {symbol_name}')
 
-                return {"exchange": self.exchange.id,
-                        "symbol": symbol.id,
-                        "timeframe": timeframe.id,
-                        "timestamp": datetime.fromtimestamp(candle_data[0] / 1000.0),
-                        "open": candle_data[1],
-                        "high": candle_data[2],
-                        "low": candle_data[3],
-                        "close": candle_data[4],
-                        "volume": candle_data[5]}
-            except Exception as e:
-                await db_session.rollback()
-                logging.error(f'[Realtime HarvesterWatcher] convert_candle_data_to_ohlcv_object error {e}')
-                await asyncio.sleep(1)
+    async def handle_candle(self, candle, symbol: Symbol, timeframe: Type[Timeframe], is_new_candle: bool,
+                            db_session: AsyncSession):
+        converted_candle = self.convert_candle_data_to_ohlcv_object(symbol, timeframe, candle)
+        pair_identifier = f'{symbol.name}_{timeframe.name}'
+        if pair_identifier not in self.last_candles_mqtt_emit_dates or datetime.now() - \
+                self.last_candles_mqtt_emit_dates[pair_identifier] > timedelta(seconds=3):
+            to_emit = {**converted_candle,
+                       'timestamp': datetime.timestamp(converted_candle['timestamp']),
+                       'exchange': self.exchange.name,
+                       'symbol': symbol.name,
+                       'timeframe': timeframe.name}
+            self.mqtt_client.publish('ohlcv', to_emit)
+            self.last_candles_mqtt_emit_dates[pair_identifier] = datetime.now()
+
+        # if is_new_candle:
+        #     self.added_candles_count += 1
+        #     await db_session.execute(
+        #         insert(OHLCV).values([converted_candle]).on_conflict_do_nothing())
+        #     await db_session.commit()
+
+    def convert_candle_data_to_ohlcv_object(self, symbol: Symbol,
+                                            timeframe: Type[Timeframe],
+                                            candle_data: list):
+        if len(candle_data) < 5:
+            raise Exception('Not enough data to generate OHLCV candle')
+
+        return {"exchange": self.exchange.id,
+                "symbol": symbol.id,
+                "timeframe": timeframe.id,
+                "timestamp": datetime.fromtimestamp(candle_data[0]),
+                "open": candle_data[1],
+                "high": candle_data[2],
+                "low": candle_data[3],
+                "close": candle_data[4],
+                "volume": candle_data[5]}
 
     async def watch_tickers(self):
         exchange_connector = self.exchange_connector_generator()
@@ -142,12 +204,6 @@ class RealtimeHarvester:
                     subscriptions = []
                     for symbol in self.symbols:
                         subscriptions.append(symbol.name)
-
-                    # if (datetime.now() - self.tickers_counter_timer).total_seconds() > 60:
-                    #     logging.info(
-                    #         f'[Realtime Harvester Watcher]: In the last minute processed {self.added_tickers_count} new tickers')
-                    #     self.tickers_counter_timer = datetime.now()
-                    #     self.added_tickers_count = 0
 
                     if len(subscriptions) > 0:
                         ticker: dict = await exchange_connector.watch_tickers(subscriptions)
@@ -190,10 +246,12 @@ class RealtimeHarvester:
             if command == GLOBAL_QUEUE_START_COMMAND:
                 self.timeframes = await get_subset_of_timeframes(self.supported_ohlcv_timeframes_names)
                 self.exchange = await fetch_exchange_entry(self.exchange_name)
+                self.symbols = await fetch_list_of_symbols(self.exchange)
+                await self.fetch_latest_candles()
                 self.is_initialized = True
             elif command == GLOBAL_QUEUE_REFRESH_COMMAND:
                 self.symbols = await fetch_list_of_symbols(self.exchange)
 
     async def start(self):
-        await self.mqttt_client.connect('mqtt', 1883, keepalive=60)
-        await asyncio.gather(*[self.start_queue_loop(), self.watch_candles_all_timeframes(), self.watch_tickers()])
+        await self.mqtt_client.connect('mqtt', 1883, keepalive=60)
+        await asyncio.gather(*[self.start_queue_loop(), self.watch_trades(), self.watch_tickers()])

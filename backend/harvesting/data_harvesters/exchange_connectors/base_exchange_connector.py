@@ -2,9 +2,11 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import List, Type
 
+from ccxt.base.types import Trade
 from harvesting.data_harvesters.data_to_fetch import DataToFetch
 from shared.models.exchange import Exchange
 from shared.models.symbol import Symbol
+from shared.models.timeframe import Timeframe
 
 
 class BaseExchangeConnector(ABC):
@@ -18,7 +20,16 @@ class BaseExchangeConnector(ABC):
         pass
 
     @abstractmethod
-    async def fetch_ohlcv(self, exchange: Type[Exchange], data: DataToFetch) -> List[tuple]:
+    async def fetch_ohlcv(self, exchange: Type[Exchange], data: DataToFetch, trim_to_range: bool = True) -> \
+            List[tuple]:
+        pass
+
+    @abstractmethod
+    def build_ohlcvc(self, last_ohlcv: list, trades: List[Trade], timeframe: Type[Timeframe]):
+        pass
+
+    @abstractmethod
+    async def watch_trades(self, symbols_and_time_frames: List[str]):
         pass
 
     @abstractmethod

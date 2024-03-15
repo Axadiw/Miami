@@ -39,4 +39,6 @@ def handle_ohlcv_realtime_candles(socket: SocketIO, mqtt):
                               json.loads(message.payload.decode())['close'],
                               json.loads(message.payload.decode())['volume']]}
             last_ohlcv_database[room] = data
+            if room == 'bybit:BTC/USDT:USDT:1m':
+                pass
             socket.emit(OHLCV_SOCKETIO_EVENT_NAME, data, to=room)

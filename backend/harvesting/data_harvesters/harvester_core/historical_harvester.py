@@ -146,6 +146,7 @@ class HistoricalHarvester:
                 new_candles = await exchange_connector.fetch_ohlcv(data=data, exchange=self.exchange)
                 success = True
             except Exception as e:
+                # TODO: Update Single fetch_single_ohlcv ETH/USDC:USDC-240315 1m bybit does not have market symbol ETH/USDC:USDC-240315
                 logging.error(f'Update Single fetch_single_ohlcv {data.symbol.name} {data.timeframe.name} {e}')
                 await asyncio.sleep(1)
         self.temporary_ohlcv_fetching_exchange_connectors.append(exchange_connector)
@@ -174,13 +175,6 @@ class HistoricalHarvester:
                         start_time = last_fetched_dates[
                             pair_id] if pair_id in last_fetched_dates else self.get_earliest_possible_date_for_ohlcv(
                             symbol, timeframe)
-
-                        if pair_id in last_fetched_dates and end_time.minute == last_fetched_dates[
-                            pair_id].minute and (
-                                end_time - last_fetched_dates[pair_id]).total_seconds() < timeframe.seconds:
-                            en = end_time
-                            lt = last_fetched_dates[pair_id]
-                            continue
 
                         data_to_fetch.append(
                             DataToFetch(symbol=symbol, timeframe=timeframe, start=start_time, end=end_time))
