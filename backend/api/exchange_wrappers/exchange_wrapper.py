@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 
 
 class ExchangeWrapper(ABC):
@@ -9,6 +10,11 @@ class ExchangeWrapper(ABC):
     @staticmethod
     @abstractmethod
     def get_name():
+        pass
+
+    @abstractmethod
+    def create_market(self, side: str, symbol: str, position_size: float, take_profits: dict, stop_loss: float,
+                      comment: str, move_sl_to_breakeven_after_tp1: bool, helper_url: Optional[str]):
         pass
 
     @abstractmethod

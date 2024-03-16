@@ -2,7 +2,7 @@ export type PriceTypeType = '%' | '$';
 export type Side = 'Long' | 'Short';
 
 export interface MarketCalculatorProps {
-  side: string;
+  side: Side;
   openPrice: number;
   accountBalance: number;
   maxLoss: number | string | undefined;

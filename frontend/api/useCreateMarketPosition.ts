@@ -2,6 +2,7 @@ import axios from 'axios';
 import { useMutation, UseMutationResult } from '@tanstack/react-query';
 import { BASE_URL } from '@/app/consts';
 import { useLoginContext } from '@/contexts/LoginContext/LoginContext';
+import { Side } from '@/app/shared/components/positionCalculators/marketCalculator';
 
 export type UseCreateMarketPositionResult = UseMutationResult<
   CreateMarketPositionResponse,
@@ -12,7 +13,7 @@ export type UseCreateMarketPositionResult = UseMutationResult<
 
 export interface CreateMarketPositionParams {
   accountId: number;
-  side: string;
+  side: Side;
   symbol: string;
   positionSize: number;
   takeProfits: number[][];
