@@ -1,5 +1,6 @@
 import json
 from json import JSONDecodeError
+from typing import Optional
 
 from flask import jsonify, make_response
 from py3cw.request import Py3CW
@@ -27,6 +28,10 @@ class Bybit3CommasWrapper(ExchangeWrapper):
     @staticmethod
     def get_name():
         return 'bybit_3commas'
+
+    def create_market(self, side: str, symbol: str, position_size: float, take_profits: dict, stop_loss: float,
+                      comment: str, move_sl_to_breakeven_after_tp1: bool, helper_url: Optional[str]):
+        pass
 
     def get_balance(self):
 

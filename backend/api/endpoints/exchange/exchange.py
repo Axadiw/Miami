@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Type
 
@@ -32,3 +33,26 @@ def get_balance(user):
 
     wrapper: ExchangeWrapper = wrapper_map[account.type](account.details)
     return wrapper.get_balance()
+
+
+@exchange_routes.route('/exchange_create_market_position', methods=['POST'])
+@token_required
+def create_market_position(user):
+    data = request.get_json()
+
+    account_id = data['account_id']
+    side = data['side']
+    symbol = data['symbol']
+    position_size = data['position_size']
+    take_profits = data['take_profits']
+    stop_loss = data['stop_loss']
+    comment = data['comment']
+    move_sl_to_breakeven_after_tp1 = data['move_sl_to_breakeven_after_tp1']
+    helper_url = data['helper_url'] if 'helper_url' in data else None
+
+    account = db.session.query(ExchangeAccount).filter_by(id=account_id, user_id=user.id).first()
+    wrapper = Bybit3CommasWrapper(account.details)
+
+    return wrapper.create_market(side=side, symbol=symbol, position_size=position_size, take_profits=take_profits,
+                                 stop_loss=stop_loss, comment=comment,
+                                 move_sl_to_breakeven_after_tp1=move_sl_to_breakeven_after_tp1, helper_url=helper_url)
