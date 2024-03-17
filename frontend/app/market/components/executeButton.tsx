@@ -1,8 +1,8 @@
-import { Button, Stack, Text } from '@mantine/core';
-import React from 'react';
+import { Button, Center, List, Stack, Text, Transition } from '@mantine/core';
+import React, { useState } from 'react';
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
 import { usePositionDetailsValidators } from '@/app/shared/hooks/usePositionDetailsValidators/usePositionDetailsValidators';
-import { useCreateMarketPosition } from '@/api/useCreateMarketPosition';
+import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 
 export const ExecuteButton = () => {
   const {
@@ -17,46 +17,83 @@ export const ExecuteButton = () => {
     tp1Percent,
     tp2Percent,
     tp3Percent,
+    setSl,
+    setTp1,
+    setTp2,
+    setTp3,
+    setExternalChartHelperURL,
+    setSelectedSymbol,
+    setMaxLoss,
   } = useMarketPageContext();
   const validators = usePositionDetailsValidators();
-  useCreateMarketPosition;
-  const { mutate } = useCreateMarketPosition();
+  const dataLayer = useDataLayerContext();
+  const { mutateAsync, isPending, reset, error: createError } = dataLayer.useCreateMarketPosition();
   const actualErrors = Object.entries(validators)
     .map((v) => v[1])
     .filter((element) => element !== undefined);
+  const [showButtonSuccess, setShowButtonSuccess] = useState<boolean>(false);
+
   return (
     <Stack>
       <Button
         disabled={active < 4 || actualErrors.length > 0}
-        onClick={() => {
-          if (calculatedValues && selectedAccountId && selectedSymbol && comment) {
-            mutate({
-              side,
-              accountId: +selectedAccountId,
-              symbol: selectedSymbol,
-              positionSize: calculatedValues.positionSize,
-              takeProfits: [
-                [calculatedValues.tp1Price, +(tp1Percent ?? 0)],
-                [calculatedValues.tp2Price, +(tp2Percent ?? 0)],
-                [calculatedValues.tp3Price, +(tp3Percent ?? 0)],
-              ],
-              stopLoss: calculatedValues.slPrice,
-              comment,
-              moveSlToBreakevenAfterTp1: slToBreakEvenAtTp1,
-              helperUrl: externalChartHelperURL ?? '',
-            });
+        loading={isPending}
+        onClick={async () => {
+          try {
+            if (calculatedValues && selectedAccountId && selectedSymbol && comment !== undefined) {
+              reset();
+              await mutateAsync({
+                side,
+                accountId: +selectedAccountId,
+                symbol: selectedSymbol,
+                positionSize: calculatedValues.positionSize,
+                takeProfits: [
+                  [calculatedValues.tp1Price, +(tp1Percent ?? 0)],
+                  [calculatedValues.tp2Price, +(tp2Percent ?? 0)],
+                  [calculatedValues.tp3Price, +(tp3Percent ?? 0)],
+                ],
+                stopLoss: calculatedValues.slPrice,
+                comment,
+                moveSlToBreakevenAfterTp1: slToBreakEvenAtTp1,
+                helperUrl: externalChartHelperURL ?? '',
+              });
+              setSelectedSymbol(null);
+              setMaxLoss('');
+              setSl('');
+              setTp1('');
+              setTp2('');
+              setTp3('');
+              setExternalChartHelperURL('');
+              setShowButtonSuccess(true);
+              setTimeout(() => {
+                setShowButtonSuccess(false);
+              }, 2000);
+            }
+          } catch (e) {
+            /* empty */
           }
         }}
       >
         Execute
       </Button>
-      <Text c="red" size="xs">
-        <ul>
-          {actualErrors.map((e) => (
-            <li>{e}</li>
-          ))}
-        </ul>
-      </Text>
+      <Transition
+        mounted={showButtonSuccess}
+        transition="fade"
+        duration={1000}
+        timingFunction="ease"
+      >
+        {(styles) => (
+          <Center>
+            <Text style={styles}>Position created successfully!</Text>
+          </Center>
+        )}
+      </Transition>
+      <List c="red" size="xs">
+        {actualErrors.map((e, i) => (
+          <List.Item key={i}>{e}</List.Item>
+        ))}
+        {createError && <List.Item key="createError">{createError.message}</List.Item>}
+      </List>
     </Stack>
   );
 };

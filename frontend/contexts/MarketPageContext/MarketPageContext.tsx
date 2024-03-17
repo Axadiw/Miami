@@ -19,7 +19,6 @@ import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContex
 import { GetOHLCVsResponse } from '@/api/useGetOHLCVs';
 import { GetTimeframesResponse } from '@/api/useGetTimeframes';
 import { GetSymbolsResponse } from '@/api/useGetSymbols';
-import { useGetAccountBalance } from '@/api/useAccountBalance';
 
 interface MarketPageContext {
   accountBalance: number | undefined;
@@ -160,13 +159,20 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
     active = 4;
   }
 
-  const { data } = useGetAccountBalance({ accountId: selectedAccountId });
+  const { data } = dataLayer.useGetAccountBalance({ accountId: selectedAccountId });
 
   useDocumentTitle(
     currentPrice && currentPrice > 0 && selectedSymbol
       ? `${currentPrice} - ${selectedSymbol}`
       : 'Miami Trade'
   );
+
+  useEffect(() => {
+    if (!selectedSymbol) {
+      // useful after programmatic deslection of symbol
+      setCurrentPrice(-1);
+    }
+  }, [selectedSymbol]);
 
   useEffect(() => {
     if (data) setAccountBalance(data.balance);

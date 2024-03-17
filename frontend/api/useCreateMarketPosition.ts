@@ -25,6 +25,7 @@ export interface CreateMarketPositionParams {
 
 export interface CreateMarketPositionResponse {
   message: string;
+  error?: string;
 }
 
 export const createMarketPosition = async (

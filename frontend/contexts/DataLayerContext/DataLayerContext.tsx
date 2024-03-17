@@ -17,6 +17,27 @@ import {
 } from '@/api/useGetTimeframes';
 import { GetSymbolsProps, GetSymbolsResponse, useGetSymbols } from '@/api/useGetSymbols';
 import { GetOHLCVsProps, GetOHLCVsResponse, useGetOHLCVs } from '@/api/useGetOHLCVs';
+import {
+  GetAccountBalanceProps,
+  GetAccountBalanceResponse,
+  useGetAccountBalance,
+} from '@/api/useAccountBalance';
+import {
+  useListExchangeAccounts,
+  UseListExchangeAccountsResult,
+} from '@/api/useListExchangeAccounts';
+import {
+  useAddNewExchangeAccount,
+  UseAddNewExchangeAccountResult,
+} from '@/api/useAddNewExchangeAccount';
+import {
+  useRemoveExchangeAccount,
+  UseRemoveExchangeAccountResult,
+} from '@/api/useRemoveExchangeAccount';
+import {
+  useCreateMarketPosition,
+  UseCreateMarketPositionResult,
+} from '@/api/useCreateMarketPosition';
 
 export interface DataLayer {
   useAppGetVersion: () => UseGetAppVersionResult;
@@ -29,6 +50,13 @@ export interface DataLayer {
   useGetOHLCVs: (props: GetOHLCVsProps) => UseQueryResult<GetOHLCVsResponse, Error>;
   useGetSymbols: (props: GetSymbolsProps) => UseQueryResult<GetSymbolsResponse, Error>;
   useGetTimeframes: (props: GetTimeframesProps) => UseQueryResult<GetTimeframesResponse, Error>;
+  useListExchangeAccounts: () => UseListExchangeAccountsResult;
+  useGetAccountBalance: (
+    props: GetAccountBalanceProps
+  ) => UseQueryResult<GetAccountBalanceResponse, Error>;
+  useAddNewExchangeAccount: () => UseAddNewExchangeAccountResult;
+  useRemoveExchangeAccount: () => UseRemoveExchangeAccountResult;
+  useCreateMarketPosition: () => UseCreateMarketPositionResult;
 }
 
 export const DataLayerContext = createContext<DataLayer>({} as DataLayer);
@@ -43,9 +71,14 @@ export const DataLayerContextProvider = ({ children }: { children: ReactNode }) 
   const registerUser = useRegisterUser();
   const saveAccountInfo = useSaveAccountInfo();
   const changePassword = useChangePassword();
+  const listExchangeAccounts = useListExchangeAccounts();
   const getOHLCVs = useGetOHLCVs;
   const getSymbols = useGetSymbols;
   const getTimeframes = useGetTimeframes;
+  const getAccountBalance = useGetAccountBalance;
+  const addNewExchangeAccount = useAddNewExchangeAccount();
+  const removeExchangeAccount = useRemoveExchangeAccount();
+  const createMarketPosition = useCreateMarketPosition();
   const value = useMemo(
     () => ({
       useAppGetVersion: () => appGetVersion,
@@ -58,17 +91,27 @@ export const DataLayerContextProvider = ({ children }: { children: ReactNode }) 
       useGetOHLCVs: (props: GetOHLCVsProps) => getOHLCVs(props),
       useGetSymbols: (props: GetSymbolsProps) => getSymbols(props),
       useGetTimeframes: (props: GetTimeframesProps) => getTimeframes(props),
+      useListExchangeAccounts: () => listExchangeAccounts,
+      useGetAccountBalance: (props: GetAccountBalanceProps) => getAccountBalance(props),
+      useAddNewExchangeAccount: () => addNewExchangeAccount,
+      useRemoveExchangeAccount: () => removeExchangeAccount,
+      useCreateMarketPosition: () => createMarketPosition,
     }),
     [
+      addNewExchangeAccount,
       appGetVersion,
       changePassword,
       checkIfLoginTokenIsValid,
+      createMarketPosition,
+      getAccountBalance,
       getAccountInfo,
       getOHLCVs,
       getSymbols,
       getTimeframes,
+      listExchangeAccounts,
       loginUser,
       registerUser,
+      removeExchangeAccount,
       saveAccountInfo,
     ]
   );

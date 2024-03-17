@@ -21,9 +21,7 @@ import {
   useAccountPageContext,
 } from '@/contexts/AccountPageContext/AccountPageContext';
 import ByBit3CommasNewAccountForm from './exchangeSpecificForms/byBit3CommasNewAccountForm';
-import { useAddNewExchangeAccount } from '@/api/useAddNewExchangeAccount';
-import { useRemoveExchangeAccount } from '@/api/useRemoveExchangeAccount';
-import { useListExchangeAccounts } from '@/api/useListExchangeAccounts';
+import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 
 export type ExchangeType = {
   id: string;
@@ -51,13 +49,14 @@ export default function ExchangeAccountsConfigTab() {
     },
   });
 
+  const dataLayer = useDataLayerContext();
   const {
     mutate: addNewAccount,
     error: addNewAccountError,
     isSuccess: addNewAccountIsSuccess,
-  } = useAddNewExchangeAccount();
-  const { mutate: removeAccount, error: removeAccountError } = useRemoveExchangeAccount();
-  const { data: existingAccounts, error: listAccountError } = useListExchangeAccounts();
+  } = dataLayer.useAddNewExchangeAccount();
+  const { mutate: removeAccount, error: removeAccountError } = dataLayer.useRemoveExchangeAccount();
+  const { data: existingAccounts, error: listAccountError } = dataLayer.useListExchangeAccounts();
 
   const { accountDetails, accountPageEventEmitter } = useAccountPageContext();
 

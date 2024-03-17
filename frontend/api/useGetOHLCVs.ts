@@ -44,5 +44,5 @@ export const useGetOHLCVs = (props: GetOHLCVsProps): UseQueryResult<GetOHLCVsRes
   useQuery({
     queryKey: [OHLCVsCacheKey, props.exchange, props.symbol, props.timeframe, props.limit, props],
     queryFn: () => getOHLCVs(props),
-    enabled: props.limit !== undefined,
+    enabled: props.limit !== undefined && props.symbol !== '' && props.timeframe !== '',
   });

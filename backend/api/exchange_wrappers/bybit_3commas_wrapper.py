@@ -72,6 +72,11 @@ class Bybit3CommasWrapper(ExchangeWrapper):
                 }
             }
         )
+        if error:
+            error_message = 'Error occurred'
+            if 'msg' in error:
+                error_message = error['msg']
+            return make_response(jsonify(dict(error=error_message)), 400)
 
         return jsonify({'message': MARKET_POSITION_CREATED})
 

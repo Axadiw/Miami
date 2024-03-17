@@ -12,6 +12,11 @@ import { UseChangePasswordResult } from '@/api/useChangePassword';
 import { GetOHLCVsResponse } from '@/api/useGetOHLCVs';
 import { GetSymbolsResponse } from '@/api/useGetSymbols';
 import { GetTimeframesResponse } from '@/api/useGetTimeframes';
+import { UseAddNewExchangeAccountResult } from '@/api/useAddNewExchangeAccount';
+import { UseCreateMarketPositionResult } from '@/api/useCreateMarketPosition';
+import { GetAccountBalanceResponse } from '@/api/useAccountBalance';
+import { UseListExchangeAccountsResult } from '@/api/useListExchangeAccounts';
+import { UseRemoveExchangeAccountResult } from '@/api/useRemoveExchangeAccount';
 
 export class MockedDataLayerBuilder {
   private useAppGetVersion = jest.fn<UseGetAppVersionResult, []>();
@@ -24,6 +29,11 @@ export class MockedDataLayerBuilder {
   private useGetOHLCVs = jest.fn<UseQueryResult<GetOHLCVsResponse, Error>, []>();
   private useGetSymbols = jest.fn<UseQueryResult<GetSymbolsResponse, Error>, []>();
   private useGetTimeframes = jest.fn<UseQueryResult<GetTimeframesResponse, Error>, []>();
+  private useAddNewExchangeAccount = jest.fn<UseAddNewExchangeAccountResult, []>();
+  private useCreateMarketPosition = jest.fn<UseCreateMarketPositionResult, []>();
+  private useGetAccountBalance = jest.fn<UseQueryResult<GetAccountBalanceResponse, Error>, []>();
+  private useListExchangeAccounts = jest.fn<UseListExchangeAccountsResult, []>();
+  private useRemoveExchangeAccount = jest.fn<UseRemoveExchangeAccountResult, []>();
 
   loginUserReturn(
     result: UseLoginUserResult = MockedMutationResult(
@@ -57,6 +67,11 @@ export class MockedDataLayerBuilder {
       useGetOHLCVs: this.useGetOHLCVs,
       useGetSymbols: this.useGetSymbols,
       useGetTimeframes: this.useGetTimeframes,
+      useAddNewExchangeAccount: this.useAddNewExchangeAccount,
+      useCreateMarketPosition: this.useCreateMarketPosition,
+      useGetAccountBalance: this.useGetAccountBalance,
+      useListExchangeAccounts: this.useListExchangeAccounts,
+      useRemoveExchangeAccount: this.useRemoveExchangeAccount,
     };
   }
 }

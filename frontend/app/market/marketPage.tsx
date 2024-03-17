@@ -21,7 +21,7 @@ import { ExecuteButton } from '@/app/market/components/executeButton';
 import { ExtraSettingsStep } from '@/app/market/components/extraSettingsStep';
 
 export default function MarketPage() {
-  const { active } = useMarketPageContext();
+  const { active, selectedSymbol } = useMarketPageContext();
 
   return (
     <SimpleGrid cols={{ base: 1, sm: 2 }}>
@@ -48,8 +48,12 @@ export default function MarketPage() {
 
       <Stack>
         <Stack>
-          <MarketChart />
-          <TimeframesSelector />
+          {selectedSymbol && (
+            <>
+              <MarketChart />
+              <TimeframesSelector />
+            </>
+          )}
           <ExternalChartHelper />
         </Stack>
         <Space h="md" />

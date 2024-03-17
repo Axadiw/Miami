@@ -77,8 +77,13 @@ export const MarketChart = () => {
     const priceSeries = priceSeriesRef.current;
     const volumeSeries = volumeSeriesRef.current;
 
-    if (priceSeries === null || volumeSeries === null || !ohlcvs?.ohlcvs) {
+    if (!priceSeries || !volumeSeries || !ohlcvs?.ohlcvs) {
       return;
+    }
+
+    if (!selectedSymbol) {
+      // useful when programmatically deselecting symbol
+      chartRef?.current?.remove();
     }
 
     priceSeries?.setData(
@@ -102,7 +107,7 @@ export const MarketChart = () => {
         color: element.open > element.close ? '#DD5E56' : '#52A49A',
       }))
     );
-  }, [ohlcvs?.ohlcvs, setCurrentPrice]);
+  }, [ohlcvs?.ohlcvs, selectedSymbol, setCurrentPrice]);
 
   useEffect(() => {
     const newSocket = socketIOClient(BASE_URL);

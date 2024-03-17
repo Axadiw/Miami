@@ -12,13 +12,18 @@ import {
 import React, { useEffect } from 'react';
 import { Side } from '@/app/shared/components/positionCalculators/marketCalculator';
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
-import { useListExchangeAccounts } from '@/api/useListExchangeAccounts';
+import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 
 export const AccountAndSideSelectionStep = () => {
   const { side, setSide, setSelectedAccountId, accountBalance, selectedAccountId } =
     useMarketPageContext();
 
-  const { data: existingAccounts } = useListExchangeAccounts();
+  const dataLayer = useDataLayerContext();
+  const { isFetching: isBalanceLoading } = dataLayer.useGetAccountBalance({
+    accountId: selectedAccountId,
+  });
+
+  const { data: existingAccounts } = dataLayer.useListExchangeAccounts();
 
   useEffect(() => {
     if (existingAccounts?.accounts && existingAccounts?.accounts.length > 0) {
@@ -65,10 +70,10 @@ export const AccountAndSideSelectionStep = () => {
           </Combobox.Dropdown>
         </Combobox>
         {accountBalance && (
-          <>
+          <Group c={isBalanceLoading ? 'grey' : undefined}>
             <Text>Balance:</Text>
             <NumberFormatter prefix="$ " value={accountBalance} thousandSeparator />
-          </>
+          </Group>
         )}
       </Group>
       <Group>
