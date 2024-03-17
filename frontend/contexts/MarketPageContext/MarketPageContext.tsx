@@ -70,8 +70,8 @@ interface MarketPageContext {
   fetchSymbolsSuccess: boolean;
   active: number;
   calculatedValues?: MarketCalculatorResponse;
-  comment: string | undefined;
-  setComment: Dispatch<SetStateAction<string | undefined>>;
+  comment: string;
+  setComment: Dispatch<SetStateAction<string>>;
 }
 
 export const MarketPageContext = createContext<MarketPageContext>({} as MarketPageContext);
@@ -104,7 +104,7 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
   const [externalChartHelperURL, setExternalChartHelperURL] = useState<string | undefined>(
     undefined
   );
-  const [comment, setComment] = useState<string | undefined>(undefined);
+  const [comment, setComment] = useState<string>('');
   const [side, setSide] = useState<Side>('Long');
   const { data: ohlcvs } = dataLayer.useGetOHLCVs({
     exchange,

@@ -64,3 +64,6 @@ def test_should_pass_correct_params_to_py3w(mocker):
                                                                         {'order_type': 'limit',
                                                                          'price': {'type': 'bid', 'value': 30},
                                                                          'volume': 50}]}})
+
+# TODO add test for symbol splitting
+# TODO add test different set of take profits
