@@ -20,7 +20,7 @@ export interface CreateMarketPositionParams {
   stopLoss: number;
   comment: string;
   moveSlToBreakevenAfterTp1: boolean;
-  helperUrl: string | undefined;
+  helperUrl: string;
 }
 
 export interface CreateMarketPositionResponse {

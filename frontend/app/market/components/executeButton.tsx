@@ -14,6 +14,9 @@ export const ExecuteButton = () => {
     comment,
     slToBreakEvenAtTp1,
     externalChartHelperURL,
+    tp1Percent,
+    tp2Percent,
+    tp3Percent,
   } = useMarketPageContext();
   const validators = usePositionDetailsValidators();
   useCreateMarketPosition;
@@ -33,14 +36,14 @@ export const ExecuteButton = () => {
               symbol: selectedSymbol,
               positionSize: calculatedValues.positionSize,
               takeProfits: [
-                [calculatedValues.tp1Price, calculatedValues.tp1Percent],
-                [calculatedValues.tp2Price, calculatedValues.tp2Percent],
-                [calculatedValues.tp3Price, calculatedValues.tp3Percent],
+                [calculatedValues.tp1Price, +(tp1Percent ?? 0)],
+                [calculatedValues.tp2Price, +(tp2Percent ?? 0)],
+                [calculatedValues.tp3Price, +(tp3Percent ?? 0)],
               ],
               stopLoss: calculatedValues.slPrice,
               comment,
               moveSlToBreakevenAfterTp1: slToBreakEvenAtTp1,
-              helperUrl: externalChartHelperURL,
+              helperUrl: externalChartHelperURL ?? '',
             });
           }
         }}

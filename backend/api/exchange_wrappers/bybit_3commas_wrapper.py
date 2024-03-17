@@ -1,10 +1,10 @@
 import json
 from json import JSONDecodeError
-from typing import Optional
 
 from flask import jsonify, make_response
 from py3cw.request import Py3CW
 
+from api.endpoints.consts import MARKET_POSITION_CREATED
 from api.exchange_wrappers.exchange_wrapper import ExchangeWrapper
 
 
@@ -29,9 +29,51 @@ class Bybit3CommasWrapper(ExchangeWrapper):
     def get_name():
         return 'bybit_3commas'
 
-    def create_market(self, side: str, symbol: str, position_size: float, take_profits: dict, stop_loss: float,
-                      comment: str, move_sl_to_breakeven_after_tp1: bool, helper_url: Optional[str]):
-        pass
+    def create_market(self, side: str, symbol: str, position_size: float, take_profits: list[list[int | float]],
+                      stop_loss: float,
+                      comment: str, move_sl_to_breakeven_after_tp1: bool, helper_url: str):
+        error, data = self.p3cw.request(
+            entity='smart_trades_v2',
+            action='new',
+            payload={
+                "account_id": self.accountId,
+                "pair": "USDT_{}USDT".format(symbol.split('/')[0].upper()),
+                "note": comment,
+                "position": {
+                    "type": 'buy' if side == 'Long' else 'sell',
+                    "units": {
+                        "value": position_size
+                    },
+                    "order_type": "market"
+                },
+                "take_profit": {
+                    "enabled": "true",
+                    "steps": [
+                        {
+                            "order_type": "limit",
+                            "price": {
+                                "value": take_profit[0],
+                                "type": "bid"
+                            },
+                            "volume": take_profit[1]
+                        } for take_profit in take_profits
+                    ]
+                },
+                "stop_loss": {
+                    "enabled": "true",
+                    "breakeven": "true" if move_sl_to_breakeven_after_tp1 else 'false',
+                    "order_type": "market",
+                    "conditional": {
+                        "price": {
+                            "value": stop_loss,
+                            "type": "bid"
+                        }
+                    },
+                }
+            }
+        )
+
+        return jsonify({'message': MARKET_POSITION_CREATED})
 
     def get_balance(self):
 

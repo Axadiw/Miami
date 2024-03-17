@@ -5,6 +5,7 @@ USER_CONFIG_SAVED_RESPONSE = dict(message='Config saved')
 PASSWORD_CHANGED_RESPONSE = dict(message='Password changed successfully')
 EXCHANGE_ACCOUNT_ADDED = dict(message='Added')
 EXCHANGE_ACCOUNT_REMOVED = dict(message='Removed')
+MARKET_POSITION_CREATED = dict(message='Market position created')
 
 # errors
 PARAMS_INVALID_RESPONSE = dict(error='Parameters invalid')
