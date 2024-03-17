@@ -4,7 +4,7 @@ from json import JSONDecodeError
 from flask import jsonify, make_response
 from py3cw.request import Py3CW
 
-from api.endpoints.consts import MARKET_POSITION_CREATED
+from api.endpoints.consts import MARKET_POSITION_CREATED, UNKNOWN_3COMMAS_ERROR
 from api.exchange_wrappers.exchange_wrapper import ExchangeWrapper
 
 
@@ -73,12 +73,12 @@ class Bybit3CommasWrapper(ExchangeWrapper):
             }
         )
         if error:
-            error_message = 'Error occurred'
+            error_message = UNKNOWN_3COMMAS_ERROR
             if 'msg' in error:
                 error_message = error['msg']
             return make_response(jsonify(dict(error=error_message)), 400)
 
-        return jsonify({'message': MARKET_POSITION_CREATED})
+        return jsonify(MARKET_POSITION_CREATED)
 
     def get_balance(self):
 

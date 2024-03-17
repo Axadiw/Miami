@@ -15,6 +15,7 @@ INCORRECT_CREDENTIALS_RESPONSE = dict(error='Incorrect credentials')
 TOKEN_MISSING_RESPONSE = dict(error='A valid token is missing')
 TOKEN_INVALID_RESPONSE = dict(error='Invalid token')
 TOKEN_EXPIRED_RESPONSE = dict(error='Expired token')
+UNKNOWN_3COMMAS_ERROR = 'Error occurred'
 
 TOKEN_VALIDITY_IN_DAYS = 30
 MINIMUM_USERNAME_LENGTH = 3
