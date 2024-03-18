@@ -21,6 +21,11 @@ export const ExecuteButton = () => {
     setTp1,
     setTp2,
     setTp3,
+    setTp1Type,
+    setTp2Type,
+    setTp3Type,
+    setSlType,
+    setMaxLossType,
     setExternalChartHelperURL,
     setSelectedSymbol,
     setMaxLoss,
@@ -67,6 +72,11 @@ export const ExecuteButton = () => {
               setTp1('');
               setTp2('');
               setTp3('');
+              setTp1Type('%');
+              setTp2Type('%');
+              setTp3Type('%');
+              setSlType('%');
+              setMaxLossType('%');
               setExternalChartHelperURL('');
               setShowButtonSuccess(true);
               setTimeout(() => {
