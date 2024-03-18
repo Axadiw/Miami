@@ -203,7 +203,7 @@ export const MarketChart = () => {
       if (value.lineVisible) {
         priceLinesData.push({
           value: value.price,
-          time: (Date.now() / 1000 + index) as UTCTimestamp,
+          time: (Math.floor(Date.now() / 1000 / 60) + index * 60) as UTCTimestamp,
         });
       }
     });
