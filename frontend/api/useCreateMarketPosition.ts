@@ -18,6 +18,7 @@ export interface CreateMarketPositionParams {
   positionSize: number;
   takeProfits: number[][];
   stopLoss: number;
+  softStopLossTimeout: number;
   comment: string;
   moveSlToBreakevenAfterTp1: boolean;
   helperUrl: string;
@@ -51,6 +52,7 @@ export const createMarketPosition = async (
         position_size: marketParams.positionSize,
         take_profits: marketParams.takeProfits,
         stop_loss: marketParams.stopLoss,
+        soft_stop_loss_timeout: marketParams.softStopLossTimeout,
         comment: marketParams.comment,
         move_sl_to_breakeven_after_tp1: marketParams.moveSlToBreakevenAfterTp1,
         helper_url: marketParams.helperUrl,

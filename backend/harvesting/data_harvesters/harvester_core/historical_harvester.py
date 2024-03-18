@@ -56,10 +56,7 @@ class HistoricalHarvester:
                                                              range(0, MAX_CONCURRENT_FETCHES)]
         with elapsed_timer() as elapsed:
             new_candles_counts = await semaphore_gather(MAX_CONCURRENT_FETCHES,
-                                                        [self.fetch_and_save_single_ohlcv(data=data,
-                                                                                          current_fetch=index + 1,
-                                                                                          all_fetches=len(
-                                                                                              data_to_fetch))
+                                                        [self.fetch_and_save_single_ohlcv(data=data)
                                                          for index, data in enumerate(data_to_fetch)])
             new_candles_for_all_symbols_count = 0
             for count in new_candles_counts:
@@ -77,16 +74,11 @@ class HistoricalHarvester:
                 f'Took {"{:.2f}".format(elapsed())} seconds')
             return new_candles_for_all_symbols_count
 
-    async def fetch_and_save_single_ohlcv(self, data: DataToFetch, current_fetch: int,
-                                          all_fetches: int):
+    async def fetch_and_save_single_ohlcv(self, data: DataToFetch):
         with elapsed_timer() as elapsed:
-            new_candles: list[OHLCV] = await self.fetch_single_ohlcv(data=data, current_fetch=current_fetch,
-                                                                     all_fetches=all_fetches)
-            fetch_length = elapsed()
+            new_candles: list[OHLCV] = await self.fetch_single_ohlcv(data=data)
             updated_candles_count = await self.save_candles(data, new_candles)
-            # logging.info(
-            #     f'Fetched {len(new_candles)} new entries,  saved {updated_candles_count} for\t{data}\t({current_fetch} / {all_fetches}).\t'
-            #     f'Fetch {"{:.2f}".format(fetch_length)} s, save {"{:.2f}".format(elapsed() - fetch_length)} s. Total {"{:.2f}".format(elapsed())} s')
+
             return updated_candles_count
 
     async def save_candles(self, data, new_candles):
@@ -136,8 +128,7 @@ class HistoricalHarvester:
             existing_date_entry.last_fetched = newLastFetchedDate
         await db_session.commit()
 
-    async def fetch_single_ohlcv(self, data: DataToFetch, current_fetch: int,
-                                 all_fetches: int):
+    async def fetch_single_ohlcv(self, data: DataToFetch):
         success = False
         new_candles = []
         exchange_connector = self.temporary_ohlcv_fetching_exchange_connectors.pop()
@@ -146,9 +137,9 @@ class HistoricalHarvester:
                 new_candles = await exchange_connector.fetch_ohlcv(data=data, exchange=self.exchange)
                 success = True
             except Exception as e:
-                # TODO: Update Single fetch_single_ohlcv ETH/USDC:USDC-240315 1m bybit does not have market symbol ETH/USDC:USDC-240315
                 logging.error(f'Update Single fetch_single_ohlcv {data.symbol.name} {data.timeframe.name} {e}')
                 await asyncio.sleep(1)
+                break
         self.temporary_ohlcv_fetching_exchange_connectors.append(exchange_connector)
         return new_candles
 

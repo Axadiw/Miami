@@ -1,10 +1,23 @@
-import { Space, Switch, Textarea } from '@mantine/core';
+import { Group, Input, NumberInput, Space, Switch, Textarea } from '@mantine/core';
 import React from 'react';
 import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
+import { usePositionDetailsValidators } from '@/app/shared/hooks/usePositionDetailsValidators/usePositionDetailsValidators';
 
 export const ExtraSettingsStep = () => {
-  const { slToBreakEvenAtTp1, setSlToBreakEvenAtTp1, active, comment, setComment } =
-    useMarketPageContext();
+  const {
+    slToBreakEvenAtTp1,
+    setSlToBreakEvenAtTp1,
+    active,
+    comment,
+    setComment,
+    softStopLossEnabled,
+    setSoftStopLossEnabled,
+    softStopLossTimeout,
+    setSoftStopLossTimeout,
+  } = useMarketPageContext();
+
+  const { softSlAbove0 } = usePositionDetailsValidators();
+
   return (
     <>
       <Switch
@@ -24,6 +37,29 @@ export const ExtraSettingsStep = () => {
         maxRows={4}
         error={comment && comment.length > 1000 ? 'Max 1000 chars' : undefined}
       />
+      <Group>
+        <Switch
+          disabled={active < 4}
+          label="Soft stop loss"
+          checked={softStopLossEnabled}
+          onChange={(event) => setSoftStopLossEnabled(event.currentTarget.checked)}
+        />
+        <Input.Wrapper label="Timeout (seconds)" size="xs">
+          <Group>
+            <NumberInput
+              disabled={active < 4 || !softStopLossEnabled}
+              w="100px"
+              min={0}
+              size="md"
+              value={softStopLossTimeout}
+              onChange={(v) => {
+                setSoftStopLossTimeout(v);
+              }}
+              error={softSlAbove0}
+            />
+          </Group>
+        </Input.Wrapper>
+      </Group>
     </>
   );
 };

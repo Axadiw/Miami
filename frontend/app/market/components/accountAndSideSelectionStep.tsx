@@ -72,7 +72,7 @@ export const AccountAndSideSelectionStep = () => {
         {accountBalance && (
           <Group c={isBalanceLoading ? 'grey' : undefined}>
             <Text>Balance:</Text>
-            <NumberFormatter prefix="$ " value={accountBalance} thousandSeparator />
+            <NumberFormatter prefix="$ " value={accountBalance.toFixed(2)} thousandSeparator />
           </Group>
         )}
       </Group>

@@ -13,6 +13,8 @@ export const usePositionDetailsValidators = () => {
     tp2,
     tp3,
     maxLoss,
+    softStopLossTimeout,
+    softStopLossEnabled,
   } = useMarketPageContext();
 
   return {
@@ -60,5 +62,11 @@ export const usePositionDetailsValidators = () => {
         ? 'TP3 need to be above 0%'
         : undefined,
     commentNotTooLong: comment && comment.length > 1000 ? 'Comment too long' : undefined,
+    softSlAbove0:
+      softStopLossEnabled && softStopLossTimeout && +softStopLossTimeout <= 0
+        ? 'Soft stop loss needs to be above 0'
+        : undefined,
+    softSlNotUndefined:
+      softStopLossEnabled && !softStopLossTimeout ? "Soft stop loss can't be empty" : undefined,
   };
 };

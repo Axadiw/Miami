@@ -30,7 +30,7 @@ class Bybit3CommasWrapper(ExchangeWrapper):
         return 'bybit_3commas'
 
     def create_market(self, side: str, symbol: str, position_size: float, take_profits: list[list[int | float]],
-                      stop_loss: float,
+                      stop_loss: float, soft_stop_loss_timeout: int,
                       comment: str, move_sl_to_breakeven_after_tp1: bool, helper_url: str):
         error, data = self.p3cw.request(
             entity='smart_trades_v2',
@@ -63,6 +63,8 @@ class Bybit3CommasWrapper(ExchangeWrapper):
                     "enabled": "true",
                     "breakeven": "true" if move_sl_to_breakeven_after_tp1 else 'false',
                     "order_type": "market",
+                    'timeout': {'enabled': 'true', 'value': soft_stop_loss_timeout} if soft_stop_loss_timeout > 0 else {
+                        'enabled': 'false'},
                     "conditional": {
                         "price": {
                             "value": stop_loss,

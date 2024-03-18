@@ -71,6 +71,10 @@ interface MarketPageContext {
   calculatedValues?: MarketCalculatorResponse;
   comment: string;
   setComment: Dispatch<SetStateAction<string>>;
+  softStopLossTimeout: number | string | undefined;
+  setSoftStopLossTimeout: Dispatch<SetStateAction<number | string | undefined>>;
+  softStopLossEnabled: boolean;
+  setSoftStopLossEnabled: Dispatch<SetStateAction<boolean>>;
 }
 
 export const MarketPageContext = createContext<MarketPageContext>({} as MarketPageContext);
@@ -103,6 +107,10 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
   const [externalChartHelperURL, setExternalChartHelperURL] = useState<string | undefined>(
     undefined
   );
+  const [softStopLossTimeout, setSoftStopLossTimeout] = useState<number | string | undefined>(
+    undefined
+  );
+  const [softStopLossEnabled, setSoftStopLossEnabled] = useState(false);
   const [comment, setComment] = useState<string>('');
   const [side, setSide] = useState<Side>('Long');
   const { data: ohlcvs } = dataLayer.useGetOHLCVs({
@@ -230,6 +238,10 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
       active,
       comment,
       setComment,
+      softStopLossTimeout,
+      setSoftStopLossTimeout,
+      softStopLossEnabled,
+      setSoftStopLossEnabled,
     }),
     [
       selectedAccountId,
@@ -260,6 +272,8 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
       symbols,
       active,
       comment,
+      softStopLossTimeout,
+      softStopLossEnabled,
     ]
   );
 

@@ -24,6 +24,8 @@ export const ExecuteButton = () => {
     setExternalChartHelperURL,
     setSelectedSymbol,
     setMaxLoss,
+    softStopLossTimeout,
+    softStopLossEnabled,
   } = useMarketPageContext();
   const validators = usePositionDetailsValidators();
   const dataLayer = useDataLayerContext();
@@ -53,6 +55,8 @@ export const ExecuteButton = () => {
                   [calculatedValues.tp3Price, +(tp3Percent ?? 0)],
                 ],
                 stopLoss: calculatedValues.slPrice,
+                softStopLossTimeout:
+                  softStopLossEnabled && softStopLossTimeout ? +softStopLossTimeout : 0,
                 comment,
                 moveSlToBreakevenAfterTp1: slToBreakEvenAtTp1,
                 helperUrl: externalChartHelperURL ?? '',

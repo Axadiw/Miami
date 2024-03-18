@@ -18,6 +18,8 @@ export const RiskManagementStep = () => {
     setSlType,
   } = useMarketPageContext();
 
+  const largeRiskDetected = calculatedValues && calculatedValues.maxLossPercent > 80;
+
   const { maximumLossAbove0, slAbove0, slBelowOpen } = usePositionDetailsValidators();
   return (
     <>
@@ -39,7 +41,11 @@ export const RiskManagementStep = () => {
             color={maxLossType === '%' ? 'yellow' : 'violet'}
             data={['%', '$']}
           />
-          <Text>
+          <Text
+            c={largeRiskDetected ? 'red' : undefined}
+            size={largeRiskDetected ? 'xl' : 'md'}
+            fw={largeRiskDetected ? 800 : undefined}
+          >
             {calculatedValues &&
               maxLoss &&
               maxLossType === '%' &&

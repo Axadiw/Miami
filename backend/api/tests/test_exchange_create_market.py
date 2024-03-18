@@ -12,6 +12,7 @@ common_params = {'account_id': 1,
                  'comment': 'my_comment',
                  'move_sl_to_breakeven_after_tp1': True,
                  'helper_url': 'this_is_helper_url',
+                 'soft_stop_loss_timeout': 0,
                  'side': 'Long'}
 
 
@@ -32,6 +33,7 @@ def test_should_check_if_all_params_are_provided(client, mocker, user1_token):
                                  'comment': 'my_comment',
                                  'move_sl_to_breakeven_after_tp1': True,
                                  'helper_url': 'this_is_helper_url',
+                                 'soft_stop_loss_timeout': '-1',
                                  'side': 'Long'})
     assert response.status_code == 400
     assert response.json == PARAMS_INVALID_RESPONSE
@@ -44,6 +46,7 @@ def test_should_check_if_all_params_are_provided(client, mocker, user1_token):
                                  'comment': 'my_comment',
                                  'move_sl_to_breakeven_after_tp1': True,
                                  'helper_url': 'this_is_helper_url',
+                                 'soft_stop_loss_timeout': '-1',
                                  'side': 'Long'})
     assert response.status_code == 400
     assert response.json == PARAMS_INVALID_RESPONSE
@@ -56,6 +59,7 @@ def test_should_check_if_all_params_are_provided(client, mocker, user1_token):
                                  'comment': 'my_comment',
                                  'move_sl_to_breakeven_after_tp1': True,
                                  'helper_url': 'this_is_helper_url',
+                                 'soft_stop_loss_timeout': '-1',
                                  'side': 'Long'})
     assert response.status_code == 400
     assert response.json == PARAMS_INVALID_RESPONSE
@@ -68,6 +72,7 @@ def test_should_check_if_all_params_are_provided(client, mocker, user1_token):
                                  'comment': 'my_comment',
                                  'move_sl_to_breakeven_after_tp1': True,
                                  'helper_url': 'this_is_helper_url',
+                                 'soft_stop_loss_timeout': '-1',
                                  'side': 'Long'})
     assert response.status_code == 400
     assert response.json == PARAMS_INVALID_RESPONSE
@@ -80,6 +85,7 @@ def test_should_check_if_all_params_are_provided(client, mocker, user1_token):
                                  'comment': 'my_comment',
                                  'move_sl_to_breakeven_after_tp1': True,
                                  'helper_url': 'this_is_helper_url',
+                                 'soft_stop_loss_timeout': '-1',
                                  'side': 'Long'})
     assert response.status_code == 400
     assert response.json == PARAMS_INVALID_RESPONSE
@@ -92,6 +98,7 @@ def test_should_check_if_all_params_are_provided(client, mocker, user1_token):
                                  'stop_loss': 5,
                                  'move_sl_to_breakeven_after_tp1': True,
                                  'helper_url': 'this_is_helper_url',
+                                 'soft_stop_loss_timeout': '-1',
                                  'side': 'Long'})
     assert response.status_code == 400
     assert response.json == PARAMS_INVALID_RESPONSE
@@ -104,6 +111,7 @@ def test_should_check_if_all_params_are_provided(client, mocker, user1_token):
                                  'stop_loss': 5,
                                  'comment': 'my_comment',
                                  'helper_url': 'this_is_helper_url',
+                                 'soft_stop_loss_timeout': '-1',
                                  'side': 'Long'})
     assert response.status_code == 400
     assert response.json == PARAMS_INVALID_RESPONSE
@@ -116,6 +124,7 @@ def test_should_check_if_all_params_are_provided(client, mocker, user1_token):
                                  'stop_loss': 5,
                                  'comment': 'my_comment',
                                  'move_sl_to_breakeven_after_tp1': True,
+                                 'soft_stop_loss_timeout': '-1',
                                  'side': 'Long'})
     assert response.status_code == 400
     assert response.json == PARAMS_INVALID_RESPONSE
@@ -128,7 +137,21 @@ def test_should_check_if_all_params_are_provided(client, mocker, user1_token):
                                  'stop_loss': 5,
                                  'comment': 'my_comment',
                                  'move_sl_to_breakeven_after_tp1': True,
+                                 'soft_stop_loss_timeout': '-1',
                                  'helper_url': 'this_is_helper_url'})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.post("/exchange_create_market_position", headers={"x-access-tokens": user1_token},
+                           json={'account_id': 1,
+                                 'symbol': 'SYMBOL_NAME',
+                                 'position_size': 10,
+                                 'take_profits': [[10, 30], [20, 20], [30, 50]],
+                                 'stop_loss': 5,
+                                 'comment': 'my_comment',
+                                 'move_sl_to_breakeven_after_tp1': True,
+                                 'helper_url': 'this_is_helper_url',
+                                 'side': 'Long'})
     assert response.status_code == 400
     assert response.json == PARAMS_INVALID_RESPONSE
 
@@ -308,6 +331,34 @@ def test_should_handle_properly_stop_loss(client, mocker, user1_token):
     assert response.data == b'dummy_create_market_response'
 
 
+def test_should_handle_properly_soft_stop_loss(client, mocker, user1_token):
+    create_exchange_account(client, user1_token)
+    mocker.patch.object(Bybit3CommasWrapper, 'create_market', return_value='dummy_create_market_response')
+
+    response = client.post("/exchange_create_market_position", headers={"x-access-tokens": user1_token},
+                           json={**common_params, 'soft_stop_loss_timeout': 'abc'})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.post("/exchange_create_market_position", headers={"x-access-tokens": user1_token},
+                           json={**common_params, 'soft_stop_loss_timeout': -1})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.post("/exchange_create_market_position", headers={"x-access-tokens": user1_token},
+                           json={**common_params, 'soft_stop_loss_timeout': 10.5})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+    response = client.post("/exchange_create_market_position", headers={"x-access-tokens": user1_token},
+                           json={**common_params, 'soft_stop_loss_timeout': 0})
+    assert response.data == b'dummy_create_market_response'
+
+    response = client.post("/exchange_create_market_position", headers={"x-access-tokens": user1_token},
+                           json={**common_params, 'soft_stop_loss_timeout': 100})
+    assert response.data == b'dummy_create_market_response'
+
+
 def test_should_handle_properly_comment(client, mocker, user1_token):
     create_exchange_account(client, user1_token)
     mocker.patch.object(Bybit3CommasWrapper, 'create_market', return_value='dummy_create_market_response')
@@ -418,6 +469,7 @@ def test_check_if_params_passed_to_wrapper(client, mocker, user1_token):
     comment = 'my_comment'
     move_sl_to_breakeven_after_tp1 = True
     helper_url = 'this_is_helper_url'
+    soft_stop_loss_timeout = 100
 
     response = client.post("/exchange_create_market_position", headers={"x-access-tokens": user1_token},
                            json={'account_id': 1,
@@ -428,6 +480,7 @@ def test_check_if_params_passed_to_wrapper(client, mocker, user1_token):
                                  'comment': comment,
                                  'move_sl_to_breakeven_after_tp1': move_sl_to_breakeven_after_tp1,
                                  'helper_url': helper_url,
+                                 'soft_stop_loss_timeout': soft_stop_loss_timeout,
                                  'side': side})
     assert response.data == b'dummy_create_market_response'
     assert create_market_spy.call_count == 1
@@ -436,6 +489,7 @@ def test_check_if_params_passed_to_wrapper(client, mocker, user1_token):
                                               position_size=position_size,
                                               take_profits=take_profits,
                                               stop_loss=stop_loss,
+                                              soft_stop_loss_timeout=soft_stop_loss_timeout,
                                               comment=comment,
                                               move_sl_to_breakeven_after_tp1=move_sl_to_breakeven_after_tp1,
                                               helper_url=helper_url)

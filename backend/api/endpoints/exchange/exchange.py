@@ -46,6 +46,7 @@ def create_market_position(user):
             or 'stop_loss' not in data \
             or 'comment' not in data \
             or 'move_sl_to_breakeven_after_tp1' not in data \
+            or 'soft_stop_loss_timeout' not in data \
             or 'helper_url' not in data:
         return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
 
@@ -56,6 +57,7 @@ def create_market_position(user):
     take_profits = data['take_profits']
     stop_loss = data['stop_loss']
     comment = data['comment']
+    soft_stop_loss_timeout = data['soft_stop_loss_timeout']
     move_sl_to_breakeven_after_tp1 = data['move_sl_to_breakeven_after_tp1']
     helper_url = data['helper_url']
 
@@ -77,6 +79,9 @@ def create_market_position(user):
         return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
 
     if (not isinstance(stop_loss, int) and not isinstance(stop_loss, float)) or stop_loss <= 0:
+        return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
+
+    if (not isinstance(soft_stop_loss_timeout, int)) or soft_stop_loss_timeout < 0:
         return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
 
     if not isinstance(take_profits, list) or len(take_profits) <= 0:
@@ -114,5 +119,5 @@ def create_market_position(user):
 
     wrapper: ExchangeWrapper = wrapper_map[account.type](account.details)
     return wrapper.create_market(side=side, symbol=symbol, position_size=position_size, take_profits=take_profits,
-                                 stop_loss=stop_loss, comment=comment,
+                                 stop_loss=stop_loss, soft_stop_loss_timeout=soft_stop_loss_timeout, comment=comment,
                                  move_sl_to_breakeven_after_tp1=move_sl_to_breakeven_after_tp1, helper_url=helper_url)
