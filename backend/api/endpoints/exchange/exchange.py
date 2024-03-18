@@ -100,6 +100,9 @@ def create_market_position(user):
     if sum_of_tp_volumes != 100:
         return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
 
+    if move_sl_to_breakeven_after_tp1 and len(take_profits) < 2:
+        return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
+
     if not isinstance(comment, str) or len(comment) > MAXIMUM_COMMENT_LENGTH:
         return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
 

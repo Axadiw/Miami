@@ -253,7 +253,7 @@ def test_should_handle_properly_take_profits(client, mocker, user1_token):
 
     # single tp 100%
     response = client.post("/exchange_create_market_position", headers={"x-access-tokens": user1_token},
-                           json={**common_params, 'take_profits': [[1, 100]]})
+                           json={**common_params, 'take_profits': [[1, 100]], 'move_sl_to_breakeven_after_tp1': False})
     assert response.data == b'dummy_create_market_response'
 
     # floats
@@ -387,6 +387,22 @@ def test_fail_for_account_from_different_user(client, user1_token, user2_token):
                            json=common_params)
     assert response.status_code == 400
     assert response.json == PARAMS_INVALID_RESPONSE
+
+
+def test_should_have_at_least_2tps_when_moveto_be_set(client, mocker, user1_token):
+    create_exchange_account(client, user1_token)
+    response = client.post("/exchange_create_market_position", headers={"x-access-tokens": user1_token},
+                           json={**common_params, 'take_profits': [[1, 100]]})
+    assert response.status_code == 400
+    assert response.json == PARAMS_INVALID_RESPONSE
+
+
+def test_can_have_single_tp_when_dont_need_to_move_sl_to_be(client, mocker, user1_token):
+    create_exchange_account(client, user1_token)
+    mocker.patch.object(Bybit3CommasWrapper, 'create_market', return_value='dummy_create_market_response')
+    response = client.post("/exchange_create_market_position", headers={"x-access-tokens": user1_token},
+                           json={**common_params, 'take_profits': [[1, 100]], 'move_sl_to_breakeven_after_tp1': False})
+    assert response.data == b'dummy_create_market_response'
 
 
 def test_check_if_params_passed_to_wrapper(client, mocker, user1_token):
