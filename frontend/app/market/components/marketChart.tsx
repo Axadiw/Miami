@@ -62,6 +62,7 @@ export const MarketChart = () => {
     selectedSymbol,
     selectedTimeframe,
     setCurrentPrice,
+    chartAutoSize,
   } = useMarketPageContext();
   const chartRef = useRef<IChartApi | null>(null);
   const priceSeriesRef = useRef<PriceSeriesWrapper['_series'] | null>(null);
@@ -108,6 +109,13 @@ export const MarketChart = () => {
       }))
     );
   }, [ohlcvs?.ohlcvs, selectedSymbol, setCurrentPrice]);
+
+  useEffect(() => {
+    priceSeriesRef?.current?.priceScale().applyOptions({
+      autoScale: chartAutoSize,
+    });
+    priceLineSeriesRef?.current?.series.priceScale().applyOptions({ autoScale: chartAutoSize });
+  }, [chartAutoSize]);
 
   useEffect(() => {
     const newSocket = socketIOClient(BASE_URL);

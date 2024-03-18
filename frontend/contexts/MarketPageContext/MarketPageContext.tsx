@@ -75,6 +75,8 @@ interface MarketPageContext {
   setSoftStopLossTimeout: Dispatch<SetStateAction<number | string | undefined>>;
   softStopLossEnabled: boolean;
   setSoftStopLossEnabled: Dispatch<SetStateAction<boolean>>;
+  chartAutoSize: boolean;
+  setChartAutoSize: Dispatch<SetStateAction<boolean>>;
 }
 
 export const MarketPageContext = createContext<MarketPageContext>({} as MarketPageContext);
@@ -104,6 +106,7 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
   const [tp2Percent, setTp2Percent] = useState<number | string | undefined>(25);
   const [tp3Percent, setTp3Percent] = useState<number | string | undefined>(25);
   const [slToBreakEvenAtTp1, setSlToBreakEvenAtTp1] = useState(true);
+  const [chartAutoSize, setChartAutoSize] = useState(true);
   const [externalChartHelperURL, setExternalChartHelperURL] = useState<string | undefined>(
     undefined
   );
@@ -242,6 +245,8 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
       setSoftStopLossTimeout,
       softStopLossEnabled,
       setSoftStopLossEnabled,
+      chartAutoSize,
+      setChartAutoSize,
     }),
     [
       selectedAccountId,
@@ -274,6 +279,7 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
       comment,
       softStopLossTimeout,
       softStopLossEnabled,
+      chartAutoSize,
     ]
   );
 
