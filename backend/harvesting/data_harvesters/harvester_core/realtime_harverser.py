@@ -121,7 +121,7 @@ class RealtimeHarvester:
                     logging.critical(f'Bad symbol {e}')
                     await exchange_connector.load_markets()
                 except Exception as e:
-                    logging.critical(f'[Realtime Harvester Watcher] Error watch_candles {e}')
+                    logging.critical(f'[Realtime Harvester Watcher] Error watch_trades {e}')
                     await asyncio.sleep(1)
 
     async def handle_trades(self, exchange_connector: BaseExchangeConnector, trades: List[Trade],
@@ -134,38 +134,35 @@ class RealtimeHarvester:
 
         for timeframe in self.timeframes:
             pair_identifier = f'{symbol_name}_{timeframe.name}'
-            if pair_identifier in self.latest_candles:
-                new_candles = exchange_connector.build_ohlcv(last_ohlcv=self.latest_candles[pair_identifier],
-                                                             trades=trades,
-                                                             timeframe=timeframe)
+            last_candle = self.latest_candles[pair_identifier] if pair_identifier in self.latest_candles else None
+            new_candles = exchange_connector.build_ohlcv(last_ohlcv=last_candle,
+                                                         trades=trades,
+                                                         timeframe=timeframe)
 
-                if len(new_candles) > 0:
-                    converted_candle = self.convert_candle(new_candles[-1], symbol_id, timeframe.id)
-                    pair_identifier = f'{symbol_name}_{timeframe.name}'
-                    if pair_identifier not in self.last_candles_mqtt_emit_dates or datetime.now() - \
-                            self.last_candles_mqtt_emit_dates[pair_identifier] > timedelta(seconds=1):
-                        to_emit = {**converted_candle,
-                                   'timestamp': datetime.timestamp(converted_candle['timestamp']),
-                                   'exchange': self.exchange.name,
-                                   'symbol': symbol_name,
-                                   'timeframe': timeframe.name}
-                        self.mqtt_client.publish('ohlcv', to_emit)
-                        # logging.info(f'Updating candle {symbol_name} {timeframe.name}')
-                        self.last_candles_mqtt_emit_dates[pair_identifier] = datetime.now()
+            if len(new_candles) > 0:
+                converted_candle = self.convert_candle(new_candles[-1], symbol_id, timeframe.id)
+                pair_identifier = f'{symbol_name}_{timeframe.name}'
+                if pair_identifier not in self.last_candles_mqtt_emit_dates or datetime.now() - \
+                        self.last_candles_mqtt_emit_dates[pair_identifier] > timedelta(seconds=1):
+                    to_emit = {**converted_candle,
+                               'timestamp': datetime.timestamp(converted_candle['timestamp']),
+                               'exchange': self.exchange.name,
+                               'symbol': symbol_name,
+                               'timeframe': timeframe.name}
+                    self.mqtt_client.publish('ohlcv', to_emit)
+                    # logging.info(f'Updating candle {symbol_name} {timeframe.name}')
+                    self.last_candles_mqtt_emit_dates[pair_identifier] = datetime.now()
 
-                    if len(new_candles) > 1:
-                        # logging.info(f'Adding new candle {symbol_name} {timeframe.name}')
-                        self.added_candles_count += 1
-                        candles_to_save.append(self.convert_candle(new_candles[-2], symbol_id, timeframe.id))
+                if len(new_candles) > 1:
+                    # logging.info(f'Adding new candle {symbol_name} {timeframe.name}')
+                    self.added_candles_count += 1
+                    candles_to_save.append(self.convert_candle(new_candles[-2], symbol_id, timeframe.id))
 
-                    self.latest_candles[pair_identifier] = new_candles[-1]
-                else:
-                    logging.critical(
-                        f'[Realtime Harvester Watcher] Received trade for {symbol_name} that '
-                        f'have not produced any candles')
+                self.latest_candles[pair_identifier] = new_candles[-1]
             else:
                 logging.critical(
-                    f'[Realtime Harvester Watcher] Received trade for unknown symbol_name: {symbol_name}')
+                    f'[Realtime Harvester Watcher] Received trade for {symbol_name} that '
+                    f'have not produced any candles')
 
         if len(candles_to_save) > 0:
             await db_session.execute(insert(OHLCV).values(candles_to_save).on_conflict_do_nothing())
@@ -225,6 +222,8 @@ class RealtimeHarvester:
                     await db_session.execute(insert(OpenInterest).values(oi).on_conflict_do_nothing())
                 await db_session.commit()
         except Exception as e:
+            await db_session.rollback()
+            await asyncio.sleep(1)
             logging.critical(f'[Realtime Harvester Watcher] Error handle_tickers {e}')
 
     async def start_queue_loop(self):

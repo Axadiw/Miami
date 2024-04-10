@@ -1,4 +1,6 @@
 # success
+from shared.models.position import SHORT_SIDE, LONG_SIDE
+
 REGISTRATION_SUCCESS_RESPONSE = dict(message='Registered successfully')
 TOKEN_VALID_RESPONSE = dict(message='Token valid')
 USER_CONFIG_SAVED_RESPONSE = dict(message='Config saved')
@@ -26,4 +28,4 @@ DEFAULT_ADMIN_EMAIL = 'axadiw@gmail.com'
 MAXIMUM_COMMENT_LENGTH = 1000
 MAXIMUM_HELPER_URL_LENGTH = 500
 
-POSITION_SIDES = ['Long', 'Short']
+POSITION_SIDES = [LONG_SIDE, SHORT_SIDE]

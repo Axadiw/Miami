@@ -29,7 +29,7 @@ def get_balance(user):
     if account.type not in wrapper_map:
         return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
 
-    wrapper: ExchangeWrapper = wrapper_map[account.type](account.details)
+    wrapper: ExchangeWrapper = wrapper_map[account.type](account.id, account.details)
     return wrapper.get_balance()
 
 
@@ -117,7 +117,7 @@ def create_market_position(user):
     if not isinstance(helper_url, str) or len(helper_url) > MAXIMUM_HELPER_URL_LENGTH:
         return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
 
-    wrapper: ExchangeWrapper = wrapper_map[account.type](account.details)
+    wrapper: ExchangeWrapper = wrapper_map[account.type](account.id, account.details)
     return wrapper.create_market(side=side, symbol=symbol, position_size=position_size, take_profits=take_profits,
                                  stop_loss=stop_loss, soft_stop_loss_timeout=soft_stop_loss_timeout, comment=comment,
                                  move_sl_to_breakeven_after_tp1=move_sl_to_breakeven_after_tp1, helper_url=helper_url)

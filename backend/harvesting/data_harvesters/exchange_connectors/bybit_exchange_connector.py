@@ -1,7 +1,7 @@
 import math
 from datetime import datetime
 from math import ceil
-from typing import List, Type
+from typing import List, Type, Optional
 
 from ccxt.base.types import Trade
 from ccxt.pro import bybit
@@ -49,9 +49,9 @@ class BybitConnectorCCXT(BaseExchangeConnector):
     async def watch_trades(self, symbols_and_time_frames: List[str]):
         return await self.connector_pro.watch_trades_for_symbols(symbols_and_time_frames)
 
-    def build_ohlcv(self, last_ohlcv: list, trades: List[Trade], timeframe: Type[Timeframe]):
+    def build_ohlcv(self, last_ohlcv: Optional[list], trades: List[Trade], timeframe: Type[Timeframe]):
         timeframe_in_seconds = timeframe.seconds
-        ohlcvs = [last_ohlcv]
+        ohlcvs = [last_ohlcv] if last_ohlcv is not None else []
         for trade in trades:
             ts = trade['timestamp'] / 1000
             openingTime = int(

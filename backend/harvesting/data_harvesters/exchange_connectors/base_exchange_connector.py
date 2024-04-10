@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import List, Type
+from typing import List, Type, Optional
 
 from ccxt.base.types import Trade
 from harvesting.data_harvesters.data_to_fetch import DataToFetch
@@ -25,7 +25,7 @@ class BaseExchangeConnector(ABC):
         pass
 
     @abstractmethod
-    def build_ohlcv(self, last_ohlcv: list, trades: List[Trade], timeframe: Type[Timeframe]):
+    def build_ohlcv(self, last_ohlcv: Optional[list], trades: List[Trade], timeframe: Type[Timeframe]):
         pass
 
     @abstractmethod
