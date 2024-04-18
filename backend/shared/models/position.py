@@ -31,6 +31,6 @@ class Position(Base):
     comment = Column(String(length=4096), nullable=False)
     position_external_id = Column(String(length=64), nullable=False)
     helper_url = Column(String(length=4096), nullable=False)
-    symbol = Column(Integer, nullable=False)
+    symbol = Column(String(length=255), nullable=False)
     move_sl_to_be = Column(Boolean, nullable=False)
     soft_stop_loss_timeout = Column(Integer, nullable=False)

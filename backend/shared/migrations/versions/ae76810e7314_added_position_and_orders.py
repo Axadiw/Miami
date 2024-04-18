@@ -21,7 +21,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table('Positions',
                     sa.Column('id', sa.Integer(), nullable=False),
-                    sa.Column('side', sa.Boolean(), nullable=False),
+                    sa.Column('side', sa.Integer(), nullable=False),
                     sa.Column('size', sa.Numeric(scale=10, precision=30), nullable=False),
                     sa.Column('state', sa.Integer(), nullable=False),
                     sa.Column('create_date', sa.DateTime(), nullable=False),
@@ -30,7 +30,7 @@ def upgrade() -> None:
                     sa.Column('comment', sa.String(length=4096), nullable=False),
                     sa.Column('position_external_id', sa.String(length=64), nullable=False),
                     sa.Column('helper_url', sa.String(length=4096), nullable=False),
-                    sa.Column('symbol', sa.Integer, nullable=False),  # pomyslec
+                    sa.Column('symbol', sa.String(255), nullable=False),
                     sa.Column('move_sl_to_be', sa.Boolean(), nullable=False),
                     sa.Column('soft_stop_loss_timeout', sa.Integer, nullable=False),
                     sa.PrimaryKeyConstraint('id'),
@@ -51,4 +51,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_table('ExchangeAccounts')
+    op.drop_table('Orders')
+    op.drop_table('Positions')

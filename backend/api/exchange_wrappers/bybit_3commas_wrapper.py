@@ -93,7 +93,6 @@ class Bybit3CommasWrapper(ExchangeWrapper):
         '2024-04-04T21:13:37.782Z'
         create_date = datetime.fromisoformat(data['data']['created_at'])
         position_external_id = str(uuid.uuid4())
-        symbol = symbol  # TBD czy to pwinien byc string czy id
         new_position = Position(side=serialize_side(side), size=size, account_id=self.accountId, comment=comment,
                                 position_external_id=position_external_id, helper_url=helper_url, symbol=symbol,
                                 state=CREATED_POSITION_STATE,
