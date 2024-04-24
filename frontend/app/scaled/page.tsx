@@ -1,7 +1,13 @@
 'use client';
 
-import { Text } from '@mantine/core';
+import { SharedPositionContextProvider } from '@/contexts/SharedPositionContext/SharedPositionContext';
+import { ScaledPositionContextProvider } from '@/app/scaled/contexts/ScaledPositionContext/ScaledPositionContext';
+import ScaledPage from '@/app/scaled/scaledPage';
 
-export default function ScaledPage() {
-  return <Text>SCALED</Text>;
-}
+export default () => (
+  <SharedPositionContextProvider>
+    <ScaledPositionContextProvider>
+      <ScaledPage />
+    </ScaledPositionContextProvider>
+  </SharedPositionContextProvider>
+);

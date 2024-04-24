@@ -2,7 +2,7 @@ import { Button, Center, List, Stack, Text, Transition } from '@mantine/core';
 import React, { useState } from 'react';
 import { useSharedPositionDetailsValidators } from '@/app/shared/hooks/useSharedPositionDetailsValidators/useSharedPositionDetailsValidators';
 import { useClearSharedPositionCreationFields } from '@/app/shared/hooks/useClearSharedPositionCreationFields/useClearSharedPositionCreationFields';
-import { MarketCalculatorResponse } from '@/app/shared/components/positionCalculators/marketCalculator';
+import { MarketCalculatorResponse } from '@/app/market/components/positionCalculators/marketCalculator';
 
 export interface ExecuteButtonProps {
   additionalValidators?: [string, string | undefined][];

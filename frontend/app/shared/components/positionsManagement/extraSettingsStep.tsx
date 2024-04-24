@@ -2,7 +2,7 @@ import { Group, Input, NumberInput, Space, Switch, Textarea } from '@mantine/cor
 import React from 'react';
 import { useSharedPositionDetailsValidators } from '@/app/shared/hooks/useSharedPositionDetailsValidators/useSharedPositionDetailsValidators';
 import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
-import { MarketCalculatorResponse } from '@/app/shared/components/positionCalculators/marketCalculator';
+import { MarketCalculatorResponse } from '@/app/market/components/positionCalculators/marketCalculator';
 
 export interface ExtraSettingsStepProps {
   calculatedValues?: MarketCalculatorResponse;

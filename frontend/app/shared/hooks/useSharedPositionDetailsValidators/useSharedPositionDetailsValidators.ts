@@ -1,5 +1,5 @@
 import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
-import { MarketCalculatorResponse } from '@/app/shared/components/positionCalculators/marketCalculator';
+import { MarketCalculatorResponse } from '@/app/market/components/positionCalculators/marketCalculator';
 
 export const useSharedPositionDetailsValidators = (calculatedValues?: MarketCalculatorResponse) => {
   const {

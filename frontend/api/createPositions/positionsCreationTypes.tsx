@@ -1,4 +1,4 @@
-import { Side } from '@/app/shared/components/positionCalculators/marketCalculator';
+import { Side } from '@/app/market/components/positionCalculators/marketCalculator';
 
 export interface CreatePositionResponse {
   message: string;

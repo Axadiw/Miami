@@ -2,7 +2,7 @@ import { createContext, ReactNode, useContext, useMemo } from 'react';
 import {
   calculateMarketValues,
   MarketCalculatorResponse,
-} from '@/app/shared/components/positionCalculators/marketCalculator';
+} from '@/app/market/components/positionCalculators/marketCalculator';
 import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
 
 interface MarketPositionContext {

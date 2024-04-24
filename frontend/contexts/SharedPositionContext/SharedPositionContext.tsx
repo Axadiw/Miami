@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 import { useDocumentTitle } from '@mantine/hooks';
-import { PriceTypeType, Side } from '@/app/shared/components/positionCalculators/marketCalculator';
+import { PriceTypeType, Side } from '@/app/market/components/positionCalculators/marketCalculator';
 import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 import { GetOHLCVsResponse } from '@/api/useGetOHLCVs';
 import { GetTimeframesResponse } from '@/api/useGetTimeframes';

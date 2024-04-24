@@ -10,7 +10,7 @@ import { SeriesDataItemTypeMap } from '@/vendor/lightweight-charts/src/model/dat
 import { UTCTimestamp } from '@/vendor/lightweight-charts/src/model/horz-scale-behavior-time/types';
 import { BASE_URL } from '@/app/consts';
 import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
-import { MarketCalculatorResponse } from '@/app/shared/components/positionCalculators/marketCalculator';
+import { MarketCalculatorResponse } from '@/app/market/components/positionCalculators/marketCalculator';
 import { PriceSeries } from '@/app/shared/components/chart/priceSeries';
 import { VolumeSeries } from '@/app/shared/components/chart/volumeSeries';
 import { MarketPriceLinesSeriesWrapper } from '../../types';

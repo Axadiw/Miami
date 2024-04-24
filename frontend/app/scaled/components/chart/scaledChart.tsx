@@ -9,12 +9,12 @@ import { UTCTimestamp } from '@/vendor/lightweight-charts/src/model/horz-scale-b
 import { BASE_URL } from '@/app/consts';
 import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
 import { MarketCalculatorResponse } from '@/app/market/components/positionCalculators/marketCalculator';
-import { useLimitPositionContext } from '@/app/limit/contexts/LimitPositionContext/LimitPositionContext';
 import { PriceSeries } from '@/app/shared/components/chart/priceSeries';
 import { VolumeSeries } from '@/app/shared/components/chart/volumeSeries';
-import { LimitPriceLinesSeriesWrapper } from '../../types';
-import { LimitPriceLinesSeries } from '@/app/limit/components/chart/series/limitPriceLineSeries';
-import { LimitChartComponent } from '@/app/limit/components/chart/limitChartComponent';
+import { useScaledPositionContext } from '@/app/scaled/contexts/ScaledPositionContext/ScaledPositionContext';
+import { ScaledPriceLinesSeriesWrapper } from '@/app/scaled/types';
+import { ScaledChartComponent } from '@/app/scaled/components/chart/scaledChartComponent';
+import { ScaledPriceLinesSeries } from '@/app/scaled/components/chart/series/scaledPriceLineSeries';
 
 const BYBIT_EXCHANGE_NAME = 'bybit';
 
@@ -40,11 +40,11 @@ function timeToLocal(originalTime: number) {
   );
 }
 
-export interface LimitChartProps {
+export interface ScaledChartProps {
   calculatedValues?: MarketCalculatorResponse;
 }
 
-export const LimitChart = (props: LimitChartProps) => {
+export const ScaledChart = (props: ScaledChartProps) => {
   const { colorScheme } = useMantineColorScheme();
   const isDarkTheme = colorScheme === 'dark';
   const {
@@ -67,14 +67,14 @@ export const LimitChart = (props: LimitChartProps) => {
     chartAutoSize,
   } = useSharedPositionContext();
 
-  const { limitPrice, setLimitPrice } = useLimitPositionContext();
+  const { upperPrice, setUpperPrice, lowerPrice, setLowerPrice } = useScaledPositionContext();
 
   const { calculatedValues } = props;
 
   const chartRef = useRef<IChartApi | null>(null);
   const priceSeriesRef = useRef<PriceSeriesWrapper['_series'] | null>(null);
   const volumeSeriesRef = useRef<VolumeSeriesWrapper['_series'] | null>(null);
-  const priceLineSeriesRef = useRef<LimitPriceLinesSeriesWrapper['_data'] | null>(null);
+  const priceLineSeriesRef = useRef<ScaledPriceLinesSeriesWrapper['_data'] | null>(null);
   const [currentSocket, setCurrentSocket] = useState<Socket | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_realtimeRoom, setRealtimeRoom] = useState<string>();
@@ -207,18 +207,22 @@ export const LimitChart = (props: LimitChartProps) => {
       price: calculatedValues.slPrice,
       lineVisible: sl !== undefined,
     });
-    priceLineSeries.lines.limit.applyOptions({
-      price: Number(limitPrice),
-      lineVisible: limitPrice !== undefined,
+    priceLineSeries.lines.upper.applyOptions({
+      price: Number(upperPrice),
+      lineVisible: upperPrice !== undefined,
     });
-
+    priceLineSeries.lines.lower.applyOptions({
+      price: Number(lowerPrice),
+      lineVisible: lowerPrice !== undefined,
+    });
     const priceLinesData: SeriesDataItemTypeMap['Line'][] = [];
     [
       priceLineSeries.lines.sl.options(),
       priceLineSeries.lines.tp1.options(),
       priceLineSeries.lines.tp2.options(),
       priceLineSeries.lines.tp3.options(),
-      priceLineSeries.lines.limit.options(),
+      priceLineSeries.lines.upper.options(),
+      priceLineSeries.lines.lower.options(),
     ].forEach((value, index) => {
       if (value.lineVisible) {
         priceLinesData.push({
@@ -229,10 +233,10 @@ export const LimitChart = (props: LimitChartProps) => {
     });
 
     priceLineSeries.series.setData(priceLinesData);
-  }, [calculatedValues, limitPrice, sl, tp1, tp2, tp3]);
+  }, [calculatedValues, upperPrice, sl, tp1, tp2, tp3, lowerPrice]);
 
   return (
-    <LimitChartComponent
+    <ScaledChartComponent
       ref={chartRef}
       options={{
         layout: {
@@ -293,14 +297,17 @@ export const LimitChart = (props: LimitChartProps) => {
         setTp3Type('$');
         setTp3(newTP);
       }}
-      updateLimitAfterDragging={(newLimit) => {
-        setLimitPrice(newLimit);
+      updateUpperAfterDragging={(newUpper) => {
+        setUpperPrice(newUpper);
+      }}
+      updateLowerAfterDragging={(newLower) => {
+        setLowerPrice(newLower);
       }}
     >
       <PriceSeries ref={priceSeriesRef}>
-        <LimitPriceLinesSeries ref={priceLineSeriesRef} />
+        <ScaledPriceLinesSeries ref={priceLineSeriesRef} />
       </PriceSeries>
       <VolumeSeries ref={volumeSeriesRef} />
-    </LimitChartComponent>
+    </ScaledChartComponent>
   );
 };

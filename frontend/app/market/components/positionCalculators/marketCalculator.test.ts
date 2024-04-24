@@ -1,4 +1,4 @@
-import { calculateMarketValues } from '@/app/shared/components/positionCalculators/marketCalculator';
+import { calculateMarketValues } from '@/app/market/components/positionCalculators/marketCalculator';
 
 describe('calculateMarketValues', () => {
   it('should calculate longs in correct manner', () => {

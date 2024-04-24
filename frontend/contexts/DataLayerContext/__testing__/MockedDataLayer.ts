@@ -18,6 +18,7 @@ import { GetAccountBalanceResponse } from '@/api/useAccountBalance';
 import { UseListExchangeAccountsResult } from '@/api/useListExchangeAccounts';
 import { UseRemoveExchangeAccountResult } from '@/api/useRemoveExchangeAccount';
 import { UseCreateLimitPositionResult } from '@/api/createPositions/useCreateLimitPosition';
+import { UseCreateScaledPositionResult } from '@/api/createPositions/useCreateScaledPosition';
 
 export class MockedDataLayerBuilder {
   private useAppGetVersion = jest.fn<UseGetAppVersionResult, []>();
@@ -33,6 +34,7 @@ export class MockedDataLayerBuilder {
   private useAddNewExchangeAccount = jest.fn<UseAddNewExchangeAccountResult, []>();
   private useCreateMarketPosition = jest.fn<UseCreateMarketPositionResult, []>();
   private useCreateLimitPosition = jest.fn<UseCreateLimitPositionResult, []>();
+  private useCreateScaledPosition = jest.fn<UseCreateScaledPositionResult, []>();
   private useGetAccountBalance = jest.fn<UseQueryResult<GetAccountBalanceResponse, Error>, []>();
   private useListExchangeAccounts = jest.fn<UseListExchangeAccountsResult, []>();
   private useRemoveExchangeAccount = jest.fn<UseRemoveExchangeAccountResult, []>();
@@ -72,6 +74,7 @@ export class MockedDataLayerBuilder {
       useAddNewExchangeAccount: this.useAddNewExchangeAccount,
       useCreateMarketPosition: this.useCreateMarketPosition,
       useCreateLimitPosition: this.useCreateLimitPosition,
+      useCreateScaledPosition: this.useCreateScaledPosition,
       useGetAccountBalance: this.useGetAccountBalance,
       useListExchangeAccounts: this.useListExchangeAccounts,
       useRemoveExchangeAccount: this.useRemoveExchangeAccount,

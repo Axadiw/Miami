@@ -3,7 +3,7 @@ import React from 'react';
 import {
   MarketCalculatorResponse,
   PriceTypeType,
-} from '@/app/shared/components/positionCalculators/marketCalculator';
+} from '@/app/market/components/positionCalculators/marketCalculator';
 import { useSharedPositionDetailsValidators } from '@/app/shared/hooks/useSharedPositionDetailsValidators/useSharedPositionDetailsValidators';
 import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
 

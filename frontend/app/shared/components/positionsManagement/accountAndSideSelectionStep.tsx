@@ -10,7 +10,7 @@ import {
   useCombobox,
 } from '@mantine/core';
 import React, { useEffect } from 'react';
-import { Side } from '@/app/shared/components/positionCalculators/marketCalculator';
+import { Side } from '@/app/market/components/positionCalculators/marketCalculator';
 import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
 

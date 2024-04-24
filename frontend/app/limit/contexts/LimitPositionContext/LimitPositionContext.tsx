@@ -11,7 +11,7 @@ import { useSharedPositionContext } from '@/contexts/SharedPositionContext/Share
 import {
   calculateMarketValues,
   MarketCalculatorResponse,
-} from '@/app/shared/components/positionCalculators/marketCalculator';
+} from '@/app/market/components/positionCalculators/marketCalculator';
 
 interface LimitPositionContext {
   setLimitPrice: Dispatch<SetStateAction<number | string | undefined>>;

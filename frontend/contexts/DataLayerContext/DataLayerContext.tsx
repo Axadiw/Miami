@@ -42,6 +42,10 @@ import {
   useCreateLimitPosition,
   UseCreateLimitPositionResult,
 } from '@/api/createPositions/useCreateLimitPosition';
+import {
+  useCreateScaledPosition,
+  UseCreateScaledPositionResult,
+} from '@/api/createPositions/useCreateScaledPosition';
 
 export interface DataLayer {
   useAppGetVersion: () => UseGetAppVersionResult;
@@ -62,6 +66,7 @@ export interface DataLayer {
   useRemoveExchangeAccount: () => UseRemoveExchangeAccountResult;
   useCreateMarketPosition: () => UseCreateMarketPositionResult;
   useCreateLimitPosition: () => UseCreateLimitPositionResult;
+  useCreateScaledPosition: () => UseCreateScaledPositionResult;
 }
 
 export const DataLayerContext = createContext<DataLayer>({} as DataLayer);
@@ -85,6 +90,7 @@ export const DataLayerContextProvider = ({ children }: { children: ReactNode }) 
   const removeExchangeAccount = useRemoveExchangeAccount();
   const createMarketPosition = useCreateMarketPosition();
   const createLimitPosition = useCreateLimitPosition();
+  const createScaledPosition = useCreateScaledPosition();
 
   const value = useMemo(
     () => ({
@@ -104,6 +110,7 @@ export const DataLayerContextProvider = ({ children }: { children: ReactNode }) 
       useRemoveExchangeAccount: () => removeExchangeAccount,
       useCreateMarketPosition: () => createMarketPosition,
       useCreateLimitPosition: () => createLimitPosition,
+      useCreateScaledPosition: () => createScaledPosition,
     }),
     [
       addNewExchangeAccount,
@@ -112,6 +119,7 @@ export const DataLayerContextProvider = ({ children }: { children: ReactNode }) 
       checkIfLoginTokenIsValid,
       createLimitPosition,
       createMarketPosition,
+      createScaledPosition,
       getAccountBalance,
       getAccountInfo,
       getOHLCVs,
