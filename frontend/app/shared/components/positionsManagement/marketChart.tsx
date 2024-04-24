@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMantineColorScheme } from '@mantine/core';
 import socketIOClient, { Socket } from 'socket.io-client';
-import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
 import { ColorType, CrosshairMode, LineStyle } from '@/vendor/lightweight-charts/src';
 import { PriceSeries } from '@/app/shared/components/chart/series/priceSeries';
 import { PriceLinesSeries } from '@/app/shared/components/chart/series/priceLineSeries';
@@ -16,6 +15,8 @@ import {
 import { SeriesDataItemTypeMap } from '@/vendor/lightweight-charts/src/model/data-consumer';
 import { UTCTimestamp } from '@/vendor/lightweight-charts/src/model/horz-scale-behavior-time/types';
 import { BASE_URL } from '@/app/consts';
+import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
+import { MarketCalculatorResponse } from '@/app/shared/components/positionCalculators/marketCalculator';
 
 const BYBIT_EXCHANGE_NAME = 'bybit';
 
@@ -41,7 +42,11 @@ function timeToLocal(originalTime: number) {
   );
 }
 
-export const MarketChart = () => {
+export interface MarketChartProps {
+  calculatedValues?: MarketCalculatorResponse;
+}
+
+export const MarketChart = (props: MarketChartProps) => {
   const { colorScheme } = useMantineColorScheme();
   const isDarkTheme = colorScheme === 'dark';
   const {
@@ -54,7 +59,6 @@ export const MarketChart = () => {
     setTp3Type,
     setTp3,
     ohlcvs,
-    calculatedValues,
     tp1,
     tp2,
     tp3,
@@ -63,7 +67,10 @@ export const MarketChart = () => {
     selectedTimeframe,
     setCurrentPrice,
     chartAutoSize,
-  } = useMarketPageContext();
+  } = useSharedPositionContext();
+
+  const { calculatedValues } = props;
+
   const chartRef = useRef<IChartApi | null>(null);
   const priceSeriesRef = useRef<PriceSeriesWrapper['_series'] | null>(null);
   const volumeSeriesRef = useRef<VolumeSeriesWrapper['_series'] | null>(null);

@@ -1,10 +1,13 @@
 'use client';
 
 import MarketPage from '@/app/market/marketPage';
-import { MarketPageContextProvider } from '@/contexts/MarketPageContext/MarketPageContext';
+import { SharedPositionContextProvider } from '@/contexts/SharedPositionContext/SharedPositionContext';
+import { MarketPositionContextProvider } from '@/app/market/contexts/LimitPositionContext/MarketPositionContext';
 
 export default () => (
-  <MarketPageContextProvider>
-    <MarketPage />
-  </MarketPageContextProvider>
+  <SharedPositionContextProvider>
+    <MarketPositionContextProvider>
+      <MarketPage />
+    </MarketPositionContextProvider>
+  </SharedPositionContextProvider>
 );

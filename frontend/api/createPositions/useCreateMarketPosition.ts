@@ -2,32 +2,19 @@ import axios from 'axios';
 import { useMutation, UseMutationResult } from '@tanstack/react-query';
 import { BASE_URL } from '@/app/consts';
 import { useLoginContext } from '@/contexts/LoginContext/LoginContext';
-import { Side } from '@/app/shared/components/positionCalculators/marketCalculator';
+import {
+  CreatePositionParams,
+  CreatePositionResponse,
+} from '@/api/createPositions/positionsCreationTypes';
 
 export type UseCreateMarketPositionResult = UseMutationResult<
-  CreateMarketPositionResponse,
+  CreatePositionResponse,
   Error,
   CreateMarketPositionParams,
   unknown
 >;
 
-export interface CreateMarketPositionParams {
-  accountId: number;
-  side: Side;
-  symbol: string;
-  positionSize: number;
-  takeProfits: number[][];
-  stopLoss: number;
-  softStopLossTimeout: number;
-  comment: string;
-  moveSlToBreakevenAfterTp1: boolean;
-  helperUrl: string;
-}
-
-export interface CreateMarketPositionResponse {
-  message: string;
-  error?: string;
-}
+export interface CreateMarketPositionParams extends CreatePositionParams {}
 
 export const createMarketPosition = async (
   token: string | null | undefined,
@@ -57,7 +44,7 @@ export const createMarketPosition = async (
         move_sl_to_breakeven_after_tp1: marketParams.moveSlToBreakevenAfterTp1,
         helper_url: marketParams.helperUrl,
       }),
-    })) as CreateMarketPositionResponse;
+    })) as CreatePositionResponse;
   } catch (error: any) {
     throw new Error(error.response.data.error);
   }

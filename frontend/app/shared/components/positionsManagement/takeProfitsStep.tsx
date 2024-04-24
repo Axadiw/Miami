@@ -1,13 +1,19 @@
 import { Group, Input, NumberInput, SegmentedControl, Slider, Stack, Text } from '@mantine/core';
 import React from 'react';
-import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
-import { PriceTypeType } from '@/app/shared/components/positionCalculators/marketCalculator';
-import { usePositionDetailsValidators } from '@/app/shared/hooks/usePositionDetailsValidators/usePositionDetailsValidators';
+import {
+  MarketCalculatorResponse,
+  PriceTypeType,
+} from '@/app/shared/components/positionCalculators/marketCalculator';
+import { useSharedPositionDetailsValidators } from '@/app/shared/hooks/useSharedPositionDetailsValidators/useSharedPositionDetailsValidators';
+import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
 
-export const TakeProfitsStep = () => {
+export interface TakeProfitsStepProps {
+  calculatedValues?: MarketCalculatorResponse;
+  active: number;
+}
+
+export const TakeProfitsStep = (props: TakeProfitsStepProps) => {
   const {
-    active,
-    calculatedValues,
     tp1,
     tp1Percent,
     setTp1,
@@ -26,7 +32,9 @@ export const TakeProfitsStep = () => {
     setTp1Percent,
     setTp2Percent,
     setTp3Percent,
-  } = useMarketPageContext();
+  } = useSharedPositionContext();
+
+  const { calculatedValues, active } = props;
 
   const {
     tp1Above0,
@@ -36,7 +44,7 @@ export const TakeProfitsStep = () => {
     tp2AboveTp1,
     tp3AboveTp2,
     tpVolumesAddTo100,
-  } = usePositionDetailsValidators();
+  } = useSharedPositionDetailsValidators(calculatedValues);
   return (
     <>
       <Group>

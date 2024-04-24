@@ -9,18 +9,13 @@ import {
   useState,
 } from 'react';
 import { useDocumentTitle } from '@mantine/hooks';
-import {
-  calculateMarketValues,
-  MarketCalculatorResponse,
-  PriceTypeType,
-  Side,
-} from '@/app/shared/components/positionCalculators/marketCalculator';
+import { PriceTypeType, Side } from '@/app/shared/components/positionCalculators/marketCalculator';
 import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 import { GetOHLCVsResponse } from '@/api/useGetOHLCVs';
 import { GetTimeframesResponse } from '@/api/useGetTimeframes';
 import { GetSymbolsResponse } from '@/api/useGetSymbols';
 
-interface MarketPageContext {
+interface SharedPositionContext {
   accountBalance: number | undefined;
   setAccountBalance: Dispatch<SetStateAction<number | undefined>>;
   maxLoss: number | string | undefined;
@@ -67,8 +62,6 @@ interface MarketPageContext {
   currentPrice: number;
   setCurrentPrice: Dispatch<SetStateAction<number>>;
   fetchSymbolsSuccess: boolean;
-  active: number;
-  calculatedValues?: MarketCalculatorResponse;
   comment: string;
   setComment: Dispatch<SetStateAction<string>>;
   softStopLossTimeout: number | string | undefined;
@@ -79,11 +72,13 @@ interface MarketPageContext {
   setChartAutoSize: Dispatch<SetStateAction<boolean>>;
 }
 
-export const MarketPageContext = createContext<MarketPageContext>({} as MarketPageContext);
+export const SharedPositionContext = createContext<SharedPositionContext>(
+  {} as SharedPositionContext
+);
 
-export const useMarketPageContext = () => useContext(MarketPageContext);
+export const useSharedPositionContext = () => useContext(SharedPositionContext);
 
-export const MarketPageContextProvider = ({ children }: { children: ReactNode }) => {
+export const SharedPositionContextProvider = ({ children }: { children: ReactNode }) => {
   const exchange = 'bybit';
   const limit = 1000;
   const dataLayer = useDataLayerContext();
@@ -124,51 +119,6 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
   });
   const { data: timeframes } = dataLayer.useGetTimeframes({ exchange });
   const { isSuccess: fetchSymbolsSuccess, data: symbols } = dataLayer.useGetSymbols({ exchange });
-  const calculatedValues = accountBalance
-    ? calculateMarketValues({
-        side,
-        openPrice: currentPrice,
-        accountBalance,
-        maxLoss,
-        maxLossType,
-        sl,
-        tp1,
-        tp2,
-        tp3,
-        tp1Percent,
-        tp2Percent,
-        tp3Percent,
-        slType,
-        tp1Type,
-        tp2Type,
-        tp3Type,
-      })
-    : undefined;
-
-  const step0Finished = selectedAccountId !== undefined;
-  const step1Finished = selectedSymbol !== null;
-  const step2Finished = maxLoss !== undefined && sl !== undefined;
-  const step3Finished =
-    tp1 !== undefined &&
-    tp1Percent !== undefined &&
-    tp2 !== undefined &&
-    tp2Percent !== undefined &&
-    tp3 !== undefined &&
-    tp3Percent !== undefined;
-
-  let active = 0;
-  if (step0Finished) {
-    active = 1;
-  }
-  if (step1Finished) {
-    active = 2;
-  }
-  if (step1Finished && step2Finished) {
-    active = 3;
-  }
-  if (step1Finished && step2Finished && step3Finished) {
-    active = 4;
-  }
 
   const { data } = dataLayer.useGetAccountBalance({ accountId: selectedAccountId });
 
@@ -180,7 +130,7 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
 
   useEffect(() => {
     if (!selectedSymbol) {
-      // useful after programmatic deslection of symbol
+      // useful after programmatic deselection of symbol
       setCurrentPrice(-1);
     }
   }, [selectedSymbol]);
@@ -235,10 +185,8 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
       currentPrice,
       setCurrentPrice,
       timeframes,
-      calculatedValues,
       fetchSymbolsSuccess,
       symbols,
-      active,
       comment,
       setComment,
       softStopLossTimeout,
@@ -272,10 +220,8 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
       ohlcvs,
       currentPrice,
       timeframes,
-      calculatedValues,
       fetchSymbolsSuccess,
       symbols,
-      active,
       comment,
       softStopLossTimeout,
       softStopLossEnabled,
@@ -283,5 +229,5 @@ export const MarketPageContextProvider = ({ children }: { children: ReactNode })
     ]
   );
 
-  return <MarketPageContext.Provider value={value}>{children}</MarketPageContext.Provider>;
+  return <SharedPositionContext.Provider value={value}>{children}</SharedPositionContext.Provider>;
 };

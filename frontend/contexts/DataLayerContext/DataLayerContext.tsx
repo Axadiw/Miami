@@ -37,7 +37,11 @@ import {
 import {
   useCreateMarketPosition,
   UseCreateMarketPositionResult,
-} from '@/api/useCreateMarketPosition';
+} from '@/api/createPositions/useCreateMarketPosition';
+import {
+  useCreateLimitPosition,
+  UseCreateLimitPositionResult,
+} from '@/api/createPositions/useCreateLimitPosition';
 
 export interface DataLayer {
   useAppGetVersion: () => UseGetAppVersionResult;
@@ -57,6 +61,7 @@ export interface DataLayer {
   useAddNewExchangeAccount: () => UseAddNewExchangeAccountResult;
   useRemoveExchangeAccount: () => UseRemoveExchangeAccountResult;
   useCreateMarketPosition: () => UseCreateMarketPositionResult;
+  useCreateLimitPosition: () => UseCreateLimitPositionResult;
 }
 
 export const DataLayerContext = createContext<DataLayer>({} as DataLayer);
@@ -79,6 +84,8 @@ export const DataLayerContextProvider = ({ children }: { children: ReactNode }) 
   const addNewExchangeAccount = useAddNewExchangeAccount();
   const removeExchangeAccount = useRemoveExchangeAccount();
   const createMarketPosition = useCreateMarketPosition();
+  const createLimitPosition = useCreateLimitPosition();
+
   const value = useMemo(
     () => ({
       useAppGetVersion: () => appGetVersion,
@@ -96,12 +103,14 @@ export const DataLayerContextProvider = ({ children }: { children: ReactNode }) 
       useAddNewExchangeAccount: () => addNewExchangeAccount,
       useRemoveExchangeAccount: () => removeExchangeAccount,
       useCreateMarketPosition: () => createMarketPosition,
+      useCreateLimitPosition: () => createLimitPosition,
     }),
     [
       addNewExchangeAccount,
       appGetVersion,
       changePassword,
       checkIfLoginTokenIsValid,
+      createLimitPosition,
       createMarketPosition,
       getAccountBalance,
       getAccountInfo,

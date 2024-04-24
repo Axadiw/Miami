@@ -1,8 +1,8 @@
-import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
+import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
+import { MarketCalculatorResponse } from '@/app/shared/components/positionCalculators/marketCalculator';
 
-export const usePositionDetailsValidators = () => {
+export const useSharedPositionDetailsValidators = (calculatedValues?: MarketCalculatorResponse) => {
   const {
-    calculatedValues,
     side,
     tp1Percent,
     tp2Percent,
@@ -15,7 +15,7 @@ export const usePositionDetailsValidators = () => {
     maxLoss,
     softStopLossTimeout,
     softStopLossEnabled,
-  } = useMarketPageContext();
+  } = useSharedPositionContext();
 
   return {
     slBelowOpen:

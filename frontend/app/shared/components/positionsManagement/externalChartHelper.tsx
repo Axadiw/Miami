@@ -1,10 +1,10 @@
 import { Group, Image, TextInput } from '@mantine/core';
 import React from 'react';
 import PrismaZoom from 'react-prismazoom';
-import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
+import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
 
 export const ExternalChartHelper = () => {
-  const { externalChartHelperURL, setExternalChartHelperURL } = useMarketPageContext();
+  const { externalChartHelperURL, setExternalChartHelperURL } = useSharedPositionContext();
   return (
     <>
       {externalChartHelperURL && (

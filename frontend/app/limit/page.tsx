@@ -1,7 +1,13 @@
 'use client';
 
-import { Stack } from '@mantine/core';
+import LimitPage from '@/app/limit/limitPage';
+import { SharedPositionContextProvider } from '@/contexts/SharedPositionContext/SharedPositionContext';
+import { LimitPositionContextProvider } from '@/app/limit/contexts/LimitPositionContext/LimitPositionContext';
 
-export default function LimitPage() {
-  return <Stack w={500} h={500} />;
-}
+export default () => (
+  <SharedPositionContextProvider>
+    <LimitPositionContextProvider>
+      <LimitPage />
+    </LimitPositionContextProvider>
+  </SharedPositionContextProvider>
+);

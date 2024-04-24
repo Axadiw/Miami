@@ -1,22 +1,28 @@
 import { Group, Input, NumberInput, Space, Switch, Textarea } from '@mantine/core';
 import React from 'react';
-import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
-import { usePositionDetailsValidators } from '@/app/shared/hooks/usePositionDetailsValidators/usePositionDetailsValidators';
+import { useSharedPositionDetailsValidators } from '@/app/shared/hooks/useSharedPositionDetailsValidators/useSharedPositionDetailsValidators';
+import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
+import { MarketCalculatorResponse } from '@/app/shared/components/positionCalculators/marketCalculator';
 
-export const ExtraSettingsStep = () => {
+export interface ExtraSettingsStepProps {
+  calculatedValues?: MarketCalculatorResponse;
+  active: number;
+}
+
+export const ExtraSettingsStep = (props: ExtraSettingsStepProps) => {
   const {
     slToBreakEvenAtTp1,
     setSlToBreakEvenAtTp1,
-    active,
     comment,
     setComment,
     softStopLossEnabled,
     setSoftStopLossEnabled,
     softStopLossTimeout,
     setSoftStopLossTimeout,
-  } = useMarketPageContext();
+  } = useSharedPositionContext();
+  const { active, calculatedValues } = props;
 
-  const { softSlAbove0 } = usePositionDetailsValidators();
+  const { softSlAbove0 } = useSharedPositionDetailsValidators(calculatedValues);
 
   return (
     <>

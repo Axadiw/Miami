@@ -1,28 +1,30 @@
 import { Group, Input, NumberInput, SegmentedControl, Text } from '@mantine/core';
-import React from 'react';
-import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
-import { PriceTypeType } from '@/app/shared/components/positionCalculators/marketCalculator';
-import { usePositionDetailsValidators } from '@/app/shared/hooks/usePositionDetailsValidators/usePositionDetailsValidators';
+import React, { ReactNode } from 'react';
+import {
+  MarketCalculatorResponse,
+  PriceTypeType,
+} from '@/app/shared/components/positionCalculators/marketCalculator';
+import { useSharedPositionDetailsValidators } from '@/app/shared/hooks/useSharedPositionDetailsValidators/useSharedPositionDetailsValidators';
+import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
 
-export const RiskManagementStep = () => {
-  const {
-    active,
-    maxLoss,
-    setMaxLoss,
-    maxLossType,
-    setMaxLossType,
-    calculatedValues,
-    slType,
-    sl,
-    setSl,
-    setSlType,
-  } = useMarketPageContext();
+export interface RiskManagementStepProps {
+  calculatedValues?: MarketCalculatorResponse;
+  children?: ReactNode;
+  active: number;
+}
+
+export const RiskManagementStep = (props: RiskManagementStepProps) => {
+  const { maxLoss, setMaxLoss, maxLossType, setMaxLossType, slType, sl, setSl, setSlType } =
+    useSharedPositionContext();
+  const { calculatedValues, active } = props;
 
   const largeRiskDetected = calculatedValues && calculatedValues.maxLossPercent > 80;
 
-  const { maximumLossAbove0, slAbove0, slBelowOpen } = usePositionDetailsValidators();
+  const { maximumLossAbove0, slAbove0, slBelowOpen } =
+    useSharedPositionDetailsValidators(calculatedValues);
   return (
     <>
+      {props.children && props.children}
       <Input.Wrapper label="Max loss:" size="xs">
         <Group>
           <NumberInput

@@ -2,18 +2,22 @@ import { IconSearch } from '@tabler/icons-react';
 import { Button, Group, rem, Text } from '@mantine/core';
 import React from 'react';
 import { spotlight, Spotlight } from '@mantine/spotlight';
-import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
+import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
 
-export const SelectSymbolStep = () => {
+export interface SelectSymbolStepProps {
+  active: number;
+}
+
+export const SelectSymbolStep = (props: SelectSymbolStepProps) => {
   const {
-    active,
     fetchSymbolsSuccess,
     symbols,
     setSelectedSymbol,
     selectedSymbol,
     currentPrice,
     setCurrentPrice,
-  } = useMarketPageContext();
+  } = useSharedPositionContext();
+  const { active } = props;
   const symbolsList = symbols?.symbols ?? [];
   return (
     <>

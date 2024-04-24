@@ -10,6 +10,7 @@ import {
   IconNumber4,
 } from '@tabler/icons-react';
 import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
+import { SetLimitPrice } from '@/app/limit/components/SetLimitPrice';
 import { AccountAndSideSelectionStep } from '@/app/shared/components/positionsManagement/accountAndSideSelectionStep';
 import { SelectSymbolStep } from '@/app/shared/components/positionsManagement/selectSymbolStep';
 import { RiskManagementStep } from '@/app/shared/components/positionsManagement/riskManagementStep';
@@ -20,9 +21,10 @@ import { TimeframesSelector } from '@/app/shared/components/positionsManagement/
 import { ExternalChartHelper } from '@/app/shared/components/positionsManagement/externalChartHelper';
 import { ExecuteButton } from '@/app/shared/components/positionsManagement/executeButton';
 import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
-import { useMarketPositionContext } from '@/app/market/contexts/LimitPositionContext/MarketPositionContext';
+import { useLimitPositionContext } from '@/app/limit/contexts/LimitPositionContext/LimitPositionContext';
+import { useLimitPositionDetailsValidators } from '@/app/limit/hooks/useLimitPositionDetailsValidator/useLimitPositionDetailsValidators';
 
-export default function MarketPage() {
+export default function LimitPage() {
   const {
     side,
     selectedAccountId,
@@ -36,10 +38,12 @@ export default function MarketPage() {
     softStopLossTimeout,
     softStopLossEnabled,
   } = useSharedPositionContext();
-  const { calculatedValues, active } = useMarketPositionContext();
+  const { limitPrice, calculatedValues, active, setLimitPrice } = useLimitPositionContext();
+
+  const limitValidators = useLimitPositionDetailsValidators();
 
   const dataLayer = useDataLayerContext();
-  const { mutateAsync, isPending, reset, error: createError } = dataLayer.useCreateMarketPosition();
+  const { mutateAsync, isPending, reset, error: createError } = dataLayer.useCreateLimitPosition();
 
   return (
     <SimpleGrid cols={{ base: 1, sm: 2 }}>
@@ -52,7 +56,9 @@ export default function MarketPage() {
             <SelectSymbolStep active={active} />
           </Timeline.Item>
           <Timeline.Item bullet={<IconNumber2 size={20} />}>
-            <RiskManagementStep calculatedValues={calculatedValues} active={active} />
+            <RiskManagementStep calculatedValues={calculatedValues} active={active}>
+              <SetLimitPrice active={active} />
+            </RiskManagementStep>
           </Timeline.Item>
           <Timeline.Item bullet={<IconNumber3 size={20} />}>
             <TakeProfitsStep calculatedValues={calculatedValues} active={active} />
@@ -79,6 +85,7 @@ export default function MarketPage() {
           active={active}
           isPending={isPending}
           error={createError}
+          additionalValidators={Object.entries(limitValidators)}
           createPositionAndCleanupForm={async () => {
             try {
               if (
@@ -104,7 +111,9 @@ export default function MarketPage() {
                   comment,
                   moveSlToBreakevenAfterTp1: slToBreakEvenAtTp1,
                   helperUrl: externalChartHelperURL ?? '',
+                  limitPrice: Number(limitPrice),
                 });
+                setLimitPrice('');
                 return true;
               }
             } catch (e) {

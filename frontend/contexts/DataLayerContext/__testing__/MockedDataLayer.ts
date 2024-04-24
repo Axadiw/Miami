@@ -13,10 +13,11 @@ import { GetOHLCVsResponse } from '@/api/useGetOHLCVs';
 import { GetSymbolsResponse } from '@/api/useGetSymbols';
 import { GetTimeframesResponse } from '@/api/useGetTimeframes';
 import { UseAddNewExchangeAccountResult } from '@/api/useAddNewExchangeAccount';
-import { UseCreateMarketPositionResult } from '@/api/useCreateMarketPosition';
+import { UseCreateMarketPositionResult } from '@/api/createPositions/useCreateMarketPosition';
 import { GetAccountBalanceResponse } from '@/api/useAccountBalance';
 import { UseListExchangeAccountsResult } from '@/api/useListExchangeAccounts';
 import { UseRemoveExchangeAccountResult } from '@/api/useRemoveExchangeAccount';
+import { UseCreateLimitPositionResult } from '@/api/createPositions/useCreateLimitPosition';
 
 export class MockedDataLayerBuilder {
   private useAppGetVersion = jest.fn<UseGetAppVersionResult, []>();
@@ -31,6 +32,7 @@ export class MockedDataLayerBuilder {
   private useGetTimeframes = jest.fn<UseQueryResult<GetTimeframesResponse, Error>, []>();
   private useAddNewExchangeAccount = jest.fn<UseAddNewExchangeAccountResult, []>();
   private useCreateMarketPosition = jest.fn<UseCreateMarketPositionResult, []>();
+  private useCreateLimitPosition = jest.fn<UseCreateLimitPositionResult, []>();
   private useGetAccountBalance = jest.fn<UseQueryResult<GetAccountBalanceResponse, Error>, []>();
   private useListExchangeAccounts = jest.fn<UseListExchangeAccountsResult, []>();
   private useRemoveExchangeAccount = jest.fn<UseRemoveExchangeAccountResult, []>();
@@ -69,6 +71,7 @@ export class MockedDataLayerBuilder {
       useGetTimeframes: this.useGetTimeframes,
       useAddNewExchangeAccount: this.useAddNewExchangeAccount,
       useCreateMarketPosition: this.useCreateMarketPosition,
+      useCreateLimitPosition: this.useCreateLimitPosition,
       useGetAccountBalance: this.useGetAccountBalance,
       useListExchangeAccounts: this.useListExchangeAccounts,
       useRemoveExchangeAccount: this.useRemoveExchangeAccount,

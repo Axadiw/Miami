@@ -11,12 +11,12 @@ import {
 } from '@mantine/core';
 import React, { useEffect } from 'react';
 import { Side } from '@/app/shared/components/positionCalculators/marketCalculator';
-import { useMarketPageContext } from '@/contexts/MarketPageContext/MarketPageContext';
 import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
+import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
 
 export const AccountAndSideSelectionStep = () => {
   const { side, setSide, setSelectedAccountId, accountBalance, selectedAccountId } =
-    useMarketPageContext();
+    useSharedPositionContext();
 
   const dataLayer = useDataLayerContext();
   const { isFetching: isBalanceLoading } = dataLayer.useGetAccountBalance({
