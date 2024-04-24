@@ -10,19 +10,19 @@ import {
   IconNumber4,
 } from '@tabler/icons-react';
 import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
-import { SetLimitPrice } from '@/app/limit/components/SetLimitPrice';
+import { SetLimitPrice } from '@/app/limit/components/setLimitPrice/SetLimitPrice';
 import { AccountAndSideSelectionStep } from '@/app/shared/components/positionsManagement/accountAndSideSelectionStep';
 import { SelectSymbolStep } from '@/app/shared/components/positionsManagement/selectSymbolStep';
 import { RiskManagementStep } from '@/app/shared/components/positionsManagement/riskManagementStep';
 import { TakeProfitsStep } from '@/app/shared/components/positionsManagement/takeProfitsStep';
 import { ExtraSettingsStep } from '@/app/shared/components/positionsManagement/extraSettingsStep';
-import { MarketChart } from '@/app/shared/components/positionsManagement/marketChart';
 import { TimeframesSelector } from '@/app/shared/components/positionsManagement/timeframesSelector';
 import { ExternalChartHelper } from '@/app/shared/components/positionsManagement/externalChartHelper';
 import { ExecuteButton } from '@/app/shared/components/positionsManagement/executeButton';
 import { useDataLayerContext } from '@/contexts/DataLayerContext/DataLayerContext';
 import { useLimitPositionContext } from '@/app/limit/contexts/LimitPositionContext/LimitPositionContext';
 import { useLimitPositionDetailsValidators } from '@/app/limit/hooks/useLimitPositionDetailsValidator/useLimitPositionDetailsValidators';
+import { LimitChart } from '@/app/limit/components/chart/limitChart';
 
 export default function LimitPage() {
   const {
@@ -74,7 +74,7 @@ export default function LimitPage() {
         <Stack>
           {selectedSymbol && (
             <>
-              <MarketChart calculatedValues={calculatedValues} />
+              <LimitChart calculatedValues={calculatedValues} />
               <TimeframesSelector />
             </>
           )}

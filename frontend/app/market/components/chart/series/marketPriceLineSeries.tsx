@@ -1,11 +1,12 @@
 /* eslint-disable react/no-this-in-sfc */
 import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
-import { PriceLinesSeriesWrapper, useChartContext } from '@/contexts/ChartContext/ChartContext';
+import { useChartContext } from '@/contexts/ChartContext/ChartContext';
 import { LineWidth } from '@/vendor/lightweight-charts/src/renderers/draw-line';
+import { MarketPriceLinesSeriesWrapper } from '@/app/market/types';
 
-interface PriceLineSeriesProps {}
+interface MarketPriceLineSeriesProps {}
 
-export const PriceLinesSeries = forwardRef((props: PriceLineSeriesProps, ref) => {
+export const MarketPriceLinesSeries = forwardRef((props: MarketPriceLineSeriesProps, ref) => {
   const { chartWrapper, priceSeriesWrapper } = useChartContext();
 
   const context = useRef({
@@ -47,7 +48,7 @@ export const PriceLinesSeries = forwardRef((props: PriceLineSeriesProps, ref) =>
       //   chartWrapper?.free();
       // }
     },
-  } as PriceLinesSeriesWrapper);
+  } as MarketPriceLinesSeriesWrapper);
 
   useLayoutEffect(() => {
     const currentRef = context.current;
@@ -60,4 +61,4 @@ export const PriceLinesSeries = forwardRef((props: PriceLineSeriesProps, ref) =>
 
   return <></>;
 });
-PriceLinesSeries.displayName = 'PriceLinesSeries';
+MarketPriceLinesSeries.displayName = 'MarketPriceLinesSeries';

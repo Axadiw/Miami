@@ -1,8 +1,8 @@
 import React, { forwardRef, useCallback, useState } from 'react';
-import { ChartContainer } from '@/app/shared/components/chart/chartContainer';
+import { MarketChartContainer } from '@/app/market/components/chart/marketChartContainer';
 import { ChartOptionsBase } from '@/vendor/lightweight-charts/src/model/chart-model';
 
-export interface ChartComponentProps {
+export interface MarketChartComponentProps {
   updateSlAfterDragging: (newSl: number) => void;
   updateTP1AfterDragging: (newTP: number) => void;
   updateTP2AfterDragging: (newTP: number) => void;
@@ -11,12 +11,12 @@ export interface ChartComponentProps {
   children?: any;
 }
 
-export const ChartComponent = forwardRef((props: ChartComponentProps, ref) => {
+export const MarketChartComponent = forwardRef((props: MarketChartComponentProps, ref) => {
   const [container, setContainer] = useState<HTMLDivElement | undefined>();
   const handleRef = useCallback((handRef: HTMLDivElement) => setContainer(handRef), []);
   return (
     <div ref={handleRef}>
-      {container && <ChartContainer ref={ref} {...props} container={container} />}
+      {container && <MarketChartContainer ref={ref} {...props} container={container} />}
     </div>
   );
 });

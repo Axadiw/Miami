@@ -15,7 +15,7 @@ import { SelectSymbolStep } from '@/app/shared/components/positionsManagement/se
 import { RiskManagementStep } from '@/app/shared/components/positionsManagement/riskManagementStep';
 import { TakeProfitsStep } from '@/app/shared/components/positionsManagement/takeProfitsStep';
 import { ExtraSettingsStep } from '@/app/shared/components/positionsManagement/extraSettingsStep';
-import { MarketChart } from '@/app/shared/components/positionsManagement/marketChart';
+import { MarketChart } from '@/app/market/components/chart/marketChart';
 import { TimeframesSelector } from '@/app/shared/components/positionsManagement/timeframesSelector';
 import { ExternalChartHelper } from '@/app/shared/components/positionsManagement/externalChartHelper';
 import { ExecuteButton } from '@/app/shared/components/positionsManagement/executeButton';

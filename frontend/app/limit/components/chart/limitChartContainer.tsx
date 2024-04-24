@@ -2,13 +2,13 @@
 import React, { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import { createChart } from '@/vendor/lightweight-charts/src';
 import { ChartContext, ChartWrapper } from '@/contexts/ChartContext/ChartContext';
-import { ChartComponentProps } from '@/app/shared/components/chart/chartComponent';
+import { LimitChartComponentProps } from './limitChartComponent';
 
-interface ChartContainerProps extends ChartComponentProps {
+interface LimitChartContainerProps extends LimitChartComponentProps {
   container: any;
 }
 
-export const ChartContainer = forwardRef((props: ChartContainerProps, ref) => {
+export const LimitChartContainer = forwardRef((props: LimitChartContainerProps, ref) => {
   const {
     container,
     options,
@@ -16,6 +16,7 @@ export const ChartContainer = forwardRef((props: ChartContainerProps, ref) => {
     updateTP1AfterDragging,
     updateTP2AfterDragging,
     updateTP3AfterDragging,
+    updateLimitAfterDragging,
   } = props;
 
   const chartApiRef = useRef({
@@ -45,6 +46,9 @@ export const ChartContainer = forwardRef((props: ChartContainerProps, ref) => {
               break;
             case 'TP3': // TODO: move to const
               updateTP3AfterDragging(params.customPriceLine.options().price);
+              break;
+            case 'Limit': // TODO: move to const
+              updateLimitAfterDragging(params.customPriceLine.options().price);
               break;
           }
         });
@@ -96,4 +100,4 @@ export const ChartContainer = forwardRef((props: ChartContainerProps, ref) => {
     </ChartContext.Provider>
   );
 });
-ChartContainer.displayName = 'ChartContainer';
+LimitChartContainer.displayName = 'LimitChartContainer';

@@ -2,21 +2,18 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useMantineColorScheme } from '@mantine/core';
 import socketIOClient, { Socket } from 'socket.io-client';
 import { ColorType, CrosshairMode, LineStyle } from '@/vendor/lightweight-charts/src';
-import { PriceSeries } from '@/app/shared/components/chart/series/priceSeries';
-import { PriceLinesSeries } from '@/app/shared/components/chart/series/priceLineSeries';
-import { VolumeSeries } from '@/app/shared/components/chart/series/volumeSeries';
-import { ChartComponent } from '@/app/shared/components/chart/chartComponent';
+import { MarketPriceLinesSeries } from '@/app/market/components/chart/series/marketPriceLineSeries';
+import { MarketChartComponent } from '@/app/market/components/chart/marketChartComponent';
 import { IChartApi } from '@/vendor/lightweight-charts/src/api/create-chart';
-import {
-  PriceLinesSeriesWrapper,
-  PriceSeriesWrapper,
-  VolumeSeriesWrapper,
-} from '@/contexts/ChartContext/ChartContext';
+import { PriceSeriesWrapper, VolumeSeriesWrapper } from '@/contexts/ChartContext/ChartContext';
 import { SeriesDataItemTypeMap } from '@/vendor/lightweight-charts/src/model/data-consumer';
 import { UTCTimestamp } from '@/vendor/lightweight-charts/src/model/horz-scale-behavior-time/types';
 import { BASE_URL } from '@/app/consts';
 import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
 import { MarketCalculatorResponse } from '@/app/shared/components/positionCalculators/marketCalculator';
+import { PriceSeries } from '@/app/shared/components/chart/priceSeries';
+import { VolumeSeries } from '@/app/shared/components/chart/volumeSeries';
+import { MarketPriceLinesSeriesWrapper } from '../../types';
 
 const BYBIT_EXCHANGE_NAME = 'bybit';
 
@@ -74,7 +71,7 @@ export const MarketChart = (props: MarketChartProps) => {
   const chartRef = useRef<IChartApi | null>(null);
   const priceSeriesRef = useRef<PriceSeriesWrapper['_series'] | null>(null);
   const volumeSeriesRef = useRef<VolumeSeriesWrapper['_series'] | null>(null);
-  const priceLineSeriesRef = useRef<PriceLinesSeriesWrapper['_data'] | null>(null);
+  const priceLineSeriesRef = useRef<MarketPriceLinesSeriesWrapper['_data'] | null>(null);
   const [currentSocket, setCurrentSocket] = useState<Socket | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_realtimeRoom, setRealtimeRoom] = useState<string>();
@@ -227,7 +224,7 @@ export const MarketChart = (props: MarketChartProps) => {
   }, [calculatedValues, sl, tp1, tp2, tp3]);
 
   return (
-    <ChartComponent
+    <MarketChartComponent
       ref={chartRef}
       options={{
         layout: {
@@ -290,9 +287,9 @@ export const MarketChart = (props: MarketChartProps) => {
       }}
     >
       <PriceSeries ref={priceSeriesRef}>
-        <PriceLinesSeries ref={priceLineSeriesRef} />
+        <MarketPriceLinesSeries ref={priceLineSeriesRef} />
       </PriceSeries>
       <VolumeSeries ref={volumeSeriesRef} />
-    </ChartComponent>
+    </MarketChartComponent>
   );
 };

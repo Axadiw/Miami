@@ -2,11 +2,11 @@
 import React, { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import {
   ChartContext,
-  PriceSeriesWrapper,
   useChartContext,
+  VolumeSeriesWrapper,
 } from '@/contexts/ChartContext/ChartContext';
 
-export const PriceSeries = forwardRef(
+export const VolumeSeries = forwardRef(
   (
     props: {
       children?: any;
@@ -18,25 +18,26 @@ export const PriceSeries = forwardRef(
     const context = useRef({
       series() {
         if (!this._series) {
-          const series = chartWrapper?.chart().addCandlestickSeries({
-            priceFormat: { precision: 6, minMove: 0.000001 },
+          const series = chartWrapper?.chart().addHistogramSeries({
+            priceFormat: {
+              type: 'volume',
+            },
+            lastValueVisible: false,
+            priceScaleId: '',
           });
           series?.priceScale().applyOptions({
             scaleMargins: {
-              top: 0.01,
-              bottom: 0.1,
+              top: 0.9,
+              bottom: 0,
             },
           });
+
           this._series = series;
         }
         return this._series;
       },
-      free() {
-        // if (this._series) {
-        //   chartWrapper?.free();
-        // }
-      },
-    } as PriceSeriesWrapper);
+      free() {},
+    } as VolumeSeriesWrapper);
 
     useLayoutEffect(() => {
       const currentRef = context.current;
@@ -51,7 +52,7 @@ export const PriceSeries = forwardRef(
       <ChartContext.Provider
         value={{
           chartWrapper,
-          priceSeriesWrapper: context.current,
+          volumeSeriesWrapper: context.current,
         }}
       >
         {props.children}
@@ -59,4 +60,4 @@ export const PriceSeries = forwardRef(
     );
   }
 );
-PriceSeries.displayName = 'PriceSeries';
+VolumeSeries.displayName = 'VolumeSeries';
