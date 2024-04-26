@@ -1,4 +1,4 @@
-import { ActionIcon, Checkbox, Group, Input, NumberInput, Stack } from '@mantine/core';
+import { ActionIcon, Checkbox, Group, Input, NumberInput, Stack, Text } from '@mantine/core';
 import React, { useEffect } from 'react';
 import { IconRefresh } from '@tabler/icons-react';
 import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
@@ -66,6 +66,14 @@ export const SetScaledRange = (props: SetScaledRangeProps) => {
             }
             label="Bind with current price"
           />
+          <Text>
+            {upperPrice &&
+              lowerPrice &&
+              `range width: ${(
+                (100.0 * (Number(upperPrice) - Number(lowerPrice))) /
+                Number(lowerPrice)
+              ).toFixed(2)} %`}
+          </Text>
         </Group>
       </Input.Wrapper>
       <ActionIcon

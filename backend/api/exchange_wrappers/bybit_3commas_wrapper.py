@@ -7,7 +7,7 @@ from flask import jsonify, make_response
 from py3cw.request import Py3CW
 
 from api.database import db
-from api.endpoints.consts import MARKET_POSITION_CREATED, UNKNOWN_3COMMAS_ERROR
+from api.endpoints.consts import MARKET_POSITION_CREATED, UNKNOWN_3COMMAS_ERROR, LIMIT_POSITION_CREATED
 from api.exchange_wrappers.exchange_wrapper import ExchangeWrapper
 from shared.models.order import Order, STOP_LOSS_ORDER_TYPE, CREATED_ORDER_STATE, TAKE_PROFIT_ORDER_TYPE, \
     STANDARD_ORDER_TYPE, FILLED_ORDER_STATE
@@ -194,14 +194,14 @@ class Bybit3CommasWrapper(ExchangeWrapper):
                                   position_id=new_position.id)
                             for take_profit in take_profits])
 
-        db.session.add(Order(type=STANDARD_ORDER_TYPE, state=FILLED_ORDER_STATE, create_date=create_date,
+        db.session.add(Order(type=STANDARD_ORDER_TYPE, state=CREATED_ORDER_STATE, create_date=create_date,
                              name=str(uuid.uuid4()), price=open_price, amount=position_size,
                              position_id=new_position.id))
 
         db.session.add(sl_order)
         db.session.commit()
 
-        return jsonify(MARKET_POSITION_CREATED)
+        return jsonify(LIMIT_POSITION_CREATED)
 
     def create_scaled(self, side: str, symbol: str, position_size: float, upper_price: float, lower_price: float,
                       orders_count: int,
