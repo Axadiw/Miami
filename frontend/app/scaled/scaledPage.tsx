@@ -38,8 +38,15 @@ export default function ScaledPage() {
     softStopLossTimeout,
     softStopLossEnabled,
   } = useSharedPositionContext();
-  const { lowerPrice, upperPrice, setUpperPrice, setLowerPrice, calculatedValues, active } =
-    useScaledPositionContext();
+  const {
+    lowerPrice,
+    upperPrice,
+    setUpperPrice,
+    setLowerPrice,
+    calculatedValues,
+    active,
+    ordersCount,
+  } = useScaledPositionContext();
 
   const limitValidators = useLimitPositionDetailsValidators();
 
@@ -122,6 +129,7 @@ export default function ScaledPage() {
                   helperUrl: externalChartHelperURL ?? '',
                   lowerPrice: Number(lowerPrice),
                   upperPrice: Number(upperPrice),
+                  ordersCount: Number(ordersCount),
                 });
                 setLowerPrice('');
                 setUpperPrice('');

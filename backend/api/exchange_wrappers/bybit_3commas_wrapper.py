@@ -7,7 +7,8 @@ from flask import jsonify, make_response
 from py3cw.request import Py3CW
 
 from api.database import db
-from api.endpoints.consts import MARKET_POSITION_CREATED, UNKNOWN_3COMMAS_ERROR, LIMIT_POSITION_CREATED
+from api.endpoints.consts import MARKET_POSITION_CREATED, UNKNOWN_3COMMAS_ERROR, LIMIT_POSITION_CREATED, \
+    SCALED_POSITION_CREATED
 from api.exchange_wrappers.exchange_wrapper import ExchangeWrapper
 from shared.models.order import Order, STOP_LOSS_ORDER_TYPE, CREATED_ORDER_STATE, TAKE_PROFIT_ORDER_TYPE, \
     STANDARD_ORDER_TYPE, FILLED_ORDER_STATE
@@ -91,7 +92,7 @@ class Bybit3CommasWrapper(ExchangeWrapper):
         size = float(data['position']['units']['value'])
         open_price = float(data['position']['price']['value'])
         create_date = datetime.fromisoformat(data['data']['created_at'])
-        position_external_id = str(uuid.uuid4())
+        position_external_id = data['id']
         new_position = Position(side=serialize_side(side), size=size, account_id=self.accountId, comment=comment,
                                 position_external_id=position_external_id, helper_url=helper_url, symbol=symbol,
                                 state=CREATED_POSITION_STATE,
@@ -176,7 +177,7 @@ class Bybit3CommasWrapper(ExchangeWrapper):
         size = float(data['position']['units']['value'])
         open_price = float(data['position']['price']['value'])
         create_date = datetime.fromisoformat(data['data']['created_at'])
-        position_external_id = str(uuid.uuid4())
+        position_external_id = data['id']
         new_position = Position(side=serialize_side(side), size=size, account_id=self.accountId, comment=comment,
                                 position_external_id=position_external_id, helper_url=helper_url, symbol=symbol,
                                 state=CREATED_POSITION_STATE,
@@ -208,7 +209,115 @@ class Bybit3CommasWrapper(ExchangeWrapper):
                       take_profits: list[list[int | float]],
                       stop_loss: float, soft_stop_loss_timeout: int,
                       comment: str, move_sl_to_breakeven_after_tp1: bool, helper_url: str):
-        pass
+        single_order_position_size = position_size / orders_count
+
+        error, data = self.p3cw.request(
+            entity='smart_trades_v2',
+            action='new',
+            payload={
+                "account_id": self.three_commas_account_id,
+                "pair": "USDT_{}USDT".format(symbol.split('/')[0].upper()),
+                "note": comment,
+                "position": {
+                    "type": 'buy' if side == 'Long' else 'sell',
+                    "units": {
+                        "value": single_order_position_size
+                    },
+                    "price": {
+                        "value": upper_price if side == 'Long' else lower_price
+                    },
+                    "order_type": "limit"
+                },
+                "take_profit": {
+                    "enabled": "true",
+                    "steps": [
+                        {
+                            "order_type": "limit",
+                            "price": {
+                                "value": take_profit[0],
+                                "type": "bid"
+                            },
+                            "volume": take_profit[1]
+                        } for take_profit in take_profits
+                    ]
+                },
+                "stop_loss": {
+                    "enabled": "true",
+                    "breakeven": "true" if move_sl_to_breakeven_after_tp1 else 'false',
+                    "order_type": "market",
+                    'timeout': {'enabled': 'true', 'value': soft_stop_loss_timeout} if soft_stop_loss_timeout > 0 else {
+                        'enabled': 'false'},
+                    "conditional": {
+                        "price": {
+                            "value": stop_loss,
+                            "type": "bid"
+                        }
+                    },
+                }
+            }
+        )
+        if error:
+            error_message = UNKNOWN_3COMMAS_ERROR
+            if 'msg' in error:
+                error_message = error['msg']
+            return make_response(jsonify(dict(error=error_message)), 400)
+
+        size = float(data['position']['units']['value'])
+        open_price = float(data['position']['price']['value'])
+        create_date = datetime.fromisoformat(data['data']['created_at'])
+        position_external_id = data['id']
+        new_position = Position(side=serialize_side(side), size=size, account_id=self.accountId, comment=comment,
+                                position_external_id=position_external_id, helper_url=helper_url, symbol=symbol,
+                                state=CREATED_POSITION_STATE,
+                                create_date=create_date,
+                                move_sl_to_be=move_sl_to_breakeven_after_tp1,
+                                soft_stop_loss_timeout=soft_stop_loss_timeout)
+        db.session.add(new_position)
+        db.session.commit()
+
+        sl_order = Order(type=STOP_LOSS_ORDER_TYPE, state=CREATED_ORDER_STATE, create_date=create_date,
+                         name=(str(uuid.uuid4())), price=stop_loss, position_id=new_position.id)
+
+        db.session.add_all([Order(type=TAKE_PROFIT_ORDER_TYPE, state=CREATED_ORDER_STATE, create_date=create_date,
+                                  name=str(uuid.uuid4()), price=take_profit[0], amount=take_profit[1],
+                                  position_id=new_position.id)
+                            for take_profit in take_profits])
+
+        db.session.add(Order(type=STANDARD_ORDER_TYPE, state=CREATED_ORDER_STATE, create_date=create_date,
+                             name=str(uuid.uuid4()), price=open_price, amount=position_size,
+                             position_id=new_position.id))
+
+        db.session.add(sl_order)
+        db.session.commit()
+
+        levels = []
+        step_size = (upper_price - lower_price) / (orders_count - 1)
+        for i in range(0, orders_count):
+            levels.append(lower_price + i * step_size)
+        levels = levels[:-1] if side == 'Long' else levels[1:]
+
+        for level in levels:
+            error, data = self.p3cw.request(
+                entity='smart_trades_v2',
+                action='add_funds',
+                action_id=str(position_external_id),
+                payload={
+                    'order_type': 'limit',
+                    'units': {
+                        'value': single_order_position_size
+                    },
+                    "price": {
+                        "value": level
+                    }
+                }
+            )
+            if error:
+                error_message = UNKNOWN_3COMMAS_ERROR
+                if 'msg' in error:
+                    error_message = error['msg']
+                return make_response(jsonify(dict(error=error_message)), 400)
+
+        return jsonify(SCALED_POSITION_CREATED)
 
     def get_balance(self):
 

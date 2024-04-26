@@ -15,6 +15,7 @@ export type UseCreateScaledPositionResult = UseMutationResult<
 export interface CreateScaledPositionParams extends CreateMarketPositionParams {
   upperPrice: number;
   lowerPrice: number;
+  ordersCount: number;
 }
 
 export const createScaledPosition = async (
@@ -46,6 +47,7 @@ export const createScaledPosition = async (
         helper_url: scaledParams.helperUrl,
         upper_price: scaledParams.upperPrice,
         lower_price: scaledParams.lowerPrice,
+        orders_count: scaledParams.ordersCount,
       }),
     })) as CreatePositionResponse;
   } catch (error: any) {
