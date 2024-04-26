@@ -119,6 +119,19 @@ class Bybit3CommasWrapper(ExchangeWrapper):
 
         return jsonify(MARKET_POSITION_CREATED)
 
+    def create_limit(self, side: str, symbol: str, position_size: float, limit_price: float,
+                     take_profits: list[list[int | float]],
+                     stop_loss: float, soft_stop_loss_timeout: int,
+                     comment: str, move_sl_to_breakeven_after_tp1: bool, helper_url: str):
+        pass
+
+    def create_scaled(self, side: str, symbol: str, position_size: float, upper_price: float, lower_price: float,
+                      orders_count: int,
+                      take_profits: list[list[int | float]],
+                      stop_loss: float, soft_stop_loss_timeout: int,
+                      comment: str, move_sl_to_breakeven_after_tp1: bool, helper_url: str):
+        pass
+
     def get_balance(self):
 
         error, data = self.p3cw.request(

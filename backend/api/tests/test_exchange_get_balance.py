@@ -2,14 +2,8 @@ import json
 
 from api.endpoints.session.session import PARAMS_INVALID_RESPONSE
 from api.exchange_wrappers.bybit_3commas_wrapper import Bybit3CommasWrapper
+from api.tests.exchange_shared_test_helpers import create_exchange_account
 from api.tests.test_session import get_test_user_token
-
-
-def create_exchange_account(client, token):
-    client.post('/add_new_exchange_account', headers={"x-access-tokens": token},
-                json={'type': 'bybit_3commas',
-                      'name': 'account 1',
-                      'details': (json.dumps({'accountId': '12345', 'apiKey': 'abcdef', 'apiSecret': 'secret2'}))})
 
 
 def test_should_fail_for_non_existing_account(client, user1_token):
