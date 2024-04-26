@@ -190,4 +190,5 @@ def create_scaled_position(user):
                                      move_sl_to_breakeven_after_tp1=move_sl_to_breakeven_after_tp1,
                                      helper_url=helper_url)
     except Exception as e:
-        return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
+        # return make_response(jsonify(PARAMS_INVALID_RESPONSE), 400)
+        return make_response(jsonify(dict(error=f'{e}')), 400)
