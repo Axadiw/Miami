@@ -18,6 +18,8 @@ interface ScaledPositionContext {
   lowerPrice: number | string | undefined;
   setOrdersCount: Dispatch<SetStateAction<number | string | undefined>>;
   ordersCount: number | string | undefined;
+  setUpperPriceAsCurrent: Dispatch<SetStateAction<boolean | undefined>>;
+  upperPriceAsCurrent: boolean | undefined;
   calculatedValues?: MarketCalculatorResponse;
   active: number;
 }
@@ -32,6 +34,7 @@ export const ScaledPositionContextProvider = ({ children }: { children: ReactNod
   const [upperPrice, setUpperPrice] = useState<number | string | undefined>(undefined);
   const [lowerPrice, setLowerPrice] = useState<number | string | undefined>(undefined);
   const [ordersCount, setOrdersCount] = useState<number | string | undefined>(undefined);
+  const [upperPriceAsCurrent, setUpperPriceAsCurrent] = useState<boolean | undefined>();
   const {
     sl,
     tp1,
@@ -116,8 +119,10 @@ export const ScaledPositionContextProvider = ({ children }: { children: ReactNod
       active,
       ordersCount,
       setOrdersCount,
+      upperPriceAsCurrent,
+      setUpperPriceAsCurrent,
     }),
-    [active, calculatedValues, lowerPrice, ordersCount, upperPrice]
+    [active, calculatedValues, lowerPrice, ordersCount, upperPrice, upperPriceAsCurrent]
   );
 
   return <ScaledPositionContext.Provider value={value}>{children}</ScaledPositionContext.Provider>;

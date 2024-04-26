@@ -41,6 +41,8 @@ export interface ScaledCalculatorResponse {
 
 export const calculateScaledValues = (props: ScaledCalculatorProps): ScaledCalculatorResponse => {
   const isLong = props.side === 'Long';
+  const upper = Number(props.upperPrice);
+  const lower = Number(props.lowerPrice);
   const maxLoss = Number(props.maxLoss);
   const sl = Number(props.sl);
   const balance = Number(props.accountBalance);
@@ -51,27 +53,38 @@ export const calculateScaledValues = (props: ScaledCalculatorProps): ScaledCalcu
   const tp2CutPercent = Number(props.tp2Percent) / 100;
   const tp3CutPercent = Number(props.tp3Percent) / 100;
 
-  const avgPrice = (props.upperPrice - props.lowerPrice) / 2;
+  const avgPrice = props.lowerPrice + (props.upperPrice - props.lowerPrice) / 2;
 
   const maxLossUSD = props.maxLossType === '$' ? maxLoss : (maxLoss / 100.0) * balance;
 
-  const slPrice = props.slType === '$' ? sl : avgPrice * (1 + ((isLong ? -1 : 1) * sl) / 100.0);
+  const slStartLevel = isLong ? lower : upper;
+  const slPrice = props.slType === '$' ? sl : slStartLevel * (1 + ((isLong ? -1 : 1) * sl) / 100.0);
 
-  const slPercent = 100 * (isLong ? 1 - slPrice / avgPrice : slPrice / avgPrice - 1);
-  const positionSize = maxLossUSD / ((avgPrice * slPercent) / 100);
+  const slPercent = 100 * (isLong ? 1 - slPrice / slStartLevel : slPrice / slStartLevel - 1);
+  const slPercentFromAvg = 100 * (isLong ? 1 - slPrice / avgPrice : slPrice / avgPrice - 1);
+  const positionSize = maxLossUSD / ((avgPrice * slPercentFromAvg) / 100);
   const positionSizeUSD = positionSize * avgPrice;
-  const tp1Price = props.tp1Type === '$' ? tp1 : avgPrice * (1 + ((isLong ? 1 : -1) * tp1) / 100.0);
-  const tp1Percent = 100 * (isLong ? 1 : -1) * (tp1Price / avgPrice - 1);
-  const tp2Price = props.tp2Type === '$' ? tp2 : avgPrice * (1 + ((isLong ? 1 : -1) * tp2) / 100.0);
-  const tp2Percent = 100 * (isLong ? 1 : -1) * (tp2Price / avgPrice - 1);
-  const tp3Price = props.tp3Type === '$' ? tp3 : avgPrice * (1 + ((isLong ? 1 : -1) * tp3) / 100.0);
-  const tp3Percent = 100 * (isLong ? 1 : -1) * (tp3Price / avgPrice - 1);
 
-  const tp1USDReward = positionSize * avgPrice * (tp1Percent / 100.0) * tp1CutPercent;
+  const tpStartLevel = isLong ? upper : lower;
+  const tp1Price =
+    props.tp1Type === '$' ? tp1 : tpStartLevel * (1 + ((isLong ? 1 : -1) * tp1) / 100.0);
+  const tp1Percent = 100 * (isLong ? 1 : -1) * (tp1Price / tpStartLevel - 1);
+  const tp2Price =
+    props.tp2Type === '$' ? tp2 : tpStartLevel * (1 + ((isLong ? 1 : -1) * tp2) / 100.0);
+  const tp2Percent = 100 * (isLong ? 1 : -1) * (tp2Price / tpStartLevel - 1);
+  const tp3Price =
+    props.tp3Type === '$' ? tp3 : tpStartLevel * (1 + ((isLong ? 1 : -1) * tp3) / 100.0);
+  const tp3Percent = 100 * (isLong ? 1 : -1) * (tp3Price / tpStartLevel - 1);
+
+  const tp1PercentFromAvg = 100 * (isLong ? 1 : -1) * (tp1Price / avgPrice - 1);
+  const tp2PercentFromAvg = 100 * (isLong ? 1 : -1) * (tp2Price / avgPrice - 1);
+  const tp3PercentFromAvg = 100 * (isLong ? 1 : -1) * (tp3Price / avgPrice - 1);
+
+  const tp1USDReward = positionSize * avgPrice * (tp1PercentFromAvg / 100.0) * tp1CutPercent;
   const tp2USDReward =
-    tp1USDReward + positionSize * avgPrice * (tp2Percent / 100.0) * tp2CutPercent;
+    tp1USDReward + positionSize * avgPrice * (tp2PercentFromAvg / 100.0) * tp2CutPercent;
   const tp3USDReward =
-    tp2USDReward + positionSize * avgPrice * (tp3Percent / 100.0) * tp3CutPercent;
+    tp2USDReward + positionSize * avgPrice * (tp3PercentFromAvg / 100.0) * tp3CutPercent;
   return {
     positionSize,
     positionSizeUSD,

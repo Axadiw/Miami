@@ -10,13 +10,14 @@ import { useSharedPositionContext } from '@/contexts/SharedPositionContext/Share
 export interface RiskManagementStepProps {
   calculatedValues?: MarketCalculatorResponse;
   children?: ReactNode;
+  displayUpToPrefixes?: boolean;
   active: number;
 }
 
 export const RiskManagementStep = (props: RiskManagementStepProps) => {
   const { maxLoss, setMaxLoss, maxLossType, setMaxLossType, slType, sl, setSl, setSlType } =
     useSharedPositionContext();
-  const { calculatedValues, active } = props;
+  const { calculatedValues, active, displayUpToPrefixes } = props;
 
   const largeRiskDetected = calculatedValues && calculatedValues.maxLossPercent > 80;
 
@@ -94,7 +95,8 @@ export const RiskManagementStep = (props: RiskManagementStepProps) => {
 
       {active > 2 && calculatedValues && (
         <Text>
-          Position size: {calculatedValues.positionSize.toFixed(6)} ($
+          Position size: {displayUpToPrefixes && 'up to '}
+          {calculatedValues.positionSize.toFixed(6)} ($
           {calculatedValues.positionSizeUSD.toFixed(2)})
         </Text>
       )}

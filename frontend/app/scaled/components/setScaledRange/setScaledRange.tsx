@@ -1,5 +1,5 @@
-import { Button, Group, Input, NumberInput } from '@mantine/core';
-import React from 'react';
+import { Checkbox, Group, Input, NumberInput } from '@mantine/core';
+import React, { useEffect } from 'react';
 import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
 import { useScaledPositionContext } from '@/app/scaled/contexts/ScaledPositionContext/ScaledPositionContext';
 import { useScaledPositionDetailsValidators } from '@/app/scaled/hooks/useScaledPositionDetailsValidator/useScaledPositionDetailsValidators';
@@ -9,10 +9,27 @@ export interface SetScaledRangeProps {
 }
 
 export const SetScaledRange = (props: SetScaledRangeProps) => {
-  const { lowerPrice, upperPrice, setUpperPrice, setLowerPrice, ordersCount, setOrdersCount } =
-    useScaledPositionContext();
+  const {
+    lowerPrice,
+    upperPrice,
+    setUpperPrice,
+    setLowerPrice,
+    ordersCount,
+    setOrdersCount,
+    upperPriceAsCurrent,
+    setUpperPriceAsCurrent,
+  } = useScaledPositionContext();
+
   const { currentPrice } = useSharedPositionContext();
   const { active } = props;
+
+  useEffect(() => {
+    if (upperPriceAsCurrent === true) {
+      setUpperPrice(currentPrice);
+    } else if (upperPriceAsCurrent === false) {
+      setLowerPrice(currentPrice);
+    }
+  }, [currentPrice, setLowerPrice, setUpperPrice, upperPriceAsCurrent]);
 
   const {
     OrdersCountAbove2,
@@ -37,15 +54,14 @@ export const SetScaledRange = (props: SetScaledRangeProps) => {
             onChange={setUpperPrice}
             error={UpperAboveLower || UpperPriceAbove0 || RangeAboveCurrentPriceWhenShort}
           />
-          <Button
+          <Checkbox
             disabled={active < 2}
-            size="xs"
-            onClick={() => {
-              setUpperPrice(currentPrice);
-            }}
-          >
-            Set current price
-          </Button>
+            checked={upperPriceAsCurrent === true}
+            onChange={(event) =>
+              setUpperPriceAsCurrent(event.currentTarget.checked ? true : undefined)
+            }
+            label="Bind with current price"
+          />
         </Group>
       </Input.Wrapper>
       <Input.Wrapper label="Lower:" size="xs">
@@ -59,15 +75,14 @@ export const SetScaledRange = (props: SetScaledRangeProps) => {
             onChange={setLowerPrice}
             error={UpperAboveLower || LowerPriceAbove0 || RangeBelowCurrentPriceWhenLong}
           />
-          <Button
+          <Checkbox
             disabled={active < 2}
-            size="xs"
-            onClick={() => {
-              setLowerPrice(currentPrice);
-            }}
-          >
-            Set current price
-          </Button>
+            checked={upperPriceAsCurrent === false}
+            onChange={(event) =>
+              setUpperPriceAsCurrent(event.currentTarget.checked ? false : undefined)
+            }
+            label="Bind with current price"
+          />
         </Group>
       </Input.Wrapper>
       <Input.Wrapper label="Orders count:" size="xs">

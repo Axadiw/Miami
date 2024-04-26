@@ -2,7 +2,7 @@ import { useSharedPositionContext } from '@/contexts/SharedPositionContext/Share
 import { useScaledPositionContext } from '@/app/scaled/contexts/ScaledPositionContext/ScaledPositionContext';
 
 export const useScaledPositionDetailsValidators = () => {
-  const { upperPrice, lowerPrice, ordersCount } = useScaledPositionContext();
+  const { upperPrice, lowerPrice, ordersCount, upperPriceAsCurrent } = useScaledPositionContext();
   const { side, currentPrice } = useSharedPositionContext();
 
   return {
@@ -29,11 +29,17 @@ export const useScaledPositionDetailsValidators = () => {
         ? 'Orders count need to be above 2'
         : undefined,
     RangeAboveCurrentPriceWhenShort:
-      side === 'Short' && lowerPrice !== undefined && Number(lowerPrice) < currentPrice
+      side === 'Short' &&
+      lowerPrice !== undefined &&
+      Number(lowerPrice) < currentPrice &&
+      upperPriceAsCurrent !== false
         ? 'Orders need to be above current price when shorting'
         : undefined,
     RangeBelowCurrentPriceWhenLong:
-      side === 'Long' && upperPrice !== undefined && Number(upperPrice) > currentPrice
+      side === 'Long' &&
+      upperPrice !== undefined &&
+      Number(upperPrice) > currentPrice &&
+      upperPriceAsCurrent !== true
         ? 'Orders need to be below current price when longing'
         : undefined,
   };

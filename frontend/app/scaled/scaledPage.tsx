@@ -57,12 +57,20 @@ export default function ScaledPage() {
             <SelectSymbolStep active={active} />
           </Timeline.Item>
           <Timeline.Item bullet={<IconNumber2 size={20} />}>
-            <RiskManagementStep calculatedValues={calculatedValues} active={active}>
+            <RiskManagementStep
+              displayUpToPrefixes
+              calculatedValues={calculatedValues}
+              active={active}
+            >
               <SetScaledRange active={active} />
             </RiskManagementStep>
           </Timeline.Item>
           <Timeline.Item bullet={<IconNumber3 size={20} />}>
-            <TakeProfitsStep calculatedValues={calculatedValues} active={active} />
+            <TakeProfitsStep
+              displayUpToPrefixes
+              calculatedValues={calculatedValues}
+              active={active}
+            />
           </Timeline.Item>
           <Timeline.Item bullet={<IconNumber4 size={20} />}>
             <ExtraSettingsStep calculatedValues={calculatedValues} active={active} />

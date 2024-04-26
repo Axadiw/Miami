@@ -10,6 +10,7 @@ import { useSharedPositionContext } from '@/contexts/SharedPositionContext/Share
 export interface TakeProfitsStepProps {
   calculatedValues?: MarketCalculatorResponse;
   active: number;
+  displayUpToPrefixes?: boolean;
 }
 
 export const TakeProfitsStep = (props: TakeProfitsStepProps) => {
@@ -34,7 +35,7 @@ export const TakeProfitsStep = (props: TakeProfitsStepProps) => {
     setTp3Percent,
   } = useSharedPositionContext();
 
-  const { calculatedValues, active } = props;
+  const { calculatedValues, active, displayUpToPrefixes } = props;
 
   const {
     tp1Above0,
@@ -99,6 +100,8 @@ export const TakeProfitsStep = (props: TakeProfitsStepProps) => {
               />
             </Stack>
             <Text c="green">
+              {' '}
+              {displayUpToPrefixes && 'up to '}
               {calculatedValues &&
                 tp1 &&
                 tp1Percent &&
@@ -161,6 +164,7 @@ export const TakeProfitsStep = (props: TakeProfitsStepProps) => {
             </Stack>
 
             <Text c="green">
+              {displayUpToPrefixes && 'up to '}
               {calculatedValues &&
                 tp2 &&
                 tp2Percent &&
@@ -222,6 +226,7 @@ export const TakeProfitsStep = (props: TakeProfitsStepProps) => {
             </Stack>
           </Input.Wrapper>
           <Text c="green">
+            {displayUpToPrefixes && 'up to '}
             {calculatedValues &&
               tp3 &&
               tp3Percent &&
