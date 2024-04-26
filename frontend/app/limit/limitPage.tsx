@@ -113,7 +113,7 @@ export default function LimitPage() {
                   helperUrl: externalChartHelperURL ?? '',
                   limitPrice: Number(limitPrice),
                 });
-                setLimitPrice('');
+                setLimitPrice(undefined);
                 return true;
               }
             } catch (e) {
