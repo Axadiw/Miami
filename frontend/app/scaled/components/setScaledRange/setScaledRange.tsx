@@ -1,5 +1,6 @@
-import { Checkbox, Group, Input, NumberInput } from '@mantine/core';
+import { ActionIcon, Checkbox, Group, Input, NumberInput, Stack } from '@mantine/core';
 import React, { useEffect } from 'react';
+import { IconRefresh } from '@tabler/icons-react';
 import { useSharedPositionContext } from '@/contexts/SharedPositionContext/SharedPositionContext';
 import { useScaledPositionContext } from '@/app/scaled/contexts/ScaledPositionContext/ScaledPositionContext';
 import { useScaledPositionDetailsValidators } from '@/app/scaled/hooks/useScaledPositionDetailsValidator/useScaledPositionDetailsValidators';
@@ -20,7 +21,7 @@ export const SetScaledRange = (props: SetScaledRangeProps) => {
     setUpperPriceAsCurrent,
   } = useScaledPositionContext();
 
-  const { currentPrice } = useSharedPositionContext();
+  const { currentPrice, side } = useSharedPositionContext();
   const { active } = props;
 
   useEffect(() => {
@@ -42,7 +43,7 @@ export const SetScaledRange = (props: SetScaledRangeProps) => {
   } = useScaledPositionDetailsValidators();
 
   return (
-    <>
+    <Stack>
       <Input.Wrapper label="Upper:" size="xs">
         <Group>
           <NumberInput
@@ -51,11 +52,14 @@ export const SetScaledRange = (props: SetScaledRangeProps) => {
             min={0}
             size="md"
             value={upperPrice}
-            onChange={setUpperPrice}
+            onChange={(newPrice) => {
+              setUpperPriceAsCurrent((prevState) => (prevState === true ? undefined : prevState));
+              setUpperPrice(newPrice);
+            }}
             error={UpperAboveLower || UpperPriceAbove0 || RangeAboveCurrentPriceWhenShort}
           />
           <Checkbox
-            disabled={active < 2}
+            disabled={active < 2 || side === 'Short'}
             checked={upperPriceAsCurrent === true}
             onChange={(event) =>
               setUpperPriceAsCurrent(event.currentTarget.checked ? true : undefined)
@@ -64,6 +68,21 @@ export const SetScaledRange = (props: SetScaledRangeProps) => {
           />
         </Group>
       </Input.Wrapper>
+      <ActionIcon
+        variant="default"
+        display={UpperAboveLower !== undefined ? 'inline' : 'none'}
+        size="md"
+        radius="md"
+        aria-label="Reverse"
+        onClick={() => {
+          const tmp = upperPrice;
+          setUpperPrice(lowerPrice);
+          setLowerPrice(tmp);
+        }}
+      >
+        <IconRefresh style={{ width: '70%', height: '70%' }} stroke={1.5} />
+      </ActionIcon>
+
       <Input.Wrapper label="Lower:" size="xs">
         <Group>
           <NumberInput
@@ -72,11 +91,14 @@ export const SetScaledRange = (props: SetScaledRangeProps) => {
             min={0}
             size="md"
             value={lowerPrice}
-            onChange={setLowerPrice}
+            onChange={(newPrice) => {
+              setUpperPriceAsCurrent((prevState) => (prevState === false ? undefined : prevState));
+              setLowerPrice(newPrice);
+            }}
             error={UpperAboveLower || LowerPriceAbove0 || RangeBelowCurrentPriceWhenLong}
           />
           <Checkbox
-            disabled={active < 2}
+            disabled={active < 2 || side === 'Long'}
             checked={upperPriceAsCurrent === false}
             onChange={(event) =>
               setUpperPriceAsCurrent(event.currentTarget.checked ? false : undefined)
@@ -98,6 +120,6 @@ export const SetScaledRange = (props: SetScaledRangeProps) => {
           />
         </Group>
       </Input.Wrapper>
-    </>
+    </Stack>
   );
 };

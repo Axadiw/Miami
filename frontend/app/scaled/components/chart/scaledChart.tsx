@@ -67,14 +67,8 @@ export const ScaledChart = (props: ScaledChartProps) => {
     chartAutoSize,
   } = useSharedPositionContext();
 
-  const {
-    upperPrice,
-    setUpperPrice,
-    lowerPrice,
-    setLowerPrice,
-    upperPriceAsCurrent,
-    setUpperPriceAsCurrent,
-  } = useScaledPositionContext();
+  const { upperPrice, setUpperPrice, lowerPrice, setLowerPrice, setUpperPriceAsCurrent } =
+    useScaledPositionContext();
 
   const { calculatedValues } = props;
 
@@ -306,15 +300,11 @@ export const ScaledChart = (props: ScaledChartProps) => {
       }}
       updateUpperAfterDragging={(newUpper) => {
         setUpperPrice(newUpper);
-        if (upperPriceAsCurrent === true) {
-          setUpperPriceAsCurrent(undefined);
-        }
+        setUpperPriceAsCurrent((prevState) => (prevState === true ? undefined : prevState));
       }}
       updateLowerAfterDragging={(newLower) => {
         setLowerPrice(newLower);
-        if (upperPriceAsCurrent === false) {
-          setUpperPriceAsCurrent(undefined);
-        }
+        setUpperPriceAsCurrent((prevState) => (prevState === false ? undefined : prevState));
       }}
     >
       <PriceSeries ref={priceSeriesRef}>
