@@ -4,6 +4,7 @@ from queue import Queue
 from typing import Type, Callable
 
 from sqlalchemy import select, delete
+from sqlalchemy.dialects import postgresql
 
 from harvesting.data_harvesters.consts import GLOBAL_QUEUE_START_COMMAND, GLOBAL_QUEUE_REFRESH_COMMAND
 from harvesting.data_harvesters.database import get_session
@@ -47,9 +48,9 @@ class MetadataHarvester:
                     existing_symbols = list(
                         (await db_session.execute(select(Symbol).filter_by(exchange=self.exchange.id))).scalars())
                     fetched_symbols = await exchange_connector.fetch_tickers(self.exchange)
-                    fetched_symbols_names = list(map(lambda x: x.name, fetched_symbols))
+                    fetched_symbols_names = list(filter(lambda x: ':' in x, map(lambda x: x.name,
+                                                                                fetched_symbols)))  # : magic for filtering out weird symbol names like EIGENUSDT (without /USDT:USDT at the end)
                     existing_symbols_names = list(map(lambda x: x.name, existing_symbols))
-
                     for symbol in existing_symbols:
                         if symbol.name not in fetched_symbols_names:
                             await (db_session.execute(delete(OHLCV).where(OHLCV.symbol == symbol.id)))
@@ -61,7 +62,7 @@ class MetadataHarvester:
 
                     new_symbols_to_add = []
                     for symbol in fetched_symbols:
-                        if symbol.name not in existing_symbols_names:
+                        if symbol.name not in existing_symbols_names and ':' in symbol.name:  # : magic for filtering out weird symbol names like EIGENUSDT (without /USDT:USDT at the end)
                             new_symbols_to_add.append(symbol)
                     db_session.add_all(new_symbols_to_add)
                     await db_session.commit()

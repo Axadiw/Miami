@@ -93,6 +93,7 @@ class RealtimeHarvester:
                                                                    trim_to_range=False)
                 success = True
             except Exception as e:
+
                 logging.error(f'Fetch initial single realtime ohlcv {data.symbol.name} {data.timeframe.name} {e}')
                 await asyncio.sleep(1)
         self.temporary_ohlcv_fetching_exchange_connectors.append(exchange_connector)
@@ -198,6 +199,7 @@ class RealtimeHarvester:
                 except ccxt.BadSymbol as e:
                     logging.critical(f'Bad symbol {e}')
                     await exchange_connector.load_markets()
+
                 except Exception as e:
                     logging.critical(f'[Realtime Harvester Watcher] Error watch_tickers {e}')
                     await asyncio.sleep(1)
