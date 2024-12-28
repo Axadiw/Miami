@@ -6,7 +6,7 @@
 from ccxt.async_support.base.exchange import Exchange
 from ccxt.abstract.wazirx import ImplicitAPI
 import hashlib
-from ccxt.base.types import Balances, Int, Market, Order, OrderBook, OrderSide, OrderType, Num, Str, Strings, Ticker, Tickers, Trade
+from ccxt.base.types import Balances, Currencies, Currency, DepositAddress, Int, Market, Num, Order, OrderBook, OrderSide, OrderType, Str, Strings, Ticker, Tickers, Trade, Transaction
 from typing import List
 from ccxt.base.errors import ExchangeError
 from ccxt.base.errors import PermissionDenied
@@ -38,7 +38,6 @@ class wazirx(Exchange, ImplicitAPI):
                 'future': False,
                 'option': False,
                 'addMargin': False,
-                'borrowMargin': False,
                 'cancelAllOrders': True,
                 'cancelOrder': True,
                 'closeAllPositions': False,
@@ -51,42 +50,63 @@ class wazirx(Exchange, ImplicitAPI):
                 'fetchBalance': True,
                 'fetchBidsAsks': False,
                 'fetchBorrowInterest': False,
+                'fetchBorrowRate': False,
                 'fetchBorrowRateHistories': False,
                 'fetchBorrowRateHistory': False,
+                'fetchBorrowRates': False,
+                'fetchBorrowRatesPerSymbol': False,
                 'fetchClosedOrders': False,
                 'fetchCrossBorrowRate': False,
                 'fetchCrossBorrowRates': False,
-                'fetchCurrencies': False,
-                'fetchDepositAddress': False,
+                'fetchCurrencies': True,
+                'fetchDepositAddress': True,
+                'fetchDepositAddresses': False,
                 'fetchDepositAddressesByNetwork': False,
                 'fetchDeposits': True,
                 'fetchDepositsWithdrawals': False,
                 'fetchFundingHistory': False,
+                'fetchFundingInterval': False,
+                'fetchFundingIntervals': False,
                 'fetchFundingRate': False,
                 'fetchFundingRateHistory': False,
                 'fetchFundingRates': False,
+                'fetchGreeks': False,
                 'fetchIndexOHLCV': False,
                 'fetchIsolatedBorrowRate': False,
                 'fetchIsolatedBorrowRates': False,
                 'fetchIsolatedPositions': False,
                 'fetchLeverage': False,
+                'fetchLeverages': False,
                 'fetchLeverageTiers': False,
+                'fetchLiquidations': False,
+                'fetchMarginAdjustmentHistory': False,
                 'fetchMarginMode': False,
+                'fetchMarginModes': False,
                 'fetchMarketLeverageTiers': False,
                 'fetchMarkets': True,
                 'fetchMarkOHLCV': False,
+                'fetchMarkPrices': False,
+                'fetchMyLiquidations': False,
+                'fetchMySettlementHistory': False,
                 'fetchMyTrades': False,
                 'fetchOHLCV': True,
+                'fetchOpenInterest': False,
                 'fetchOpenInterestHistory': False,
                 'fetchOpenOrders': True,
+                'fetchOption': False,
+                'fetchOptionChain': False,
                 'fetchOrder': False,
                 'fetchOrderBook': True,
                 'fetchOrders': True,
                 'fetchPosition': False,
+                'fetchPositionHistory': False,
                 'fetchPositionMode': False,
                 'fetchPositions': False,
+                'fetchPositionsForSymbol': False,
+                'fetchPositionsHistory': False,
                 'fetchPositionsRisk': False,
                 'fetchPremiumIndexOHLCV': False,
+                'fetchSettlementHistory': False,
                 'fetchStatus': True,
                 'fetchTicker': True,
                 'fetchTickers': True,
@@ -97,9 +117,12 @@ class wazirx(Exchange, ImplicitAPI):
                 'fetchTransactionFees': False,
                 'fetchTransactions': False,
                 'fetchTransfers': False,
-                'fetchWithdrawals': False,
+                'fetchUnderlyingAssets': False,
+                'fetchVolatilityHistory': False,
+                'fetchWithdrawals': True,
                 'reduceMargin': False,
-                'repayMargin': False,
+                'repayCrossMargin': False,
+                'repayIsolatedMargin': False,
                 'setLeverage': False,
                 'setMargin': False,
                 'setMarginMode': False,
@@ -121,7 +144,7 @@ class wazirx(Exchange, ImplicitAPI):
                 'public': {
                     'get': {
                         'exchangeInfo': 1,
-                        'depth': 1,
+                        'depth': 0.5,
                         'ping': 1,
                         'systemStatus': 1,
                         'tickers/24hr': 1,
@@ -140,6 +163,11 @@ class wazirx(Exchange, ImplicitAPI):
                         'openOrders': 1,
                         'order': 0.5,
                         'myTrades': 0.5,
+                        'coins': 12,
+                        'crypto/withdraws': 12,
+                        'crypto/deposits/address': 60,
+                        'sub_account/fund_transfer/history': 1,
+                        'sub_account/accounts': 1,
                     },
                     'post': {
                         'order': 0.1,
@@ -185,12 +213,17 @@ class wazirx(Exchange, ImplicitAPI):
             'options': {
                 # 'fetchTradesMethod': 'privateGetHistoricalTrades',
                 'recvWindow': 10000,
+                'networks': {
+                    # You can get network from fetchCurrencies
+                },
             },
         })
 
-    async def fetch_markets(self, params={}):
+    async def fetch_markets(self, params={}) -> List[Market]:
         """
-        :see: https://docs.wazirx.com/#exchange-info
+
+        https://docs.wazirx.com/#exchange-info
+
         retrieves data on all markets for wazirx
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict[]: an array of objects representing market data
@@ -225,7 +258,7 @@ class wazirx(Exchange, ImplicitAPI):
         markets = self.safe_value(response, 'symbols', [])
         return self.parse_markets(markets)
 
-    def parse_market(self, market) -> Market:
+    def parse_market(self, market: dict) -> Market:
         id = self.safe_string(market, 'symbol')
         baseId = self.safe_string(market, 'baseAsset')
         quoteId = self.safe_string(market, 'quoteAsset')
@@ -299,7 +332,9 @@ class wazirx(Exchange, ImplicitAPI):
 
     async def fetch_ohlcv(self, symbol: str, timeframe='1m', since: Int = None, limit: Int = None, params={}) -> List[list]:
         """
-        :see: https://docs.wazirx.com/#kline-candlestick-data
+
+        https://docs.wazirx.com/#kline-candlestick-data
+
         fetches historical candlestick data containing the open, high, low, and close price, and the volume of a market
         :param str symbol: unified symbol of the market to fetch OHLCV data for
         :param str timeframe: the length of time each candle represents. Available values [1m,5m,15m,30m,1h,2h,4h,6h,12h,1d,1w]
@@ -311,12 +346,12 @@ class wazirx(Exchange, ImplicitAPI):
         """
         await self.load_markets()
         market = self.market(symbol)
-        request = {
+        request: dict = {
             'symbol': market['id'],
             'interval': self.safe_string(self.timeframes, timeframe, timeframe),
         }
         if limit is not None:
-            request['limit'] = limit
+            request['limit'] = min(limit, 2000)
         until = self.safe_integer(params, 'until')
         params = self.omit(params, ['until'])
         if since is not None:
@@ -347,7 +382,9 @@ class wazirx(Exchange, ImplicitAPI):
 
     async def fetch_order_book(self, symbol: str, limit: Int = None, params={}) -> OrderBook:
         """
-        :see: https://docs.wazirx.com/#order-book
+
+        https://docs.wazirx.com/#order-book
+
         fetches information on open orders with bid(buy) and ask(sell) prices, volumes and other data
         :param str symbol: unified symbol of the market to fetch the order book for
         :param int [limit]: the maximum amount of order book entries to return
@@ -356,7 +393,7 @@ class wazirx(Exchange, ImplicitAPI):
         """
         await self.load_markets()
         market = self.market(symbol)
-        request = {
+        request: dict = {
             'symbol': market['id'],
         }
         if limit is not None:
@@ -380,7 +417,9 @@ class wazirx(Exchange, ImplicitAPI):
 
     async def fetch_ticker(self, symbol: str, params={}) -> Ticker:
         """
-        :see: https://docs.wazirx.com/#24hr-ticker-price-change-statistics
+
+        https://docs.wazirx.com/#24hr-ticker-price-change-statistics
+
         fetches a price ticker, a statistical calculation with the information calculated over the past 24 hours for a specific market
         :param str symbol: unified symbol of the market to fetch the ticker for
         :param dict [params]: extra parameters specific to the exchange API endpoint
@@ -388,7 +427,7 @@ class wazirx(Exchange, ImplicitAPI):
         """
         await self.load_markets()
         market = self.market(symbol)
-        request = {
+        request: dict = {
             'symbol': market['id'],
         }
         ticker = await self.publicGetTicker24hr(self.extend(request, params))
@@ -411,7 +450,9 @@ class wazirx(Exchange, ImplicitAPI):
 
     async def fetch_tickers(self, symbols: Strings = None, params={}) -> Tickers:
         """
-        :see: https://docs.wazirx.com/#24hr-tickers-price-change-statistics
+
+        https://docs.wazirx.com/#24hr-tickers-price-change-statistics
+
         fetches price tickers for multiple markets, statistical information calculated over the past 24 hours for each market
         :param str[]|None symbols: unified symbols of the markets to fetch the ticker for, all market tickers are returned if not assigned
         :param dict [params]: extra parameters specific to the exchange API endpoint
@@ -436,7 +477,7 @@ class wazirx(Exchange, ImplicitAPI):
         #     ...
         # ]
         #
-        result = {}
+        result: dict = {}
         for i in range(0, len(tickers)):
             ticker = tickers[i]
             parsedTicker = self.parse_ticker(ticker)
@@ -446,7 +487,9 @@ class wazirx(Exchange, ImplicitAPI):
 
     async def fetch_trades(self, symbol: str, since: Int = None, limit: Int = None, params={}) -> List[Trade]:
         """
-        :see: https://docs.wazirx.com/#recent-trades-list
+
+        https://docs.wazirx.com/#recent-trades-list
+
         get the list of most recent trades for a particular symbol
         :param str symbol: unified symbol of the market to fetch trades for
         :param int [since]: timestamp in ms of the earliest trade to fetch
@@ -456,7 +499,7 @@ class wazirx(Exchange, ImplicitAPI):
         """
         await self.load_markets()
         market = self.market(symbol)
-        request = {
+        request: dict = {
             'symbol': market['id'],
         }
         if limit is not None:
@@ -479,7 +522,7 @@ class wazirx(Exchange, ImplicitAPI):
         # ]
         return self.parse_trades(response, market, since, limit)
 
-    def parse_trade(self, trade, market: Market = None) -> Trade:
+    def parse_trade(self, trade: dict, market: Market = None) -> Trade:
         #
         #     {
         #         "id":322307791,
@@ -517,7 +560,9 @@ class wazirx(Exchange, ImplicitAPI):
 
     async def fetch_status(self, params={}):
         """
-        :see: https://docs.wazirx.com/#system-status
+
+        https://docs.wazirx.com/#system-status
+
         the latest known information on the availability of the exchange API
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict: a `status structure <https://docs.ccxt.com/#/?id=exchange-status-structure>`
@@ -540,7 +585,9 @@ class wazirx(Exchange, ImplicitAPI):
 
     async def fetch_time(self, params={}):
         """
-        :see: https://docs.wazirx.com/#check-server-time
+
+        https://docs.wazirx.com/#check-server-time
+
         fetches the current integer timestamp in milliseconds from the exchange server
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns int: the current integer timestamp in milliseconds from the exchange server
@@ -553,7 +600,7 @@ class wazirx(Exchange, ImplicitAPI):
         #
         return self.safe_integer(response, 'serverTime')
 
-    def parse_ticker(self, ticker, market: Market = None) -> Ticker:
+    def parse_ticker(self, ticker: dict, market: Market = None) -> Ticker:
         #
         #     {
         #        "symbol":"btcinr",
@@ -604,7 +651,7 @@ class wazirx(Exchange, ImplicitAPI):
         }, market)
 
     def parse_balance(self, response) -> Balances:
-        result = {'info': response}
+        result: dict = {'info': response}
         for i in range(0, len(response)):
             balance = response[i]
             id = self.safe_string(balance, 'asset')
@@ -617,7 +664,9 @@ class wazirx(Exchange, ImplicitAPI):
 
     async def fetch_balance(self, params={}) -> Balances:
         """
-        :see: https://docs.wazirx.com/#fund-details-user_data
+
+        https://docs.wazirx.com/#fund-details-user_data
+
         query for balance and get the amount of funds available for trading or funds locked in orders
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict: a `balance structure <https://docs.ccxt.com/#/?id=balance-structure>`
@@ -637,7 +686,9 @@ class wazirx(Exchange, ImplicitAPI):
 
     async def fetch_orders(self, symbol: Str = None, since: Int = None, limit: Int = None, params={}) -> List[Order]:
         """
-        :see: https://docs.wazirx.com/#all-orders-user_data
+
+        https://docs.wazirx.com/#all-orders-user_data
+
         fetches information on multiple orders made by the user
         :param str symbol: unified market symbol of the market orders were made in
         :param int [since]: the earliest time in ms to fetch orders for
@@ -649,7 +700,7 @@ class wazirx(Exchange, ImplicitAPI):
             raise ArgumentsRequired(self.id + ' fetchOrders() requires a symbol argument')
         await self.load_markets()
         market = self.market(symbol)
-        request = {
+        request: dict = {
             'symbol': market['id'],
         }
         if since is not None:
@@ -692,7 +743,9 @@ class wazirx(Exchange, ImplicitAPI):
 
     async def fetch_open_orders(self, symbol: Str = None, since: Int = None, limit: Int = None, params={}) -> List[Order]:
         """
-        :see: https://docs.wazirx.com/#current-open-orders-user_data
+
+        https://docs.wazirx.com/#current-open-orders-user_data
+
         fetch all unfilled currently open orders
         :param str symbol: unified market symbol
         :param int [since]: the earliest time in ms to fetch open orders for
@@ -701,7 +754,7 @@ class wazirx(Exchange, ImplicitAPI):
         :returns Order[]: a list of `order structures <https://docs.ccxt.com/#/?id=order-structure>`
         """
         await self.load_markets()
-        request = {}
+        request: dict = {}
         market: Market = None
         if symbol is not None:
             market = self.market(symbol)
@@ -739,7 +792,9 @@ class wazirx(Exchange, ImplicitAPI):
 
     async def cancel_all_orders(self, symbol: Str = None, params={}):
         """
-        :see: https://docs.wazirx.com/#cancel-all-open-orders-on-a-symbol-trade
+
+        https://docs.wazirx.com/#cancel-all-open-orders-on-a-symbol-trade
+
         cancel all open orders in a market
         :param str symbol: unified market symbol of the market to cancel orders in
         :param dict [params]: extra parameters specific to the exchange API endpoint
@@ -749,14 +804,35 @@ class wazirx(Exchange, ImplicitAPI):
             raise ArgumentsRequired(self.id + ' cancelAllOrders() requires a symbol argument')
         await self.load_markets()
         market = self.market(symbol)
-        request = {
+        request: dict = {
             'symbol': market['id'],
         }
-        return await self.privateDeleteOpenOrders(self.extend(request, params))
+        response = await self.privateDeleteOpenOrders(self.extend(request, params))
+        #
+        #    [
+        #        {
+        #            id: "4565421197",
+        #            symbol: "adausdt",
+        #            type: "limit",
+        #            side: "buy",
+        #            status: "wait",
+        #            price: "0.41",
+        #            origQty: "11.00",
+        #            executedQty: "0.00",
+        #            avgPrice: "0.00",
+        #            createdTime: "1718089507000",
+        #            updatedTime: "1718089507000",
+        #            clientOrderId: "93d2a838-e272-405d-91e7-3a7bc6d3a003"
+        #        }
+        #    ]
+        #
+        return self.parse_orders(response)
 
     async def cancel_order(self, id: str, symbol: Str = None, params={}):
         """
-        :see: https://docs.wazirx.com/#cancel-order-trade
+
+        https://docs.wazirx.com/#cancel-order-trade
+
         cancels an open order
         :param str id: order id
         :param str symbol: unified symbol of the market the order was made in
@@ -767,22 +843,24 @@ class wazirx(Exchange, ImplicitAPI):
             raise ArgumentsRequired(self.id + ' cancelOrder() requires a symbol argument')
         await self.load_markets()
         market = self.market(symbol)
-        request = {
+        request: dict = {
             'symbol': market['id'],
             'orderId': id,
         }
         response = await self.privateDeleteOrder(self.extend(request, params))
         return self.parse_order(response)
 
-    async def create_order(self, symbol: str, type: OrderType, side: OrderSide, amount, price=None, params={}):
+    async def create_order(self, symbol: str, type: OrderType, side: OrderSide, amount: float, price: Num = None, params={}):
         """
-        :see: https://docs.wazirx.com/#new-order-trade
+
+        https://docs.wazirx.com/#new-order-trade
+
         create a trade order
         :param str symbol: unified symbol of the market to create an order in
         :param str type: 'market' or 'limit'
         :param str side: 'buy' or 'sell'
         :param float amount: how much of currency you want to trade in units of base currency
-        :param float [price]: the price at which the order is to be fullfilled, in units of the quote currency, ignored in market orders
+        :param float [price]: the price at which the order is to be fulfilled, in units of the quote currency, ignored in market orders
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict: an `order structure <https://docs.ccxt.com/#/?id=order-structure>`
         """
@@ -793,7 +871,7 @@ class wazirx(Exchange, ImplicitAPI):
             raise ExchangeError(self.id + ' createOrder() requires a price argument')
         await self.load_markets()
         market = self.market(symbol)
-        request = {
+        request: dict = {
             'symbol': market['id'],
             'side': side,
             'quantity': amount,
@@ -819,19 +897,23 @@ class wazirx(Exchange, ImplicitAPI):
         # }
         return self.parse_order(response, market)
 
-    def parse_order(self, order, market: Market = None) -> Order:
-        # {
-        #     "id":1949417813,
-        #     "symbol":"ltcusdt",
-        #     "type":"limit",
-        #     "side":"sell",
-        #     "status":"done",
-        #     "price":"146.2",
-        #     "origQty":"0.05",
-        #     "executedQty":"0.05",
-        #     "createdTime":1641252564000,
-        #     "updatedTime":1641252564000
-        # },
+    def parse_order(self, order: dict, market: Market = None) -> Order:
+        #
+        #    {
+        #        "id": 1949417813,
+        #        "symbol": "ltcusdt",
+        #        "type": "limit",
+        #        "side": "sell",
+        #        "status": "done",
+        #        "price": "146.2",
+        #        "origQty": "0.05",
+        #        "executedQty": "0.05",
+        #        "avgPrice":  "0.00",
+        #        "createdTime": 1641252564000,
+        #        "updatedTime": 1641252564000
+        #        "clientOrderId": "93d2a838-e272-405d-91e7-3a7bc6d3a003"
+        #    }
+        #
         created = self.safe_integer(order, 'createdTime')
         updated = self.safe_integer(order, 'updatedTime')
         marketId = self.safe_string(order, 'symbol')
@@ -846,7 +928,7 @@ class wazirx(Exchange, ImplicitAPI):
         return self.safe_order({
             'info': order,
             'id': id,
-            'clientOrderId': None,
+            'clientOrderId': self.safe_string(order, 'clientOrderId'),
             'timestamp': created,
             'datetime': self.iso8601(created),
             'lastTradeTimestamp': updated,
@@ -862,17 +944,306 @@ class wazirx(Exchange, ImplicitAPI):
             'remaining': None,
             'cost': None,
             'fee': None,
-            'average': None,
+            'average': self.safe_string(order, 'avgPrice'),
             'trades': [],
         }, market)
 
-    def parse_order_status(self, status):
-        statuses = {
+    def parse_order_status(self, status: Str):
+        statuses: dict = {
             'wait': 'open',
             'done': 'closed',
             'cancel': 'canceled',
         }
         return self.safe_string(statuses, status, status)
+
+    async def fetch_currencies(self, params={}) -> Currencies:
+        """
+        fetches all available currencies on an exchange
+
+        https://docs.wazirx.com/#all-coins-39-information-user_data
+
+        :param dict [params]: extra parameters specific to the exchange API endpoint
+        :returns dict: an associative dictionary of currencies
+        """
+        if not self.check_required_credentials(False):
+            return None
+        response = await self.privateGetCoins(params)
+        #
+        #     [
+        #         {
+        #             "currency": "btc",
+        #             "name": "Bitcoin",
+        #             "networkList": [
+        #                 {
+        #                     "addressRegex": "^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$|^(bc1)[0-9A-Za-z]{39,59}$",
+        #                     "confirmations": 4,
+        #                     "depositDesc": {
+        #                         "description": ""
+        #                     },
+        #                     "depositDust": "0.00000001",
+        #                     "depositEnable": True,
+        #                     "disclaimer": "• \u003cb\u003eSend only using the Bitcoin network.\u003c/b\u003e Using any other network will result in loss of funds.\u003cbr/\u003e• \u003cb\u003eDeposit only BTC to self deposit address.\u003c/b\u003e Depositing any other asset will result in a loss of funds.\u003cbr/\u003e",
+        #                     "fullName": null,
+        #                     "hidden": {
+        #                         "deposit": False,
+        #                         "withdraw": False
+        #                     },
+        #                     "isDefault": True,
+        #                     "maxWithdrawAmount": "3",
+        #                     "minConfirm": 4,
+        #                     "minWithdrawAmount": "0.003",
+        #                     "name": "Bitcoin",
+        #                     "network": "btc",
+        #                     "order": 3,
+        #                     "precision": 8,
+        #                     "requestId": "6d67a13d-26f7-4941-9856-94eba4adfe78",
+        #                     "shortName": "BTC",
+        #                     "specialTip": "Please ensure to select \u003cb\u003eBitcoin\u003c/b\u003e network at sender's wallet.",
+        #                     "withdrawConsent": {
+        #                         "helpUrl": null,
+        #                         "message": "I confirm that self withdrawal of crypto assets is being done to my own wallet, above. I authorize you to share travel rule information with the destination wallet service provider wherever applicable."
+        #                     },
+        #                     "withdrawDesc": {
+        #                         "description": ""
+        #                     },
+        #                     "withdrawEnable": True,
+        #                     "withdrawFee": "0.0015"
+        #                 }
+        #             ],
+        #             "rapidListed": False
+        #         }
+        #     ]
+        #
+        result: dict = {}
+        for i in range(0, len(response)):
+            currency = response[i]
+            currencyId = self.safe_string(currency, 'currency')
+            code = self.safe_currency_code(currencyId)
+            name = self.safe_string(currency, 'name')
+            chains = self.safe_list(currency, 'networkList', [])
+            networks: dict = {}
+            minPrecision = None
+            minWithdrawFeeString = None
+            minWithdrawString = None
+            maxWithdrawString = None
+            minDepositString = None
+            deposit = False
+            withdraw = False
+            for j in range(0, len(chains)):
+                chain = chains[j]
+                networkId = self.safe_string(chain, 'network')
+                networkCode = self.network_id_to_code(networkId)
+                precision = self.parse_number(self.parse_precision(self.safe_string(chain, 'precision')))
+                minPrecision = precision if (minPrecision is None) else min(minPrecision, precision)
+                depositAllowed = self.safe_bool(chain, 'depositEnable')
+                deposit = depositAllowed if (depositAllowed) else deposit
+                withdrawAllowed = self.safe_bool(chain, 'withdrawEnable')
+                withdraw = withdrawAllowed if (withdrawAllowed) else withdraw
+                withdrawFeeString = self.safe_string(chain, 'withdrawFee')
+                if withdrawFeeString is not None:
+                    minWithdrawFeeString = withdrawFeeString if (minWithdrawFeeString is None) else Precise.string_min(withdrawFeeString, minWithdrawFeeString)
+                minNetworkWithdrawString = self.safe_string(chain, 'minWithdrawAmount')
+                if minNetworkWithdrawString is not None:
+                    minWithdrawString = minNetworkWithdrawString if (minWithdrawString is None) else Precise.string_min(minNetworkWithdrawString, minWithdrawString)
+                maxNetworkWithdrawString = self.safe_string(chain, 'maxWithdrawAmount')
+                if maxNetworkWithdrawString is not None:
+                    maxWithdrawString = maxNetworkWithdrawString if (maxWithdrawString is None) else Precise.string_min(maxNetworkWithdrawString, maxWithdrawString)
+                minNetworkDepositString = self.safe_string(chain, 'depositDust')
+                if minNetworkDepositString is not None:
+                    minDepositString = minNetworkDepositString if (minDepositString is None) else Precise.string_min(minNetworkDepositString, minDepositString)
+                networks[networkCode] = {
+                    'info': chain,
+                    'id': networkId,
+                    'network': networkCode,
+                    'active': depositAllowed and withdrawAllowed,
+                    'deposit': depositAllowed,
+                    'withdraw': withdrawAllowed,
+                    'fee': self.parse_number(withdrawFeeString),
+                    'precision': precision,
+                    'limits': {
+                        'withdraw': {
+                            'min': self.parse_number(minNetworkWithdrawString),
+                            'max': self.parse_number(maxNetworkWithdrawString),
+                        },
+                        'deposit': {
+                            'min': self.parse_number(minNetworkDepositString),
+                            'max': None,
+                        },
+                    },
+                }
+            result[code] = {
+                'info': currency,
+                'code': code,
+                'id': currencyId,
+                'name': name,
+                'active': deposit and withdraw,
+                'deposit': deposit,
+                'withdraw': withdraw,
+                'fee': self.parse_number(minWithdrawFeeString),
+                'precision': minPrecision,
+                'limits': {
+                    'amount': {
+                        'min': None,
+                        'max': None,
+                    },
+                    'withdraw': {
+                        'min': self.parse_number(minWithdrawString),
+                        'max': self.parse_number(maxWithdrawString),
+                    },
+                    'deposit': {
+                        'min': self.parse_number(minDepositString),
+                        'max': None,
+                    },
+                },
+                'networks': networks,
+            }
+        return result
+
+    async def fetch_deposit_address(self, code: str, params={}) -> DepositAddress:
+        """
+        fetch the deposit address for a currency associated with self account
+
+        https://docs.wazirx.com/#deposit-address-supporting-network-user_data
+
+        :param str code: unified currency code of the currency for the deposit address
+        :param dict [params]: extra parameters specific to the exchange API endpoint
+        :param str [params.network]: unified network code, you can get network from fetchCurrencies
+        :returns dict: an `address structure <https://docs.ccxt.com/#/?id=address-structure>`
+        """
+        await self.load_markets()
+        currency = self.currency(code)
+        networkCode = self.safe_string(params, 'network')
+        params = self.omit(params, 'network')
+        if networkCode is None:
+            raise ArgumentsRequired(self.id + ' fetchDepositAddress() requires a network parameter')
+        request: dict = {
+            'coin': currency['id'],
+            'network': self.network_code_to_id(networkCode, code),
+        }
+        response = await self.privateGetCryptoDepositsAddress(self.extend(request, params))
+        #
+        #     {
+        #         "address": "bc1qrzpyzh69pfclpqy7c3yg8rkjsy49se7642v4q3",
+        #         "coin": "btc",
+        #         "url": "https:  #live.blockcypher.com/btc/address/bc1qrzpyzh69pfclpqy7c3yg8rkjsy49se7642v4q3"
+        #     }
+        #
+        return {
+            'info': response,
+            'currency': code,
+            'network': self.network_code_to_id(networkCode, code),
+            'address': self.safe_string(response, 'address'),
+            'tag': None,
+        }
+
+    async def fetch_withdrawals(self, code: Str = None, since: Int = None, limit: Int = None, params={}) -> List[Transaction]:
+        """
+        fetch all withdrawals made from an account
+
+        https://docs.wazirx.com/#withdraw-history-supporting-network-user_data
+
+        :param str code: unified currency code
+        :param int [since]: the earliest time in ms to fetch withdrawals for
+        :param int [limit]: the maximum number of withdrawals structures to retrieve
+        :param dict [params]: extra parameters specific to the exchange API endpoint
+        :param int [params.until]: the latest time in ms to fetch entries for
+        :returns dict[]: a list of `transaction structures <https://docs.ccxt.com/#/?id=transaction-structure>`
+        """
+        await self.load_markets()
+        request: dict = {}
+        currency = None
+        if code is not None:
+            currency = self.currency(code)
+            request['coin'] = currency['id']
+        if limit is not None:
+            request['limit'] = limit
+        until = self.safe_integer(params, 'until')
+        params = self.omit(params, ['until'])
+        if since is not None:
+            request['startTime'] = since
+        if until is not None:
+            request['endTime'] = until
+        response = await self.privateGetCryptoWithdraws(self.extend(request, params))
+        #
+        #     [
+        #         {
+        #             "address": "0x94df8b352de7f46f64b01d3666bf6e936e44ce60",
+        #             "amount": "8.91000000",
+        #             "createdAt": "2019-10-12 09:12:02",
+        #             "lastUpdated": "2019-10-12 11:12:02",
+        #             "coin": "USDT",
+        #             "id": "b6ae22b3aa844210a7041aee7589627c",
+        #             "withdrawOrderId": "WITHDRAWtest123",
+        #             "network": "ETH",
+        #             "status": 1,
+        #             "transactionFee": "0.004",
+        #             "failureInfo":"The address is not valid. Please confirm with the recipient",
+        #             "txId": "0xb5ef8c13b968a406cc62a93a8bd80f9e9a906ef1b3fcf20a2e48573c17659268"
+        #         }
+        #     ]
+        #
+        return self.parse_transactions(response, currency, since, limit)
+
+    def parse_transaction_status(self, status: Str):
+        statuses: dict = {
+            '0': 'ok',
+            '1': 'fail',
+            '2': 'pending',
+            '3': 'canceled',
+        }
+        return self.safe_string(statuses, status, status)
+
+    def parse_transaction(self, transaction: dict, currency: Currency = None) -> Transaction:
+        #
+        #     {
+        #         "address": "0x94df8b352de7f46f64b01d3666bf6e936e44ce60",
+        #         "amount": "8.91000000",
+        #         "createdAt": "2019-10-12 09:12:02",
+        #         "lastUpdated": "2019-10-12 11:12:02",
+        #         "coin": "USDT",
+        #         "id": "b6ae22b3aa844210a7041aee7589627c",
+        #         "withdrawOrderId": "WITHDRAWtest123",
+        #         "network": "ETH",
+        #         "status": 1,
+        #         "transactionFee": "0.004",
+        #         "failureInfo": "The address is not valid. Please confirm with the recipient",
+        #         "txId": "0xb5ef8c13b968a406cc62a93a8bd80f9e9a906ef1b3fcf20a2e48573c17659268"
+        #     }
+        #
+        currencyId = self.safe_string(transaction, 'coin')
+        code = self.safe_currency_code(currencyId, currency)
+        timestamp = self.parse8601(self.safe_string(transaction, 'createdAt'))
+        updated = self.parse8601(self.safe_string(transaction, 'lastUpdated'))
+        status = self.parse_transaction_status(self.safe_string(transaction, 'status'))
+        feeCost = self.safe_number(transaction, 'transactionFee')
+        fee = None
+        if feeCost is not None:
+            fee = {
+                'cost': feeCost,
+                'currency': code,
+            }
+        return {
+            'info': transaction,
+            'id': self.safe_string(transaction, 'id'),
+            'txid': self.safe_string(transaction, 'txId'),
+            'timestamp': timestamp,
+            'datetime': self.iso8601(timestamp),
+            'network': self.network_id_to_code(self.safe_string(transaction, 'network')),
+            'address': self.safe_string(transaction, 'address'),
+            'addressTo': self.safe_string(transaction, 'address'),
+            'addressFrom': None,
+            'tag': None,
+            'tagTo': None,
+            'tagFrom': None,
+            'type': 'withdrawal',
+            'amount': self.safe_number(transaction, 'amount'),
+            'currency': code,
+            'status': status,
+            'updated': updated,
+            'fee': fee,
+            'internal': None,
+            'comment': None,
+        }
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
         url = self.urls['api']['rest'] + '/' + path
@@ -893,7 +1264,7 @@ class wazirx(Exchange, ImplicitAPI):
             }
         return {'url': url, 'method': method, 'body': body, 'headers': headers}
 
-    def handle_errors(self, code, reason, url, method, headers, body, response, requestHeaders, requestBody):
+    def handle_errors(self, code: int, reason: str, url: str, method: str, headers: dict, body: str, response, requestHeaders, requestBody):
         #
         # {"code":2098,"message":"Request out of receiving window."}
         #

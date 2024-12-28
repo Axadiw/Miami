@@ -6,19 +6,20 @@
 from ccxt.async_support.base.exchange import Exchange
 from ccxt.abstract.currencycom import ImplicitAPI
 import hashlib
-from ccxt.base.types import Balances, Currency, Int, Market, Order, OrderBook, OrderSide, OrderType, Str, Strings, Ticker, Tickers, Trade, Transaction
+from ccxt.base.types import Account, Balances, Currencies, Currency, DepositAddress, Int, LedgerEntry, Leverage, Market, Num, Order, OrderBook, OrderSide, OrderType, Str, Strings, Ticker, Tickers, Trade, TradingFees, Transaction
 from typing import List
 from ccxt.base.errors import ExchangeError
+from ccxt.base.errors import AuthenticationError
 from ccxt.base.errors import ArgumentsRequired
 from ccxt.base.errors import BadRequest
 from ccxt.base.errors import BadSymbol
 from ccxt.base.errors import InsufficientFunds
 from ccxt.base.errors import InvalidOrder
 from ccxt.base.errors import OrderNotFound
+from ccxt.base.errors import NotSupported
 from ccxt.base.errors import DDoSProtection
 from ccxt.base.errors import ExchangeNotAvailable
 from ccxt.base.errors import InvalidNonce
-from ccxt.base.errors import AuthenticationError
 from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
 
@@ -113,6 +114,7 @@ class currencycom(Exchange, ImplicitAPI):
                 'fetchWithdrawal': None,
                 'fetchWithdrawals': True,
                 'reduceMargin': None,
+                'sandbox': True,
                 'setLeverage': None,
                 'setMarginMode': None,
                 'setPositionMode': None,
@@ -313,6 +315,9 @@ class currencycom(Exchange, ImplicitAPI):
     async def fetch_time(self, params={}):
         """
         fetches the current integer timestamp in milliseconds from the exchange server
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/timeUsingGET
+
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns int: the current integer timestamp in milliseconds from the exchange server
         """
@@ -324,9 +329,12 @@ class currencycom(Exchange, ImplicitAPI):
         #
         return self.safe_integer(response, 'serverTime')
 
-    async def fetch_currencies(self, params={}):
+    async def fetch_currencies(self, params={}) -> Currencies:
         """
         fetches all available currencies on an exchange
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/getCurrenciesUsingGET
+
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict: an associative dictionary of currencies
         """
@@ -358,7 +366,7 @@ class currencycom(Exchange, ImplicitAPI):
         #         },
         #     ]
         #
-        result = {}
+        result: dict = {}
         for i in range(0, len(response)):
             currency = response[i]
             id = self.safe_string(currency, 'displaySymbol')
@@ -392,9 +400,12 @@ class currencycom(Exchange, ImplicitAPI):
             }
         return result
 
-    async def fetch_markets(self, params={}):
+    async def fetch_markets(self, params={}) -> List[Market]:
         """
         retrieves data on all markets for currencycom
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/exchangeInfoUsingGET
+
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict[]: an array of objects representing market data
         """
@@ -493,7 +504,7 @@ class currencycom(Exchange, ImplicitAPI):
                 if (maxPrice is not None) and (Precise.string_gt(maxPrice, '0')):
                     limitPriceMax = maxPrice
             precisionAmount = self.parse_number(self.parse_precision(self.safe_string(market, 'baseAssetPrecision')))
-            limitAmount = {
+            limitAmount: dict = {
                 'min': None,
                 'max': None,
             }
@@ -504,7 +515,7 @@ class currencycom(Exchange, ImplicitAPI):
                     'min': self.safe_number(filter, 'minQty'),
                     'max': self.safe_number(filter, 'maxQty'),
                 }
-            limitMarket = {
+            limitMarket: dict = {
                 'min': None,
                 'max': None,
             }
@@ -570,9 +581,12 @@ class currencycom(Exchange, ImplicitAPI):
             })
         return result
 
-    async def fetch_accounts(self, params={}):
+    async def fetch_accounts(self, params={}) -> List[Account]:
         """
         fetch all the accounts associated with a profile
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/accountUsingGET
+
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict: a dictionary of `account structures <https://docs.ccxt.com/#/?id=account-structure>` indexed by the account type
         """
@@ -623,9 +637,12 @@ class currencycom(Exchange, ImplicitAPI):
             })
         return result
 
-    async def fetch_trading_fees(self, params={}):
+    async def fetch_trading_fees(self, params={}) -> TradingFees:
         """
         fetch the trading fees for multiple markets
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/accountUsingGET
+
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict: a dictionary of `fee structures <https://docs.ccxt.com/#/?id=fee-structure>` indexed by market symbols
         """
@@ -647,7 +664,7 @@ class currencycom(Exchange, ImplicitAPI):
         #
         makerFee = self.safe_number(response, 'makerCommission')
         takerFee = self.safe_number(response, 'takerCommission')
-        result = {}
+        result: dict = {}
         for i in range(0, len(self.symbols)):
             symbol = self.symbols[i]
             result[symbol] = {
@@ -683,7 +700,7 @@ class currencycom(Exchange, ImplicitAPI):
         #         ]
         #     }
         #
-        result = {'info': response}
+        result: dict = {'info': response}
         balances = self.safe_value(response, 'balances', [])
         for i in range(0, len(balances)):
             balance = balances[i]
@@ -698,6 +715,9 @@ class currencycom(Exchange, ImplicitAPI):
     async def fetch_balance(self, params={}) -> Balances:
         """
         query for balance and get the amount of funds available for trading or funds locked in orders
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/accountUsingGET
+
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict: a `balance structure <https://docs.ccxt.com/#/?id=balance-structure>`
         """
@@ -739,6 +759,9 @@ class currencycom(Exchange, ImplicitAPI):
     async def fetch_order_book(self, symbol: str, limit: Int = None, params={}) -> OrderBook:
         """
         fetches information on open orders with bid(buy) and ask(sell) prices, volumes and other data
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/depthUsingGET
+
         :param str symbol: unified symbol of the market to fetch the order book for
         :param int [limit]: the maximum amount of order book entries to return
         :param dict [params]: extra parameters specific to the exchange API endpoint
@@ -746,7 +769,7 @@ class currencycom(Exchange, ImplicitAPI):
         """
         await self.load_markets()
         market = self.market(symbol)
-        request = {
+        request: dict = {
             'symbol': market['id'],
         }
         if limit is not None:
@@ -771,7 +794,7 @@ class currencycom(Exchange, ImplicitAPI):
         orderbook['nonce'] = self.safe_integer(response, 'lastUpdateId')
         return orderbook
 
-    def parse_ticker(self, ticker, market: Market = None) -> Ticker:
+    def parse_ticker(self, ticker: dict, market: Market = None) -> Ticker:
         #
         # fetchTicker
         #
@@ -852,13 +875,16 @@ class currencycom(Exchange, ImplicitAPI):
     async def fetch_ticker(self, symbol: str, params={}) -> Ticker:
         """
         fetches a price ticker, a statistical calculation with the information calculated over the past 24 hours for a specific market
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/ticker_24hrUsingGET
+
         :param str symbol: unified symbol of the market to fetch the ticker for
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict: a `ticker structure <https://docs.ccxt.com/#/?id=ticker-structure>`
         """
         await self.load_markets()
         market = self.market(symbol)
-        request = {
+        request: dict = {
             'symbol': market['id'],
         }
         response = await self.publicGetV2Ticker24hr(self.extend(request, params))
@@ -887,6 +913,9 @@ class currencycom(Exchange, ImplicitAPI):
     async def fetch_tickers(self, symbols: Strings = None, params={}) -> Tickers:
         """
         fetches price tickers for multiple markets, statistical information calculated over the past 24 hours for each market
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/ticker_24hrUsingGET
+
         :param str[]|None symbols: unified symbols of the markets to fetch the ticker for, all market tickers are returned if not assigned
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict: a dictionary of `ticker structures <https://docs.ccxt.com/#/?id=ticker-structure>`
@@ -936,6 +965,9 @@ class currencycom(Exchange, ImplicitAPI):
     async def fetch_ohlcv(self, symbol: str, timeframe='1m', since: Int = None, limit: Int = None, params={}) -> List[list]:
         """
         fetches historical candlestick data containing the open, high, low, and close price, and the volume of a market
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/klinesUsingGET
+
         :param str symbol: unified symbol of the market to fetch OHLCV data for
         :param str timeframe: the length of time each candle represents
         :param int [since]: timestamp in ms of the earliest candle to fetch
@@ -945,14 +977,14 @@ class currencycom(Exchange, ImplicitAPI):
         """
         await self.load_markets()
         market = self.market(symbol)
-        request = {
+        request: dict = {
             'symbol': market['id'],
             'interval': self.safe_string(self.timeframes, timeframe, timeframe),
         }
         if since is not None:
             request['startTime'] = since
         if limit is not None:
-            request['limit'] = limit  # default 500, max 1000
+            request['limit'] = min(limit, 1000)  # default 500, max 1000
         response = await self.publicGetV2Klines(self.extend(request, params))
         #
         #     [
@@ -963,7 +995,7 @@ class currencycom(Exchange, ImplicitAPI):
         #
         return self.parse_ohlcvs(response, market, timeframe, since, limit)
 
-    def parse_trade(self, trade, market: Market = None) -> Trade:
+    def parse_trade(self, trade: dict, market: Market = None) -> Trade:
         #
         # fetchTrades(public aggregate trades)
         #
@@ -1041,6 +1073,9 @@ class currencycom(Exchange, ImplicitAPI):
     async def fetch_trades(self, symbol: str, since: Int = None, limit: Int = None, params={}) -> List[Trade]:
         """
         get the list of most recent trades for a particular symbol
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/aggTradesUsingGET
+
         :param str symbol: unified symbol of the market to fetch trades for
         :param int [since]: timestamp in ms of the earliest trade to fetch
         :param int [limit]: the maximum amount of trades to fetch
@@ -1049,7 +1084,7 @@ class currencycom(Exchange, ImplicitAPI):
         """
         await self.load_markets()
         market = self.market(symbol)
-        request = {
+        request: dict = {
             'symbol': market['id'],
             # 'limit': 500,  # default 500, max 1000
         }
@@ -1071,7 +1106,7 @@ class currencycom(Exchange, ImplicitAPI):
         #
         return self.parse_trades(response, market, since, limit)
 
-    def parse_order(self, order, market: Market = None) -> Order:
+    def parse_order(self, order: dict, market: Market = None) -> Order:
         #
         # createOrder
         #
@@ -1163,7 +1198,6 @@ class currencycom(Exchange, ImplicitAPI):
             'timeInForce': timeInForce,
             'side': side,
             'price': price,
-            'stopPrice': None,
             'triggerPrice': None,
             'amount': amount,
             'cost': None,
@@ -1175,8 +1209,8 @@ class currencycom(Exchange, ImplicitAPI):
             'trades': fills,
         }, market)
 
-    def parse_order_status(self, status):
-        statuses = {
+    def parse_order_status(self, status: Str):
+        statuses: dict = {
             'NEW': 'open',
             'CREATED': 'open',
             'MODIFIED': 'open',
@@ -1190,7 +1224,7 @@ class currencycom(Exchange, ImplicitAPI):
         return self.safe_string(statuses, status, status)
 
     def parse_order_type(self, status):
-        statuses = {
+        statuses: dict = {
             'MARKET': 'market',
             'LIMIT': 'limit',
             'STOP': 'stop',
@@ -1204,7 +1238,7 @@ class currencycom(Exchange, ImplicitAPI):
         return self.safe_string(statuses, status, status)
 
     def parse_order_time_in_force(self, status):
-        statuses = {
+        statuses: dict = {
             'GTC': 'GTC',
             'FOK': 'FOK',
             'IOC': 'IOC',
@@ -1212,20 +1246,23 @@ class currencycom(Exchange, ImplicitAPI):
         return self.safe_string(statuses, status, status)
 
     def parse_order_side(self, status):
-        statuses = {
+        statuses: dict = {
             'BUY': 'buy',
             'SELL': 'sell',
         }
         return self.safe_string(statuses, status, status)
 
-    async def create_order(self, symbol: str, type: OrderType, side: OrderSide, amount, price=None, params={}):
+    async def create_order(self, symbol: str, type: OrderType, side: OrderSide, amount: float, price: Num = None, params={}):
         """
         create a trade order
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/orderUsingPOST
+
         :param str symbol: unified symbol of the market to create an order in
         :param str type: 'market' or 'limit'
         :param str side: 'buy' or 'sell'
         :param float amount: how much of currency you want to trade in units of base currency
-        :param float [price]: the price at which the order is to be fullfilled, in units of the quote currency, ignored in market orders
+        :param float [price]: the price at which the order is to be fulfilled, in units of the quote currency, ignored in market orders
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict: an `order structure <https://docs.ccxt.com/#/?id=order-structure>`
         """
@@ -1238,7 +1275,7 @@ class currencycom(Exchange, ImplicitAPI):
             if accountId is None:
                 raise ArgumentsRequired(self.id + " createOrder() requires an accountId parameter or an exchange.options['accountId'] option for " + market['type'] + ' markets')
         newOrderRespType = self.safe_value(self.options['newOrderRespType'], type, 'RESULT')
-        request = {
+        request: dict = {
             'symbol': market['id'],
             'quantity': self.amount_to_precision(symbol, amount),
             'type': type.upper(),
@@ -1258,11 +1295,11 @@ class currencycom(Exchange, ImplicitAPI):
                 request['type'] = 'STOP'
                 request['price'] = self.price_to_precision(symbol, price)
             elif type == 'market':
-                stopPrice = self.safe_value_2(params, 'triggerPrice', 'stopPrice')
+                triggerPrice = self.safe_value_2(params, 'triggerPrice', 'stopPrice')
                 params = self.omit(params, ['triggerPrice', 'stopPrice'])
-                if stopPrice is not None:
+                if triggerPrice is not None:
                     request['type'] = 'STOP'
-                    request['price'] = self.price_to_precision(symbol, stopPrice)
+                    request['price'] = self.price_to_precision(symbol, triggerPrice)
         response = await self.privatePostV2Order(self.extend(request, params))
         #
         # limit
@@ -1308,7 +1345,10 @@ class currencycom(Exchange, ImplicitAPI):
     async def fetch_order(self, id: str, symbol: Str = None, params={}):
         """
         fetches information on an order made by the user
-        :see: https://apitradedoc.currency.com/swagger-ui.html#/rest-api/getOrderUsingGET
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/getOrderUsingGET
+
+        :param str id: order id
         :param str symbol: unified symbol of the market the order was made in
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict: An `order structure <https://docs.ccxt.com/#/?id=order-structure>`
@@ -1317,7 +1357,7 @@ class currencycom(Exchange, ImplicitAPI):
             raise ArgumentsRequired(self.id + ' fetchOrder() requires a symbol argument')
         await self.load_markets()
         market = self.market(symbol)
-        request = {
+        request: dict = {
             'orderId': id,
             'symbol': market['id'],
         }
@@ -1349,6 +1389,9 @@ class currencycom(Exchange, ImplicitAPI):
     async def fetch_open_orders(self, symbol: Str = None, since: Int = None, limit: Int = None, params={}) -> List[Order]:
         """
         fetch all unfilled currently open orders
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/openOrdersUsingGET
+
         :param str symbol: unified market symbol
         :param int [since]: the earliest time in ms to fetch open orders for
         :param int [limit]: the maximum number of  open orders structures to retrieve
@@ -1357,7 +1400,7 @@ class currencycom(Exchange, ImplicitAPI):
         """
         await self.load_markets()
         market = None
-        request = {}
+        request: dict = {}
         if symbol is not None:
             market = self.market(symbol)
             request['symbol'] = market['id']
@@ -1391,6 +1434,9 @@ class currencycom(Exchange, ImplicitAPI):
     async def cancel_order(self, id: str, symbol: Str = None, params={}):
         """
         cancels an open order
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/cancelOrderUsingDELETE
+
         :param str id: order id
         :param str symbol: unified symbol of the market the order was made in
         :param dict [params]: extra parameters specific to the exchange API endpoint
@@ -1401,7 +1447,7 @@ class currencycom(Exchange, ImplicitAPI):
         await self.load_markets()
         market = self.market(symbol)
         origClientOrderId = self.safe_value(params, 'origClientOrderId')
-        request = {
+        request: dict = {
             'symbol': market['id'],
             # 'orderId': int(id),
             # 'origClientOrderId': id,
@@ -1429,6 +1475,9 @@ class currencycom(Exchange, ImplicitAPI):
     async def fetch_my_trades(self, symbol: Str = None, since: Int = None, limit: Int = None, params={}):
         """
         fetch all trades made by the user
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/myTradesUsingGET
+
         :param str symbol: unified market symbol
         :param int [since]: the earliest time in ms to fetch trades for
         :param int [limit]: the maximum number of trades structures to retrieve
@@ -1439,7 +1488,7 @@ class currencycom(Exchange, ImplicitAPI):
             raise ArgumentsRequired(self.id + ' fetchMyTrades() requires a symbol argument')
         await self.load_markets()
         market = self.market(symbol)
-        request = {
+        request: dict = {
             'symbol': market['id'],
         }
         if limit is not None:
@@ -1468,6 +1517,9 @@ class currencycom(Exchange, ImplicitAPI):
     async def fetch_deposits(self, code: Str = None, since: Int = None, limit: Int = None, params={}) -> List[Transaction]:
         """
         fetch all deposits made to an account
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/getDepositsUsingGET
+
         :param str code: unified currency code
         :param int [since]: the earliest time in ms to fetch deposits for
         :param int [limit]: the maximum number of deposits structures to retrieve
@@ -1479,6 +1531,9 @@ class currencycom(Exchange, ImplicitAPI):
     async def fetch_withdrawals(self, code: Str = None, since: Int = None, limit: Int = None, params={}) -> List[Transaction]:
         """
         fetch all withdrawals made from an account
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/getWithdrawalsUsingGET
+
         :param str code: unified currency code
         :param int [since]: the earliest time in ms to fetch withdrawals for
         :param int [limit]: the maximum number of withdrawals structures to retrieve
@@ -1490,6 +1545,9 @@ class currencycom(Exchange, ImplicitAPI):
     async def fetch_deposits_withdrawals(self, code: Str = None, since: Int = None, limit: Int = None, params={}) -> List[Transaction]:
         """
         fetch history of deposits and withdrawals
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/getTransactionsUsingGET
+
         :param str [code]: unified currency code for the currency of the deposit/withdrawals, default is None
         :param int [since]: timestamp in ms of the earliest deposit/withdrawal, default is None
         :param int [limit]: max number of deposit/withdrawals to return, default is None
@@ -1500,7 +1558,7 @@ class currencycom(Exchange, ImplicitAPI):
 
     async def fetch_transactions_by_method(self, method, code: Str = None, since: Int = None, limit: Int = None, params={}):
         await self.load_markets()
-        request = {}
+        request: dict = {}
         currency = None
         if code is not None:
             currency = self.currency(code)
@@ -1508,7 +1566,15 @@ class currencycom(Exchange, ImplicitAPI):
             request['startTime'] = since
         if limit is not None:
             request['limit'] = limit
-        response = await getattr(self, method)(self.extend(request, params))
+        response = None
+        if method == 'privateGetV2Deposits':
+            response = await self.privateGetV2Deposits(self.extend(request, params))
+        elif method == 'privateGetV2Withdrawals':
+            response = await self.privateGetV2Withdrawals(self.extend(request, params))
+        elif method == 'privateGetV2Transactions':
+            response = await self.privateGetV2Transactions(self.extend(request, params))
+        else:
+            raise NotSupported(self.id + ' fetchTransactionsByMethod() not support self method')
         #
         #    [
         #        {
@@ -1527,7 +1593,7 @@ class currencycom(Exchange, ImplicitAPI):
         #
         return self.parse_transactions(response, currency, since, limit, params)
 
-    def parse_transaction(self, transaction, currency: Currency = None) -> Transaction:
+    def parse_transaction(self, transaction: dict, currency: Currency = None) -> Transaction:
         #
         #    {
         #        "id": "616769213",
@@ -1577,31 +1643,34 @@ class currencycom(Exchange, ImplicitAPI):
             'fee': fee,
         }
 
-    def parse_transaction_status(self, status):
-        statuses = {
+    def parse_transaction_status(self, status: Str):
+        statuses: dict = {
             'APPROVAL': 'pending',
             'PROCESSED': 'ok',
         }
         return self.safe_string(statuses, status, status)
 
     def parse_transaction_type(self, type):
-        types = {
+        types: dict = {
             'deposit': 'deposit',
             'withdrawal': 'withdrawal',
         }
         return self.safe_string(types, type, type)
 
-    async def fetch_ledger(self, code: Str = None, since: Int = None, limit: Int = None, params={}):
+    async def fetch_ledger(self, code: Str = None, since: Int = None, limit: Int = None, params={}) -> List[LedgerEntry]:
         """
-        fetch the history of changes, actions done by the user or operations that altered balance of the user
-        :param str code: unified currency code, default is None
+        fetch the history of changes, actions done by the user or operations that altered the balance of the user
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/getLedgerUsingGET
+
+        :param str [code]: unified currency code, default is None
         :param int [since]: timestamp in ms of the earliest ledger entry, default is None
-        :param int [limit]: max number of ledger entrys to return, default is None
+        :param int [limit]: max number of ledger entries to return, default is None
         :param dict [params]: extra parameters specific to the exchange API endpoint
-        :returns dict: a `ledger structure <https://docs.ccxt.com/#/?id=ledger-structure>`
+        :returns dict: a `ledger structure <https://docs.ccxt.com/#/?id=ledger>`
         """
         await self.load_markets()
-        request = {}
+        request: dict = {}
         currency = None
         if code is not None:
             currency = self.currency(code)
@@ -1639,19 +1708,20 @@ class currencycom(Exchange, ImplicitAPI):
         #
         return self.parse_ledger(response, currency, since, limit)
 
-    def parse_ledger_entry(self, item, currency: Currency = None):
+    def parse_ledger_entry(self, item: dict, currency: Currency = None) -> LedgerEntry:
         id = self.safe_string(item, 'id')
         amountString = self.safe_string(item, 'amount')
         amount = Precise.string_abs(amountString)
         timestamp = self.safe_integer(item, 'timestamp')
         currencyId = self.safe_string(item, 'currency')
         code = self.safe_currency_code(currencyId, currency)
+        currency = self.safe_currency(currencyId, currency)
         feeCost = self.safe_string(item, 'commission')
         fee = None
         if feeCost is not None:
             fee = {'currency': code, 'cost': feeCost}
         direction = 'out' if Precise.string_lt(amountString, '0') else 'in'
-        result = {
+        return self.safe_ledger_entry({
             'id': id,
             'timestamp': timestamp,
             'datetime': self.iso8601(timestamp),
@@ -1667,11 +1737,10 @@ class currencycom(Exchange, ImplicitAPI):
             'status': self.parse_ledger_entry_status(self.safe_string(item, 'status')),
             'fee': fee,
             'info': item,
-        }
-        return result
+        }, currency)
 
     def parse_ledger_entry_status(self, status):
-        statuses = {
+        statuses: dict = {
             'APPROVAL': 'pending',
             'PROCESSED': 'ok',
             'CANCELLED': 'canceled',
@@ -1679,44 +1748,60 @@ class currencycom(Exchange, ImplicitAPI):
         return self.safe_string(statuses, status, status)
 
     def parse_ledger_entry_type(self, type):
-        types = {
+        types: dict = {
             'deposit': 'transaction',
             'withdrawal': 'transaction',
             'exchange_commission': 'fee',
         }
         return self.safe_string(types, type, type)
 
-    async def fetch_leverage(self, symbol: str, params={}):
+    async def fetch_leverage(self, symbol: str, params={}) -> Leverage:
         """
         fetch the set leverage for a market
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/leverageSettingsUsingGET
+
         :param str symbol: unified market symbol
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict: a `leverage structure <https://docs.ccxt.com/#/?id=leverage-structure>`
         """
         await self.load_markets()
         market = self.market(symbol)
-        request = {
+        request: dict = {
             'symbol': market['id'],
         }
         response = await self.privateGetV2LeverageSettings(self.extend(request, params))
         #
-        # {
-        #     "values": [1, 2, 5, 10,],
-        #     "value": "10",
-        # }
+        #     {
+        #         "values": [1, 2, 5, 10,],
+        #         "value": "10",
+        #     }
         #
-        return self.safe_number(response, 'value')
+        return self.parse_leverage(response, market)
 
-    async def fetch_deposit_address(self, code: str, params={}):
+    def parse_leverage(self, leverage: dict, market: Market = None) -> Leverage:
+        leverageValue = self.safe_integer(leverage, 'value')
+        return {
+            'info': leverage,
+            'symbol': market['symbol'],
+            'marginMode': None,
+            'longLeverage': leverageValue,
+            'shortLeverage': leverageValue,
+        }
+
+    async def fetch_deposit_address(self, code: str, params={}) -> DepositAddress:
         """
         fetch the deposit address for a currency associated with self account
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/getDepositAddressUsingGET
+
         :param str code: unified currency code
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict: an `address structure <https://docs.ccxt.com/#/?id=address-structure>`
         """
         await self.load_markets()
         currency = self.currency(code)
-        request = {
+        request: dict = {
             'coin': currency['id'],
         }
         response = await self.privateGetV2DepositAddress(self.extend(request, params))
@@ -1725,16 +1810,16 @@ class currencycom(Exchange, ImplicitAPI):
         #
         return self.parse_deposit_address(response, currency)
 
-    def parse_deposit_address(self, depositAddress, currency: Currency = None):
+    def parse_deposit_address(self, depositAddress, currency: Currency = None) -> DepositAddress:
         address = self.safe_string(depositAddress, 'address')
         self.check_address(address)
         currency = self.safe_currency(None, currency)
         return {
+            'info': depositAddress,
             'currency': currency['code'],
+            'network': None,
             'address': address,
             'tag': None,
-            'network': None,
-            'info': depositAddress,
         }
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
@@ -1768,6 +1853,9 @@ class currencycom(Exchange, ImplicitAPI):
     async def fetch_positions(self, symbols: Strings = None, params={}):
         """
         fetch all open positions
+
+        https://apitradedoc.currency.com/swagger-ui.html#/rest-api/tradingPositionsUsingGET
+
         :param str[]|None symbols: list of unified market symbols
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict[]: a list of `position structure <https://docs.ccxt.com/#/?id=position-structure>`
@@ -1806,10 +1894,10 @@ class currencycom(Exchange, ImplicitAPI):
         #        ]
         #    }
         #
-        data = self.safe_value(response, 'positions', [])
+        data = self.safe_list(response, 'positions', [])
         return self.parse_positions(data, symbols)
 
-    def parse_position(self, position, market: Market = None):
+    def parse_position(self, position: dict, market: Market = None):
         #
         #    {
         #        "accountId": "109698017416453793",
@@ -1840,7 +1928,7 @@ class currencycom(Exchange, ImplicitAPI):
         #
         market = self.safe_market(self.safe_string(position, 'symbol'), market)
         symbol = market['symbol']
-        timestamp = self.safe_number(position, 'createdTimestamp')
+        timestamp = self.safe_integer(position, 'createdTimestamp')
         quantityRaw = self.safe_string(position, 'openQuantity')
         side = 'long' if Precise.string_gt(quantityRaw, '0') else 'short'
         quantity = Precise.string_abs(quantityRaw)
@@ -1860,7 +1948,7 @@ class currencycom(Exchange, ImplicitAPI):
             'collateral': None,
             'side': side,
             # 'realizedProfit': self.safe_number(position, 'rpl'),
-            'unrealizedProfit': unrealizedProfit,
+            'unrealizedPnl': unrealizedProfit,
             'leverage': leverage,
             'percentage': None,
             'marginMode': None,
@@ -1874,13 +1962,12 @@ class currencycom(Exchange, ImplicitAPI):
             'maintenanceMarginPercentage': None,
             'marginRatio': None,
             'id': None,
-            'unrealizedPnl': None,
             'hedged': None,
             'stopLossPrice': None,
             'takeProfitPrice': None,
         })
 
-    def handle_errors(self, httpCode, reason, url, method, headers, body, response, requestHeaders, requestBody):
+    def handle_errors(self, httpCode: int, reason: str, url: str, method: str, headers: dict, body: str, response, requestHeaders, requestBody):
         if (httpCode == 418) or (httpCode == 429):
             raise DDoSProtection(self.id + ' ' + str(httpCode) + ' ' + reason + ' ' + body)
         # error response in a form: {"code": -1013, "msg": "Invalid quantity."}

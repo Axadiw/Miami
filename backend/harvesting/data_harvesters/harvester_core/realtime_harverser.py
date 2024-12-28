@@ -205,6 +205,7 @@ class RealtimeHarvester:
                     await asyncio.sleep(1)
 
     async def handle_tickers(self, ticker, db_session: AsyncSession):
+        ticker = ticker[list(ticker.keys())[0]]
         try:
             symbol = (await db_session.execute(select(Symbol).filter_by(name=ticker['symbol']))).scalar()
             timestamp = datetime.fromtimestamp(ticker['timestamp'] / 1000.0)
