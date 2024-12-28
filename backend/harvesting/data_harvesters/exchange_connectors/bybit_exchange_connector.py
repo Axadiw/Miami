@@ -33,7 +33,7 @@ class BybitConnectorCCXT(BaseExchangeConnector):
                                                         limit=MAX_CANDLES_HISTORY_TO_FETCH,
                                                         params={"paginate": True,
                                                                 "paginationCalls": int(
-                                                                    ceil(MAX_CANDLES_HISTORY_TO_FETCH / 1000)),
+                                                                    ceil(MAX_CANDLES_HISTORY_TO_FETCH / 100)),
                                                                 'until': data.end.timestamp() * 1000,
                                                                 'maxRetries': 10})
 
