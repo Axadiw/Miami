@@ -11,7 +11,7 @@ from shared.models.order import Order, STOP_LOSS_ORDER_TYPE, TAKE_PROFIT_ORDER_T
 from shared.models.position import Position, LONG_SIDE
 
 
-def test_should_pass_correct_params_to_py3w_with_3_tps(mocker):
+def test_should_pass_correct_params_to_py3w_with_3_tps(app, mocker):
     py3w_spy = mocker.patch.object(Py3CW, 'request',
                                    return_value=(None, example_response))
     wrapper = Bybit3CommasWrapper(account_id=0,
