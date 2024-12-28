@@ -49,6 +49,7 @@ class MetadataHarvester:
                         (await db_session.execute(select(Symbol).filter_by(exchange=self.exchange.id))).scalars())
                     fetched_symbols = await exchange_connector.fetch_tickers(self.exchange)
                     fetched_symbols_names = list(filter(lambda x: ':' in x, map(lambda x: x.name,
+                                                                                # TODO: extract this to a separate block
                                                                                 fetched_symbols)))  # : magic for filtering out weird symbol names like EIGENUSDT (without /USDT:USDT at the end)
                     existing_symbols_names = list(map(lambda x: x.name, existing_symbols))
                     for symbol in existing_symbols:

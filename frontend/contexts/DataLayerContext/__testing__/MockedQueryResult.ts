@@ -26,5 +26,6 @@ export function MockedQueryResult<ReturnType>(returnValue: ReturnType) {
     fetchStatus: 'idle',
     refetch: jest.fn(),
     isInitialLoading: false,
+    promise: Promise.resolve(returnValue),
   } as UseQueryResult<ReturnType, Error>;
 }
