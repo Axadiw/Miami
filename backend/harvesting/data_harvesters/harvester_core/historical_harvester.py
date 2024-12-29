@@ -49,7 +49,7 @@ class HistoricalHarvester:
         self.configured = False
 
     async def fetch_all_ohlcv(self, data_to_fetch: list[DataToFetch]) -> object:
-        logging.info(f'[Historical Harvester] Starting to fetch candles for {len(data_to_fetch)} gaps')
+        logging.debug(f'[Historical Harvester] Starting to fetch candles for {len(data_to_fetch)} gaps')
         self.temporary_ohlcv_fetching_db_sessions = [async_session_generator(app_name='ohlcv_fetcher')() for _ in
                                                      range(0, MAX_CONCURRENT_FETCHES)]
         self.temporary_ohlcv_fetching_exchange_connectors = [self.exchange_connector_generator() for _ in
@@ -68,13 +68,15 @@ class HistoricalHarvester:
                 await connector.close()
             self.temporary_ohlcv_fetching_db_sessions = []
             self.temporary_ohlcv_fetching_exchange_connectors = []
-            logging.info(
+            logging.debug(
                 f'[Historical Harvester] Finished updating history for all symbols in all timeframes. '
                 f'Added {new_candles_for_all_symbols_count} new entries '
                 f'Took {"{:.2f}".format(elapsed())} seconds')
             return new_candles_for_all_symbols_count
 
     async def fetch_and_save_single_ohlcv(self, data: DataToFetch):
+        logging.debug(
+            f'[Historical Harvester] Will fetch {data.symbol.name} {data.timeframe.name} {data.start} - {data.end}')
         with elapsed_timer() as elapsed:
             new_candles: list[OHLCV] = await self.fetch_single_ohlcv(data=data)
             updated_candles_count = await self.save_candles(data, new_candles)
@@ -169,7 +171,7 @@ class HistoricalHarvester:
 
                         data_to_fetch.append(
                             DataToFetch(symbol=symbol, timeframe=timeframe, start=start_time, end=end_time))
-            logging.info(
+            logging.debug(
                 f'Calculated date ranges to fetch '
                 f'Took {"{:.2f}".format(elapsed())} seconds')
             return data_to_fetch
