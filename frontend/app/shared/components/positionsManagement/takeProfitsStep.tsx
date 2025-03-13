@@ -103,7 +103,9 @@ export const TakeProfitsStep = (props: TakeProfitsStepProps) => {
               {calculatedValues &&
                 tp1 &&
                 tp1Percent &&
-                `${displayUpToPrefixes && 'up to '} $ ${calculatedValues.tp1USDReward.toFixed(2)}`}
+                `${displayUpToPrefixes ? 'up to ' : ''} $ ${calculatedValues.tp1USDReward.toFixed(
+                  2
+                )}`}
             </Text>
           </Group>
         </Input.Wrapper>
@@ -165,7 +167,9 @@ export const TakeProfitsStep = (props: TakeProfitsStepProps) => {
               {calculatedValues &&
                 tp2 &&
                 tp2Percent &&
-                `${displayUpToPrefixes && 'up to '} $ ${calculatedValues.tp2USDReward.toFixed(2)}`}
+                `${displayUpToPrefixes ? 'up to ' : ''} $ ${calculatedValues.tp2USDReward.toFixed(
+                  2
+                )}`}
             </Text>
           </Group>
         </Input.Wrapper>
@@ -226,7 +230,9 @@ export const TakeProfitsStep = (props: TakeProfitsStepProps) => {
             {calculatedValues &&
               tp3 &&
               tp3Percent &&
-              `${displayUpToPrefixes && 'up to '} $ ${calculatedValues.tp3USDReward.toFixed(2)}`}
+              `${displayUpToPrefixes ? 'up to ' : ''} $ ${calculatedValues.tp3USDReward.toFixed(
+                2
+              )}`}
           </Text>
         </Group>
       </Group>
