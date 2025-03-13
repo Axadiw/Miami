@@ -5,6 +5,8 @@ MiamiTrade is a cryptocurrency trading platform with risk management built in as
 Compared with ordinary exchanges that persuade you to increase risks during trading, in MiamiTrade you can easily set
 how much you're willing to risk for each trade.
 
+Live version accessible via https://miamitrade.pro
+
 ## Features
 
 Create various types of positions (listed below).
